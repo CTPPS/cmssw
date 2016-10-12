@@ -1,0 +1,7 @@
+<lcgdict>
+       <class name="CTPPSRPPositions" class_version="0">
+         <field name="m_positions" mapping="blob" />
+       </class>
+       <class name="CTPPSRPPosition"/>
+       <class name="std::map<unsigned int,CTPPSRPPosition>"/>
+</lcgdict> 

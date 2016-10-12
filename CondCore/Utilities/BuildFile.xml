@@ -13,6 +13,7 @@
 <use   name="CondFormats/CastorObjects"/>
 <use   name="CondFormats/HIObjects"/>
 <use   name="CondFormats/CSCObjects"/>
+<use   name="CondFormats/CTPPSObjects"/>
 <use   name="CondFormats/DTObjects"/>
 <use   name="CondFormats/ESObjects"/>
 <use   name="CondFormats/EcalObjects"/>
