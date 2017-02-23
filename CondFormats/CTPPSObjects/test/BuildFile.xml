@@ -1,0 +1,3 @@
+<bin file="testSerializationCTPPSObjects.cpp">
+    <use   name="CondFormats/CTPPSObjects"/>
+</bin>
