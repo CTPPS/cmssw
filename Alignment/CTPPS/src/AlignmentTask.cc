@@ -479,13 +479,10 @@ void AlignmentTask::BuildOneRotZPerPotConstraints(std::vector<AlignmentConstrain
 
 void AlignmentTask::BuildStandardConstraints(vector<AlignmentConstraint> &constraints) const
 {
-  // TODO
-  printf(">> AlignmentTask::BuildStandardConstraints > not yet ported\n");
-  throw 1;
+  const vector<unsigned int> &decUnitIds = standardConstraints.getParameter<vector<unsigned int>>("units");
 
+// TODO needed?
 #if 0
-  const vector<unsigned int> &units = standardConstraints.getParameter<vector<unsigned int>>("units");
-
   // count planes in RPs
   struct PlaneCount { unsigned int all, U, V; };
   map<unsigned int, PlaneCount> planesPerPot;
@@ -499,31 +496,102 @@ void AlignmentTask::BuildStandardConstraints(vector<AlignmentConstraint> &constr
     else
       planesPerPot[rp].V++;
   }
+#endif
 
   // ShR constraints
   if (resolveShR)
   {
-    for (const auto &coUnit : units)
+    for (const auto &decUnitId : decUnitIds)
     {
       // prepare empty constraints
       AlignmentConstraint ac_X;
-      ac_X.forClass = qcRotZ;
-      for (unsigned int i = 0; i < quantityClasses.size(); i++)
+      ac_X.forClass = qcShR1; // TODO: it is also for ShR2...
+      for (auto &qcit : quantityClasses)
       {
-        ac_X.coef[quantityClasses[i]].ResizeTo(QuantitiesOfClass(quantityClasses[i]));
-        ac_X.coef[quantityClasses[i]].Zero();
+        ac_X.coef[qcit].ResizeTo(QuantitiesOfClass(qcit));
+        ac_X.coef[qcit].Zero();
       }
       ac_X.val = 0;
       ac_X.extended = false;
     
       AlignmentConstraint ac_Y(ac_X);
   
+      // set constraint names
       char buf[50];
-      sprintf(buf, "ShR: unit %u, SmX=0", coUnit);
+      sprintf(buf, "ShR: unit %u, MeanX=0", decUnitId);
       ac_X.name = buf;
-      sprintf(buf, "ShR: unit %u, SmY=0", coUnit);
+      sprintf(buf, "ShR: unit %u, MeanY=0", decUnitId);
       ac_Y.name = buf;
-  
+
+      // traverse geometry
+      for (const auto git : geometry)
+      {
+        // stop is sensor not in the selected arm
+        CTPPSDetId senId(git.first);
+        unsigned int senDecUnit = senId.arm()*100 + senId.station()*10;
+        if (senId.rp() > 2)
+          senDecUnit += 1;
+
+        if (senDecUnit != decUnitId)
+          continue;
+
+        // fill constraint for strip sensors
+        if (senId.subdetId() == CTPPSDetId::sdTrackingStrip)
+        {
+          signed int qIndex = GetQuantityIndex(qcShR2, git.first);
+          if (qIndex < 0)
+            throw cms::Exception("AlignmentTask::BuildStandardConstraints") <<
+              "Cannot get quantity index for class " << qcShR2 << " and sensor id " << git.first << ".";
+
+          // set constraint coefficients
+          ac_X.coef[qcShR2][qIndex] = git.second.GetDirectionData(2).dx;
+          ac_Y.coef[qcShR2][qIndex] = git.second.GetDirectionData(2).dy;
+        }
+
+        // fill constraint for strip sensors
+        if (senId.subdetId() == CTPPSDetId::sdTrackingPixel)
+        {
+          // get quantity indeces
+          signed int qIndex1 = GetQuantityIndex(qcShR1, git.first);
+          if (qIndex1 < 0)
+            throw cms::Exception("AlignmentTask::BuildStandardConstraints") <<
+              "Cannot get quantity index for class " << qcShR1 << " and sensor id " << git.first << ".";
+
+          signed int qIndex2 = GetQuantityIndex(qcShR2, git.first);
+          if (qIndex2 < 0)
+            throw cms::Exception("AlignmentTask::BuildStandardConstraints") <<
+              "Cannot get quantity index for class " << qcShR2 << " and sensor id " << git.first << ".";
+
+          // get geometry
+          const double d1x = git.second.GetDirectionData(1).dx;
+          const double d1y = git.second.GetDirectionData(1).dy;
+          const double d2x = git.second.GetDirectionData(2).dx;
+          const double d2y = git.second.GetDirectionData(2).dy;
+
+          // calculate coefficients
+          const double D = d1x*d2y - d1y*d2x;
+          const double coef_x_s1 = + d2y / D;
+          const double coef_y_s1 = - d2x / D;
+          const double coef_x_s2 = - d1y / D;
+          const double coef_y_s2 = + d1x / D;
+
+          // set constraint coefficients
+          ac_X.coef[qcShR1][qIndex1] = coef_x_s1;
+          ac_Y.coef[qcShR1][qIndex1] = coef_y_s1;
+
+          ac_X.coef[qcShR2][qIndex2] = coef_x_s2;
+          ac_Y.coef[qcShR2][qIndex2] = coef_y_s2;
+        }
+      }
+
+      // add constraints
+      constraints.push_back(ac_X);
+      constraints.push_back(ac_Y);
+    }
+
+#if 0
+    for (const auto &coUnit : units)
+    {
       unsigned int indeces = QuantitiesOfClass(qcShR);
       for (unsigned int idx = 0; idx < indeces; ++idx)
       {
@@ -549,11 +617,16 @@ void AlignmentTask::BuildStandardConstraints(vector<AlignmentConstraint> &constr
       constraints.push_back(ac_X);
       constraints.push_back(ac_Y);
     }
+#endif
   }
 
   // RotZ constraints
   if (resolveRotZ)
   {
+    throw cms::Exception("AlignmentTask::BuildStandardConstraints") << "RotZ constriants not yet ported.";
+
+    // TODO
+#if 0
     for (const auto &coUnit : units)
     {
       // prepare empty constraints
@@ -601,11 +674,16 @@ void AlignmentTask::BuildStandardConstraints(vector<AlignmentConstraint> &constr
       if (!useEqualMeanUMeanVRotZConstraint)
         constraints.push_back(ac_V);
     }
+#endif
   }
 
   // mean U = mean V RotZ constraints
   if (resolveRotZ && useEqualMeanUMeanVRotZConstraint)
   {
+    throw cms::Exception("AlignmentTask::BuildStandardConstraints") << "MeanUMeanVRotZ constriants not yet ported.";
+
+    // TODO
+#if 0
     map<unsigned int, pair<unsigned int, unsigned int>> planesPerPot;
     for (const auto it : geometry)
     {
@@ -654,8 +732,11 @@ void AlignmentTask::BuildStandardConstraints(vector<AlignmentConstraint> &constr
       // push the constraint
       constraints.push_back(ac);
     }
+#endif
   }
 
+  // TODO: remove once debugging is over
+#if 0
   // print constraints
   for (const auto &c : constraints)
   {

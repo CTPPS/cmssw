@@ -21,7 +21,7 @@ ctppsFastLocalSimulation = cms.EDProducer("CTPPSFastLocalSimulation",
       x_max = cms.double(0.0),
 
       y_mean = cms.double(0.0),
-      y_width = cms.double(20.0),
+      y_width = cms.double(30.0),
       y_min = cms.double(0.0),
       y_max = cms.double(0.0)
     ),
