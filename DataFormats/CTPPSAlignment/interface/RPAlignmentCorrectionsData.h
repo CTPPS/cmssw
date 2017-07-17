@@ -74,17 +74,13 @@ class RPAlignmentCorrectionsData
     /// adds (merges) a RP correction on top of the current value
     /// \param sumErrors if it is true, old and new alignment uncertainties are summed (in quadrature)
     /// if it is false, the uncertainties of the parameter (i.e. not the object) will be used
-    /// With the add... switches one can control which corrections are added.
-    void AddRPCorrection(unsigned int, const RPAlignmentCorrectionData&, bool sumErrors = true,
-      bool addShR=true, bool addShZ=true, bool addRotZ=true);
+    void AddRPCorrection(unsigned int, const RPAlignmentCorrectionData&, bool sumErrors = false);
     
     /// adds (merges) a RP correction on top of the current value
-    void AddSensorCorrection(unsigned int, const RPAlignmentCorrectionData&, bool sumErrors = true,
-      bool addShR=true, bool addShZ=true, bool addRotZ=true);
+    void AddSensorCorrection(unsigned int, const RPAlignmentCorrectionData&, bool sumErrors = false);
   
     /// adds (merges) corrections on top of the current values
-    void AddCorrections(const RPAlignmentCorrectionsData &, bool sumErrors = true,
-      bool addShR=true, bool addShZ=true, bool addRotZ=true);
+    void AddCorrections(const RPAlignmentCorrectionsData &, bool sumErrors = false);
 
     /// clears all alignments
     void Clear();

@@ -57,6 +57,10 @@
   R = | 0 cos r_x  -sin r_x | * |    0     1     0     | * | sin r_z  cos r_z   0 |
       | 0 sin r_x  cos r_x  |   |-sin r_y  0  cos r_y  |   |    0        0      1 |
   \endverbatim
+ *
+ * NB: the only members that are effective to geometry adjustments are:
+ *    translation, rotation_x, rotation_y, rotation_z
+ * The other members are only relevant for certain alignment algorithms.
  **/
 class RPAlignmentCorrectionData
 {
@@ -197,9 +201,7 @@ public:
   /// match between x, y and read-out shifts is not checked
   /// \param sumErrors if it is true, old and new alignment uncertainties are summed (in quadrature)
   /// if it is false, the uncertainties of the parameter (i.e. not the object) will be used
-  /// With the add... switches one can control which corrections are added.
-  void add(const RPAlignmentCorrectionData&, bool sumErrors = true, bool addShR=true,
-    bool addShZ=true, bool addRotZ=true);
+  void add(const RPAlignmentCorrectionData&, bool sumErrors = false);
 
   /// given the readout directions, it transforms 'translation_r1' and 'translation_r2'
   /// to the transverse components (x, y) of 'translation'

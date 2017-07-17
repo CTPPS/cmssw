@@ -50,55 +50,37 @@ RPAlignmentCorrectionData::RPAlignmentCorrectionData(double sh_x, double sh_y, d
 
 //----------------------------------------------------------------------------------------------------
 
-void RPAlignmentCorrectionData::add(const RPAlignmentCorrectionData &a, bool sumErrors, bool addShR,
-  bool addShZ, bool addRotZ)
+void RPAlignmentCorrectionData::add(const RPAlignmentCorrectionData &a, bool sumErrors)
 {
-  /// TODO: proper adding of all three angles
-  
-  //printf(">> RPAlignmentCorrectionData::Add, sumErrors = %i\n", sumErrors);
+  // add translations
+  translation.SetX(a.translation.X() + translation.X());
+  translation.SetY(a.translation.Y() + translation.Y());
+  translation.SetZ(a.translation.Z() + translation.Z());
 
-  bool addShXY = addShR;
-  
-  if (addShR)
+  if (sumErrors)
   {
-    translation_r1 = a.translation_r1 + translation_r1;
-    if (sumErrors)
-      translation_r1_error = sqrt(a.translation_r1_error*a.translation_r1_error + translation_r1_error*translation_r1_error);
-    else
-      translation_r1_error = a.translation_r1_error;
-
-    // TODO: translation_r2
-  }
-
-  if (addShXY)
-  {
-    translation.SetX(a.translation.X() + translation.X());
-    translation.SetY(a.translation.Y() + translation.Y());
-    if (sumErrors) {
-      translation_error.SetX(sqrt(a.translation_error.X()*a.translation_error.X() + translation_error.X()*translation_error.X()));
-      translation_error.SetY(sqrt(a.translation_error.Y()*a.translation_error.Y() + translation_error.Y()*translation_error.Y()));
-    } else {
-      translation_error.SetX(a.translation_error.X());
-      translation_error.SetY(a.translation_error.Y());
-    }
+    translation_error.SetX(sqrt(a.translation_error.X()*a.translation_error.X() + translation_error.X()*translation_error.X()));
+    translation_error.SetY(sqrt(a.translation_error.Y()*a.translation_error.Y() + translation_error.Y()*translation_error.Y()));
+    translation_error.SetZ(sqrt(a.translation_error.Z()*a.translation_error.Z() + translation_error.Z()*translation_error.Z()));
+  } else {
+    translation_error.SetX(a.translation_error.X());
+    translation_error.SetY(a.translation_error.Y());
+    translation_error.SetZ(a.translation_error.Z());
   }
   
-  if (addShZ)
+  // add rotations
+  rotation_x = a.rotation_x + rotation_x;
+  rotation_y = a.rotation_y + rotation_y;
+  rotation_z = a.rotation_z + rotation_z;
+  if (sumErrors)
   {
-    translation.SetZ(a.translation.Z() + translation.Z());
-    if (sumErrors)
-      translation_error.SetZ(sqrt(a.translation_error.Z()*a.translation_error.Z() + translation_error.Z()*translation_error.Z()));
-    else
-      translation_error.SetZ(a.translation_error.Z());
-  }
-
-  if (addRotZ)
-  {
-    rotation_z = a.rotation_z + rotation_z;
-    if (sumErrors)
-      rotation_z_error = sqrt(a.rotation_z_error*a.rotation_z_error + rotation_z_error*rotation_z_error);
-    else
-      rotation_z_error = a.rotation_z_error;
+    rotation_x_error = sqrt(a.rotation_x_error*a.rotation_x_error + rotation_x_error*rotation_x_error);
+    rotation_y_error = sqrt(a.rotation_y_error*a.rotation_y_error + rotation_y_error*rotation_y_error);
+    rotation_z_error = sqrt(a.rotation_z_error*a.rotation_z_error + rotation_z_error*rotation_z_error);
+  } else {
+    rotation_x_error = a.rotation_x_error;
+    rotation_y_error = a.rotation_y_error;
+    rotation_z_error = a.rotation_z_error;
   }
 }
 
@@ -114,6 +96,7 @@ void RPAlignmentCorrectionData::readoutTranslationsToXY(double d1x, double d1y, 
   translation.SetXYZ(tr_x, tr_y, tr_z);
 
   // TODO: error propagation
+  translation_error.SetXYZ(0., 0., 0.);
   /*
   tr_z = translation_error.z();
   translation_error.SetXYZ(translation_r1_error*dx, translation_r1_error*dy, tr_z);
@@ -132,8 +115,9 @@ void RPAlignmentCorrectionData::xyTranslationToReadout(double d1x, double d1y, d
 
   // there is a very high correlation between x and y components of translation_error
   //double dot_error = sqrt(dx*dx * translation_error.x()*translation_error.x() + dy*dy * translation_error.y()*translation_error.y());
-  double dot_error = sqrt(translation_error.x()*translation_error.x() + translation_error.y()*translation_error.y());
-  translation_r1_error = dot_error;
+  //double dot_error = sqrt(translation_error.x()*translation_error.x() + translation_error.y()*translation_error.y());
+  //translation_r1_error = dot_error;
+  translation_r1_error = 0.;
 
   // TODO: why this?
   //translation_error.SetXYZ(dot_error*dx, dot_error*dy, translation_error.z());
@@ -141,7 +125,8 @@ void RPAlignmentCorrectionData::xyTranslationToReadout(double d1x, double d1y, d
   double dot2 = d2x*translation.x() + d2y*translation.y();
   translation_r2 = dot2;
 
-  translation_r2_error = dot_error;
+  //translation_r2_error = dot_error;
+  translation_r2_error = 0.;
 }
 
 //----------------------------------------------------------------------------------------------------

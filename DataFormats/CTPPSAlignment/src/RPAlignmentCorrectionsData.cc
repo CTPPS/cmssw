@@ -88,37 +88,36 @@ void RPAlignmentCorrectionsData::SetSensorCorrection(unsigned int id, const RPAl
 //----------------------------------------------------------------------------------------------------
 
 void RPAlignmentCorrectionsData::AddRPCorrection(unsigned int id, const RPAlignmentCorrectionData &a,
-  bool sumErrors, bool addShR, bool addShZ, bool addRotZ)
+  bool sumErrors)
 {
-  mapType::iterator it = rps.find(id);
+  auto it = rps.find(id);
   if (it == rps.end())
-    rps.insert(mapType::value_type(id, a));
+    rps.insert({id, a});
   else
-    it->second.add(a, sumErrors, addShR, addShZ, addRotZ);
+    it->second.add(a, sumErrors);
 }
 
 //----------------------------------------------------------------------------------------------------
 
 void RPAlignmentCorrectionsData::AddSensorCorrection(unsigned int id, const RPAlignmentCorrectionData &a,
-  bool sumErrors, bool addShR, bool addShZ, bool addRotZ)
+  bool sumErrors)
 {
-  mapType::iterator it = sensors.find(id);
+  auto it = sensors.find(id);
   if (it == sensors.end())
-    sensors.insert(mapType::value_type(id, a));
+    sensors.insert({id, a});
   else
-    it->second.add(a, sumErrors, addShR, addShZ, addRotZ);
+    it->second.add(a, sumErrors);
 }
 
 //----------------------------------------------------------------------------------------------------
 
-void RPAlignmentCorrectionsData::AddCorrections(const RPAlignmentCorrectionsData &nac, bool sumErrors,
-  bool addShR, bool addShZ, bool addRotZ)
+void RPAlignmentCorrectionsData::AddCorrections(const RPAlignmentCorrectionsData &nac, bool sumErrors)
 {
   for (auto it = nac.rps.begin(); it != nac.rps.end(); ++it)
-    AddRPCorrection(it->first, it->second, sumErrors, addShR, addShZ, addRotZ);
+    AddRPCorrection(it->first, it->second, sumErrors);
   
   for (auto it = nac.sensors.begin(); it != nac.sensors.end(); ++it)
-    AddSensorCorrection(it->first, it->second, sumErrors, addShR, addShZ, addRotZ);
+    AddSensorCorrection(it->first, it->second, sumErrors);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -129,6 +128,6 @@ void RPAlignmentCorrectionsData::Clear()
   sensors.clear();
 }
 
+//----------------------------------------------------------------------------------------------------
 
 TYPELOOKUP_DATA_REG (RPAlignmentCorrectionsData);
-
