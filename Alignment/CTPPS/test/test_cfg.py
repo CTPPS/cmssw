@@ -32,7 +32,7 @@ process.load("geometry_CTPPS_alaTotem_RECO_cfi")
 # misalignments and alignment corrections
 process.load("Geometry.VeryForwardGeometryBuilder.TotemRPIncludeAlignments_cfi")
 process.TotemRPIncludeAlignments.MisalignedFiles = cms.vstring("./mis_alignment.xml") # misalignments
-#process.TotemRPIncludeAlignments.RealFiles = cms.vstring("./cumulative_results_Jan.xml") # known alignment corrections
+#process.TotemRPIncludeAlignments.RealFiles = cms.vstring("./results_cumulative_factored_Jan.xml") # known alignment corrections
 
 # geometry printer
 process.geomInfo = cms.EDAnalyzer("GeometryInfoModule",
@@ -44,7 +44,7 @@ process.geomInfo = cms.EDAnalyzer("GeometryInfoModule",
 
 # station simulation
 process.load("Alignment.CTPPS.ctppsFastLocalSimulation_cfi")
-process.ctppsFastLocalSimulation.verbosity = 10
+process.ctppsFastLocalSimulation.verbosity = 0
 process.ctppsFastLocalSimulation.z0 = 210000
 process.ctppsFastLocalSimulation.RPs = cms.vuint32(103, 104, 105, 123, 124, 125)
 process.ctppsFastLocalSimulation.roundToPitch = False # TODO: eventually change to True
@@ -53,7 +53,8 @@ process.ctppsFastLocalSimulation.roundToPitch = False # TODO: eventually change 
 
 # alignment
 process.load("Alignment.CTPPS.ctppsStraightTrackAligner_cfi")
-process.ctppsStraightTrackAligner.verbosity = 10
+process.ctppsStraightTrackAligner.verbosity = 1
+process.ctppsStraightTrackAligner.factorizationVerbosity = 10
 #process.ctppsStraightTrackAligner.rpIds = cms.vuint32(103, 123)
 process.ctppsStraightTrackAligner.rpIds = cms.vuint32(103, 104, 105, 123, 124, 125)
 process.ctppsStraightTrackAligner.z0 = process.ctppsFastLocalSimulation.z0
@@ -61,22 +62,22 @@ process.ctppsStraightTrackAligner.maxResidualToSigma = 10
 process.ctppsStraightTrackAligner.chiSqPerNdfCut = 100
 process.ctppsStraightTrackAligner.algorithms = cms.vstring("Jan")
 
-##  process.ctppsStraightTrackAligner.constraintsType = cms.string("fixedDetectors")
-##  process.ctppsStraightTrackAligner.fixedDetectorsConstraints = cms.PSet(
-##    ShR1 = cms.PSet(
-##      ids = cms.vuint32(),
-##      values = cms.vdouble()
-##    ),
-##    ShR2 = cms.PSet(
-##      ids = cms.vuint32(1998061568, 1998094336, 1998323712, 1998356480),
-##      values = cms.vdouble(0, 0, 0, 0)
-##    )
-##  )
-
-process.ctppsStraightTrackAligner.constraintsType = cms.string("standard")
-process.ctppsStraightTrackAligner.standardConstraints = cms.PSet(
-    units = cms.vuint32(101, 121)
+process.ctppsStraightTrackAligner.constraintsType = cms.string("fixedDetectors")
+process.ctppsStraightTrackAligner.fixedDetectorsConstraints = cms.PSet(
+  ShR1 = cms.PSet(
+    ids = cms.vuint32(),
+    values = cms.vdouble()
+  ),
+  ShR2 = cms.PSet(
+    ids = cms.vuint32(1998061568, 1998094336, 1998323712, 1998356480),
+    values = cms.vdouble(0, 0, 0, 0)
+  )
 )
+
+##  process.ctppsStraightTrackAligner.constraintsType = cms.string("standard")
+##  process.ctppsStraightTrackAligner.standardConstraints = cms.PSet(
+##      units = cms.vuint32(101, 121)
+##  )
 
 process.geomInfot = cms.EDAnalyzer("GeometryInfoModule")
 

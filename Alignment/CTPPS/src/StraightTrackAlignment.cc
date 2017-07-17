@@ -123,7 +123,6 @@ StraightTrackAlignment::StraightTrackAlignment(const ParameterSet& ps) :
   maxTrackAy(ps.getParameter<double>("maxTrackAy")),
 
   fileNamePrefix(ps.getParameter<string>("fileNamePrefix")),
-  cumulativeFileNamePrefix(ps.getParameter<string>("cumulativeFileNamePrefix")),
   expandedFileNamePrefix(ps.getParameter<string>("expandedFileNamePrefix")),
   factoredFileNamePrefix(ps.getParameter<string>("factoredFileNamePrefix")),
   preciseXMLFormat(ps.getParameter<bool>("preciseXMLFormat")),
@@ -759,33 +758,26 @@ void StraightTrackAlignment::Finish()
     if (!fileNamePrefix.empty())
     {
       RPAlignmentCorrectionsMethods::WriteXMLFile(results[a], fileNamePrefix + algorithms[a]->GetName() + ".xml",
-        preciseXMLFormat, algorithms[a]->HasErrorEstimate());
+        preciseXMLFormat, algorithms[a]->HasErrorEstimate(), true, false, false, true);
     }
 
-    // TODO: validate logic, order of merging and synchronisation
-    // merge alignments
-    RPAlignmentCorrectionsData cumulativeAlignments;
-    cumulativeAlignments.AddCorrections(initialAlignments, false);
-    cumulativeAlignments.AddCorrections(results[a], false, task.resolveShR, task.resolveShZ, task.resolveRotZ);
-
-    // synchronize XY and readout shifts, normalize z rotations
-    for (auto it = cumulativeAlignments.sensors.begin(); it != cumulativeAlignments.sensors.end(); ++it)
+    // convert shr to xy, normalize z rotations
+    RPAlignmentCorrectionsData convertedAlignments = results[a];
+    for (auto it = convertedAlignments.sensors.begin(); it != convertedAlignments.sensors.end(); ++it)
     {
       const DetGeometry &g = task.geometry[it->first];
       auto d1 = g.GetDirectionData(1);
       auto d2 = g.GetDirectionData(2);
 
-      it->second.xyTranslationToReadout(d1.dx, d1.dy, d2.dx, d2.dy);
+      it->second.readoutTranslationsToXY(d1.dx, d1.dy, d2.dx, d2.dy);
 
       it->second.normalizeRotationZ();
     }
 
-    // write cumulative results
-    if (!cumulativeFileNamePrefix.empty())
-    {
-      RPAlignmentCorrectionsMethods::WriteXMLFile(cumulativeAlignments, cumulativeFileNamePrefix + algorithms[a]->GetName() + ".xml",
-        preciseXMLFormat, algorithms[a]->HasErrorEstimate());
-    }
+    // merge alignments
+    RPAlignmentCorrectionsData cumulativeAlignments;
+    cumulativeAlignments.AddCorrections(initialAlignments, false);
+    cumulativeAlignments.AddCorrections(convertedAlignments, false);
 
     // write expanded and factored results
     if (!expandedFileNamePrefix.empty() || !factoredFileNamePrefix.empty())
@@ -796,19 +788,20 @@ void StraightTrackAlignment::Finish()
       if (factorizationVerbosity)
         printf(">> Factorizing results of %s algorithm\n", algorithms[a]->GetName().c_str());
       
+      const bool equalWeights = false;
       CommonMethods::FactorRPFromSensorCorrections(cumulativeAlignments, expandedAlignments, factoredAlignments,
-        task.geometry, factorizationVerbosity);
+        task.geometry, equalWeights, factorizationVerbosity);
 
       if (!expandedFileNamePrefix.empty())
       {
         RPAlignmentCorrectionsMethods::WriteXMLFile(expandedAlignments, expandedFileNamePrefix + algorithms[a]->GetName() + ".xml",
-          preciseXMLFormat, algorithms[a]->HasErrorEstimate());
+          preciseXMLFormat, false, false, true, false, true);
       }
 
       if (!factoredFileNamePrefix.empty())
       {
         RPAlignmentCorrectionsMethods::WriteXMLFile(factoredAlignments, factoredFileNamePrefix + algorithms[a]->GetName() + ".xml",
-          preciseXMLFormat, algorithms[a]->HasErrorEstimate());
+          preciseXMLFormat, false, false, true, false, true);
       }
     }
   }
