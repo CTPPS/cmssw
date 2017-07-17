@@ -33,14 +33,15 @@ class RPAlignmentCorrectionsMethods
 
 
     /// writes corrections into a single XML file
-    static void WriteXMLFile(const RPAlignmentCorrectionsData &, const std::string &fileName, bool precise=false, bool wrErrors=true, bool wrSh_r=true,
-        bool wrSh_xy=true, bool wrSh_z=true, bool wrRot_z=true);
+    static void WriteXMLFile(const RPAlignmentCorrectionsData &, const std::string &fileName, bool precise=false,
+        bool wrErrors=true, bool wrSh_r=true, bool wrSh_xy=true, bool wrSh_z=true, bool wrRot_z=true);
     
     /// writes a block of corrections into a file
-    static void WriteXMLBlock(const RPAlignmentCorrectionsData &, FILE *, bool precise=false, bool wrErrors=true, bool wrSh_r=true,
-        bool wrSh_xy=true, bool wrSh_z=true, bool wrRot_z=true);
+    static void WriteXMLBlock(const RPAlignmentCorrectionsData &, FILE *, bool precise=false,
+        bool wrErrors=true, bool wrSh_r=true, bool wrSh_xy=true, bool wrSh_z=true, bool wrRot_z=true);
     
-    static void WriteXML(const RPAlignmentCorrectionData & data, FILE *f, bool precise, bool wrErrors, bool wrSh_r, bool wrSh_xy, bool wrSh_z, bool wrRot_z);
+    static void WriteXML(const RPAlignmentCorrectionData & data, FILE *f, bool precise, bool wrErrors,
+        bool wrSh_r, bool wrSh_xy, bool wrSh_z, bool wrRot_z);
 };
 
 #endif

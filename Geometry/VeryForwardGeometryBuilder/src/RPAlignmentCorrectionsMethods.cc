@@ -11,7 +11,10 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
+#include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 #include "DataFormats/CTPPSDetId/interface/TotemRPDetId.h"
+#include "DataFormats/CTPPSDetId/interface/CTPPSPixelDetId.h"
+#include "DataFormats/CTPPSDetId/interface/CTPPSDiamondDetId.h"
 
 #include "Geometry/VeryForwardGeometryBuilder/interface/RPAlignmentCorrectionsMethods.h"
 
@@ -67,7 +70,7 @@ RPAlignmentCorrectionsData RPAlignmentCorrectionsMethods::GetCorrectionsDataFrom
 
   if (!parser)
     throw cms::Exception("RPAlignmentCorrectionsMethods") << "Cannot parse file `" << fn << "' (parser = NULL)." << endl;
-  
+
   DOMDocument* xmlDoc = parser->getDocument();
 
   if (!xmlDoc)
@@ -89,14 +92,14 @@ RPAlignmentCorrectionsData RPAlignmentCorrectionsMethods::GetCorrectionsDataFrom
 RPAlignmentCorrectionsData RPAlignmentCorrectionsMethods::GetCorrectionsData(DOMNode *root)
 {
   RPAlignmentCorrectionsData result;
-  
+
   DOMNodeList *children = root->getChildNodes();
   for (unsigned int i = 0; i < children->getLength(); i++)
   {
     DOMNode *n = children->item(i);
     if (n->getNodeType() != DOMNode::ELEMENT_NODE)
       continue;
-   
+
     // check node type
     unsigned char nodeType = 0;
     if (!strcmp(XMLString::transcode(n->getNodeName()), "det")) nodeType = 1;
@@ -126,7 +129,7 @@ RPAlignmentCorrectionsData RPAlignmentCorrectionsMethods::GetCorrectionsData(DOM
     for (unsigned int j = 0; j < attr->getLength(); j++)
     {    
       DOMNode *a = attr->item(j);
- 
+
       //printf("\t%s\n", XMLString::transcode(a->getNodeName()));
 
       if (!strcmp(XMLString::transcode(a->getNodeName()), "id"))
@@ -201,23 +204,23 @@ void RPAlignmentCorrectionsMethods::WriteXML(const RPAlignmentCorrectionData &da
 {
   if (wrSh_r)
   {
-    WRITE(sh_r1, 2, 0.1);
-    WRITE(sh_r2, 2, 0.1);
+    WRITE(sh_r1, 2, 0.02);
+    WRITE(sh_r2, 2, 0.02);
     if (wrErrors)
     {
-      WRITE(sh_r1_e, 2, 0.1);
-      WRITE(sh_r2_e, 2, 0.1);
+      WRITE(sh_r1_e, 2, 0.02);
+      WRITE(sh_r2_e, 2, 0.02);
     }
   }
 
   if (wrSh_xy)
   {
-    WRITE(sh_x, 2, 0.1);
-    WRITE(sh_y, 2, 0.1);
+    WRITE(sh_x, 2, 0.02);
+    WRITE(sh_y, 2, 0.02);
     if (wrErrors)
     {
-      WRITE(sh_x_e, 2, 0.1);
-      WRITE(sh_y_e, 2, 0.1);
+      WRITE(sh_x_e, 2, 0.02);
+      WRITE(sh_y_e, 2, 0.02);
     }
   }
 
@@ -252,8 +255,9 @@ void RPAlignmentCorrectionsMethods::WriteXMLFile(const RPAlignmentCorrectionsDat
     throw cms::Exception("RPAlignmentCorrections::WriteXMLFile") << "Cannot open file `" << fileName
       << "' to save alignments." << endl;
 
-  fprintf(rf, "<!--\nShifts in um, rotations in mrad.\n\nFor more details see RPAlignmentCorrections::LoadXMLFile in\n");
-  fprintf(rf, "Alignment/RPDataFormats/src/RPAlignmentCorrectionsSequence.cc\n-->\n\n");
+  // TODO
+  //fprintf(rf, "<!--\nShifts in um, rotations in mrad.\n\nFor more details see RPAlignmentCorrections::LoadXMLFile in\n");
+  //fprintf(rf, "Alignment/RPDataFormats/src/RPAlignmentCorrectionsSequence.cc\n-->\n\n");
   fprintf(rf, "<xml DocumentType=\"AlignmentDescription\">\n");
 
   WriteXMLBlock(data, rf, precise, wrErrors, wrSh_r, wrSh_xy, wrSh_z, wrRot_z);
@@ -274,41 +278,52 @@ void RPAlignmentCorrectionsMethods::WriteXMLBlock(const RPAlignmentCorrectionsDa
   RPAlignmentCorrectionsData::mapType sensors = data.GetSensorMap();
   RPAlignmentCorrectionsData::mapType rps = data.GetRPMap();
 
-  for (RPAlignmentCorrectionsData::mapType::const_iterator it = sensors.begin(); it != sensors.end(); ++it)
+  for (auto it = sensors.begin(); it != sensors.end(); ++it)
   {
+    CTPPSDetId sensorId(it->first);
+    unsigned int rpId = sensorId.getRPId();
+    unsigned int decRPId = sensorId.arm()*100 + sensorId.station()*10 + sensorId.rp();
+
     // start a RP block
-    unsigned int rp = CTPPSDetId(it->first).getRPId();
-    if (firstRP || prevRP != rp)
+    if (firstRP || prevRP != rpId)
     {
       if (!firstRP)
         fprintf(rf, "\n");
       firstRP = false;
 
-      RPAlignmentCorrectionsData::mapType::const_iterator rit = rps.find(rp);
+      fprintf(rf, "\t<!-- RP %3u -->\n", decRPId);
+
+      auto rit = rps.find(rpId);
       if (rit != rps.end())
       {
-        fprintf(rf, "\t<rp  id=\"%4u\"                                  ", rit->first);
+        fprintf(rf, "\t<rp id=\"%u\" ", rit->first);
         WriteXML( rit->second , rf, precise, wrErrors, false, wrSh_xy, wrSh_z, wrRot_z );
         fprintf(rf, "/>\n");
-        writtenRPs.insert(rp);
-      } else
-        fprintf(rf, "\t<!-- RP %3u -->\n", rp);
+        writtenRPs.insert(rpId);
+      }
     }
-    prevRP = rp;
+    prevRP = rpId;
+
+    // write plane id
+    unsigned int planeIdx = 1000;
+    if (sensorId.subdetId() == CTPPSDetId::sdTrackingStrip) planeIdx = TotemRPDetId(it->first).plane();
+    if (sensorId.subdetId() == CTPPSDetId::sdTrackingPixel) planeIdx = CTPPSPixelDetId(it->first).plane();
+    if (sensorId.subdetId() == CTPPSDetId::sdTimingDiamond) planeIdx = CTPPSDiamondDetId(it->first).plane();
+    fprintf(rf, "\t<!-- plane %u --> ", planeIdx);
 
     // write the correction
-    fprintf(rf, "\t<det id=\"%4u\"", it->first);
+    fprintf(rf, "<det id=\"%u\"", it->first);
     WriteXML(it->second, rf, precise, wrErrors, wrSh_r, wrSh_xy, wrSh_z, wrRot_z);
     fprintf(rf, "/>\n");
   }
 
   // write remaining RPs
-  for (RPAlignmentCorrectionsData::mapType::const_iterator it = rps.begin(); it != rps.end(); ++it)
+  for (auto it = rps.begin(); it != rps.end(); ++it)
   {
     set<unsigned int>::iterator wit = writtenRPs.find(it->first);
     if (wit == writtenRPs.end())
     {
-      fprintf(rf, "\t<rp  id=\"%4u\"                                ", it->first);
+      fprintf(rf, "\t<rp id=\"%u\"                                ", it->first);
       WriteXML(it->second, rf, precise, wrErrors, false, wrSh_xy, wrSh_z, wrRot_z);
       fprintf(rf, "/>\n");
     }
