@@ -3,7 +3,7 @@
 * This is a part of TOTEM offline software.
 * Authors: 
 *  Jan Kašpar (jan.kaspar@gmail.com) 
-*    
+*  Cristian Baldenegro (crisx.baldenegro@gmail.com)
 ****************************************************************************/
 
 #include "FWCore/Framework/interface/EDProducer.h"
@@ -24,6 +24,8 @@
 #include "DataFormats/CTPPSDetId/interface/CTPPSDetId.h"
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/CTPPSReco/interface/TotemRPRecHit.h"
+#include "DataFormats/CTPPSReco/interface/TotemRPUVPattern.h"
+#include "DataFormats/CTPPSReco/interface/TotemRPLocalTrack.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSDiamondRecHit.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSPixelRecHit.h"
 
@@ -103,7 +105,7 @@ class CTPPSFastLocalSimulation : public edm::EDProducer
     edm::ESHandle<TotemRPGeometry> geometry;
 
     void GenerateTrack(unsigned int pi, CLHEP::HepRandomEngine &rndEng,
-        HepMC::GenEvent* gEv, std::unique_ptr<edm::DetSetVector<TotemRPRecHit>> &stripHitColl,
+        HepMC::GenEvent* gEv, std::unique_ptr<edm::DetSetVector<TotemRPUVPattern>> &UVPatternColl,
         std::unique_ptr<edm::DetSetVector<CTPPSDiamondRecHit>> &diamondHitColl,
         std::unique_ptr<edm::DetSetVector<CTPPSPixelRecHit>> &pixelHitColl
       );
@@ -157,7 +159,7 @@ CTPPSFastLocalSimulation::CTPPSFastLocalSimulation(const edm::ParameterSet &ps) 
 
   if (makeHits)
   {
-    produces<DetSetVector<TotemRPRecHit>>();
+    produces<DetSetVector<TotemRPUVPattern>>();
     produces<DetSetVector<CTPPSDiamondRecHit>>();
     produces<DetSetVector<CTPPSPixelRecHit>>();
   }
@@ -245,7 +247,7 @@ void CTPPSFastLocalSimulation::Distribution::Generate(CLHEP::HepRandomEngine &rn
 //----------------------------------------------------------------------------------------------------
 
 void CTPPSFastLocalSimulation::GenerateTrack(unsigned int idx, CLHEP::HepRandomEngine &rndEng,
-  HepMC::GenEvent* gEv, unique_ptr<edm::DetSetVector<TotemRPRecHit>> &stripHitColl,
+  HepMC::GenEvent* gEv, unique_ptr<edm::DetSetVector<TotemRPUVPattern>> &UVPatternColl,
   unique_ptr<edm::DetSetVector<CTPPSDiamondRecHit>> &diamondHitColl,
   unique_ptr<edm::DetSetVector<CTPPSPixelRecHit>> &pixelHitColl)
 {
@@ -359,9 +361,13 @@ void CTPPSFastLocalSimulation::GenerateTrack(unsigned int idx, CLHEP::HepRandomE
 
         if (verbosity > 5)
           printf(" | m=%+8.4f, sigma=%+8.4f\n", v, sigma);
-
-        DetSet<TotemRPRecHit> &hits = stripHitColl->find_or_insert(detId);
-        hits.push_back(TotemRPRecHit(v, sigma));
+          TotemRPRecHit singlehit;
+          singlehit.setPosition(v);
+          singlehit.setSigma(sigma);
+          TotemRPUVPattern temp;
+          temp.addHit(detId, singlehit);
+          DetSet<TotemRPUVPattern> &hits = UVPatternColl->find_or_insert(detId);
+          hits.push_back(temp);
       }
 
       // diamonds
@@ -422,7 +428,7 @@ void CTPPSFastLocalSimulation::produce(edm::Event &event, const edm::EventSetup 
   GenEvent* gEv = new GenEvent();
   gEv->set_event_number(event.id().event());
 
-  unique_ptr<DetSetVector<TotemRPRecHit>> stripHitColl(new DetSetVector<TotemRPRecHit>());
+  unique_ptr<DetSetVector<TotemRPUVPattern>> UVPatternColl(new DetSetVector<TotemRPUVPattern>());
   unique_ptr<DetSetVector<CTPPSDiamondRecHit>> diamondHitColl(new DetSetVector<CTPPSDiamondRecHit>());
   unique_ptr<DetSetVector<CTPPSPixelRecHit>> pixelHitColl(new DetSetVector<CTPPSPixelRecHit>());
 
@@ -432,7 +438,7 @@ void CTPPSFastLocalSimulation::produce(edm::Event &event, const edm::EventSetup 
     if (verbosity > 5)
       printf("    generating track %u\n", pi);
 
-    GenerateTrack(pi, rndEng, gEv, stripHitColl, diamondHitColl, pixelHitColl);
+    GenerateTrack(pi, rndEng, gEv, UVPatternColl, diamondHitColl, pixelHitColl);
   }
 
   // save products
@@ -445,7 +451,7 @@ void CTPPSFastLocalSimulation::produce(edm::Event &event, const edm::EventSetup 
 
   if (makeHits)
   {
-    event.put(move(stripHitColl));
+    event.put(move(UVPatternColl));
     event.put(move(diamondHitColl));
     event.put(move(pixelHitColl));
   }

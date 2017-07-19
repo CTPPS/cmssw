@@ -6,7 +6,7 @@ ctppsStraightTrackAligner = cms.EDAnalyzer("CTPPSStraightTrackAligner",
 
     # ---------- input and event selection ----------
 
-    tagStripHits = cms.InputTag("ctppsFastLocalSimulation"),
+    tagUVPattern = cms.InputTag("ctppsFastLocalSimulation"),
     tagDiamondHits = cms.InputTag("ctppsFastLocalSimulation"),
     tagPixelHits = cms.InputTag("ctppsFastLocalSimulation"),
 

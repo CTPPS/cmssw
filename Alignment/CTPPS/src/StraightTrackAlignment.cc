@@ -315,7 +315,7 @@ void StraightTrackAlignment::Begin(const EventSetup &es)
 
 //----------------------------------------------------------------------------------------------------
 
-void StraightTrackAlignment::ProcessEvent(const DetSetVector<TotemRPRecHit> &hitsStrip, const DetSetVector<CTPPSDiamondRecHit> &hitsDiamond,
+void StraightTrackAlignment::ProcessEvent(const DetSetVector<TotemRPUVPattern> &UVPattern, const DetSetVector<CTPPSDiamondRecHit> &hitsDiamond,
       const DetSetVector<CTPPSPixelRecHit> &hitsPixel)
 {
   eventsTotal++;
@@ -327,20 +327,61 @@ void StraightTrackAlignment::ProcessEvent(const DetSetVector<TotemRPRecHit> &hit
   
   HitCollection hitSelection;
 
-  // strips
-  for (const auto &pv : hitsStrip)
+// strips (With UV pattern as input)
+
+  for (const auto &pv : UVPattern)
   {
-    // skip if RP not selected
     const CTPPSDetId detId(pv.detId());
     const unsigned int rpDecId = detId.arm()*100 + detId.station()*10 + detId.rp();
 
     if (find(rpIds.begin(), rpIds.end(), rpDecId) == rpIds.end())
       continue;
 
-    const double &z = task.geometry[pv.detId()].z;
+    // is U-V association unique?
+    unsigned int n_U=0, n_V=0;
+    unsigned int idx_U=0, idx_V=0;
+    for (unsigned int pi = 0; pi < pv.size(); pi++)
+    {
+      const TotemRPUVPattern &pattern = pv[pi];
 
-    for (const auto &h : pv)
-      hitSelection.emplace_back(Hit(pv.detId(), 2, h.getPosition(), h.getSigma(), z));
+       switch (pattern.getProjection())
+      {
+        case TotemRPUVPattern::projU:
+          n_U++;
+          idx_U=pi;
+          break;
+     
+        case TotemRPUVPattern::projV:
+          n_V++;
+          idx_V=pi;
+          break;
+
+        default:
+          break;
+       }  
+    }
+    //TODO Uncomment for real data.
+    //    if (n_U != 1 || n_V != 1)
+    //    {
+    //	  std::cout<< ">> StraightTrackAlignment::ProcessEvent > Impossible to combine U and V patterns in RP " << detId << " (n_U=" << n_U << ", n_V=" << n_V << ")." << std::endl;
+    // continue;
+    //    }
+    
+    if (!pv[idx_U].getFittable() || !pv[idx_V].getFittable())
+	 continue; //For FastSimulation remove continue statement
+
+    // combine U and V hits
+    DetSetVector<TotemRPRecHit> hits;
+    
+    for (auto &ids : pv[idx_V].getHits())
+    {	
+	const double &z = task.geometry[ids.detId()].z;
+
+		for (auto &h : ids)
+		{
+	  		hitSelection.emplace_back(Hit(pv.detId(), 2, h.getPosition(), h.getSigma(), z));
+		}  
+    }
   }
 
   // diamonds
