@@ -315,8 +315,7 @@ void StraightTrackAlignment::Begin(const EventSetup &es)
 
 //----------------------------------------------------------------------------------------------------
 
-void StraightTrackAlignment::ProcessEvent(const DetSetVector<TotemRPUVPattern> &UVPattern, const DetSetVector<CTPPSDiamondRecHit> &hitsDiamond,
-      const DetSetVector<CTPPSPixelRecHit> &hitsPixel)
+void StraightTrackAlignment::ProcessEvent(const DetSetVector<TotemRPUVPattern> &uvPatternsStrip, const DetSetVector<CTPPSDiamondRecHit> &hitsDiamond, const DetSetVector<CTPPSPixelRecHit> &hitsPixel)
 {
   eventsTotal++;
 
@@ -327,9 +326,9 @@ void StraightTrackAlignment::ProcessEvent(const DetSetVector<TotemRPUVPattern> &
   
   HitCollection hitSelection;
 
-// strips (With UV pattern as input)
+// strips
 
-  for (const auto &pv : UVPattern)
+  for (const auto &pv : uvPatternsStrip)
   {
     const CTPPSDetId detId(pv.detId());
     const unsigned int rpDecId = detId.arm()*100 + detId.station()*10 + detId.rp();
@@ -360,19 +359,31 @@ void StraightTrackAlignment::ProcessEvent(const DetSetVector<TotemRPUVPattern> &
           break;
        }  
     }
-    //TODO Uncomment for real data.
-    //    if (n_U != 1 || n_V != 1)
-    //    {
-    //	  std::cout<< ">> StraightTrackAlignment::ProcessEvent > Impossible to combine U and V patterns in RP " << detId << " (n_U=" << n_U << ", n_V=" << n_V << ")." << std::endl;
-    // continue;
-    //    }
+
+    if (n_U != 1 || n_V != 1)
+    {
+	  std::cout<< ">> StraightTrackAlignment::ProcessEvent > Impossible to combine U and V patterns in RP " << detId << " (n_U=" << n_U << ", n_V=" << n_V << ")." << std::endl;
+         continue;
+    }
     
     if (!pv[idx_U].getFittable() || !pv[idx_V].getFittable())
-	 continue; //For FastSimulation remove continue statement
+	 continue;
 
     // combine U and V hits
     DetSetVector<TotemRPRecHit> hits;
     
+    // U pattern
+    for (auto &ids : pv[idx_U].getHits())
+    {	
+	const double &z = task.geometry[ids.detId()].z;
+
+		for (auto &h : ids)
+		{
+	  		hitSelection.emplace_back(Hit(pv.detId(), 2, h.getPosition(), h.getSigma(), z));
+		}  
+    }
+
+	// V pattern
     for (auto &ids : pv[idx_V].getHits())
     {	
 	const double &z = task.geometry[ids.detId()].z;
@@ -444,8 +455,6 @@ void StraightTrackAlignment::ProcessEvent(const DetSetVector<TotemRPUVPattern> &
 
   // -------------------- STEP 3: quality checks
 
-// TODO
-#if 0
   bool top = false, bottom = false, horizontal = false;
   unordered_set<unsigned int> units;
   for (const auto &rp : selectedRPs)
@@ -484,10 +493,9 @@ void StraightTrackAlignment::ProcessEvent(const DetSetVector<TotemRPUVPattern> &
   // is it an additional accepted RP set?
   if (find(additionalAcceptedRPSets.begin(), additionalAcceptedRPSets.end(), selectedRPs) != additionalAcceptedRPSets.end())
     rp_set_accepted = true;
-#endif
-  bool rp_set_accepted = true;
 
   bool selected = rp_set_accepted;
+
 
   // too bad chisq
   if (cutOnChiSqPerNdf && trackFit.ChiSqPerNdf() > chiSqPerNdfCut)

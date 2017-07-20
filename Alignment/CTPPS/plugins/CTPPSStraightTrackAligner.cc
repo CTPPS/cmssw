@@ -3,7 +3,7 @@
 * This is a part of TOTEM offline software.
 * Authors: 
 *  Jan Kašpar (jan.kaspar@gmail.com) 
-*  Cristian Baldenegro (cris.baldenegro@gmail.com) [UV pattern]
+*  Cristian Baldenegro (crisx.baldenegro@gmail.com)
 ****************************************************************************/
 
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -21,7 +21,6 @@
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/CTPPSReco/interface/TotemRPRecHit.h"
 #include "DataFormats/CTPPSReco/interface/TotemRPUVPattern.h"
-#include "DataFormats/CTPPSReco/interface/TotemRPLocalTrack.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSDiamondRecHit.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSPixelRecHit.h"
 
@@ -37,7 +36,7 @@ class CTPPSStraightTrackAligner : public edm::EDAnalyzer
   private:
     unsigned int verbosity;
 
-    edm::EDGetTokenT<edm::DetSetVector<TotemRPUVPattern>> tokenPatternCollection; //newline
+    edm::EDGetTokenT<edm::DetSetVector<TotemRPUVPattern>> tokenUVPatternsStrip;
     edm::EDGetTokenT<edm::DetSetVector<CTPPSDiamondRecHit>> tokenDiamondHits;
     edm::EDGetTokenT<edm::DetSetVector<CTPPSPixelRecHit>> tokenPixelHits;
 
@@ -63,7 +62,7 @@ using namespace edm;
 CTPPSStraightTrackAligner::CTPPSStraightTrackAligner(const ParameterSet &ps) : 
   verbosity(ps.getUntrackedParameter<unsigned int>("verbosity", 0)),
 
-  tokenPatternCollection(consumes<DetSetVector<TotemRPUVPattern>>(ps.getParameter<edm::InputTag>("tagUVPattern"))),
+  tokenUVPatternsStrip(consumes<DetSetVector<TotemRPUVPattern>>(ps.getParameter<edm::InputTag>("tagUVPatternsStrip"))),
   tokenDiamondHits(consumes<DetSetVector<CTPPSDiamondRecHit>>(ps.getParameter<edm::InputTag>("tagDiamondHits"))),
   tokenPixelHits(consumes<DetSetVector<CTPPSPixelRecHit>>(ps.getParameter<edm::InputTag>("tagPixelHits"))),
 
@@ -98,8 +97,8 @@ void CTPPSStraightTrackAligner::analyze(const edm::Event &event, const edm::Even
   }
 
   // get input
-  Handle<DetSetVector<TotemRPUVPattern>> inputPatternCollection;
-  event.getByToken(tokenPatternCollection, inputPatternCollection);
+  Handle<DetSetVector<TotemRPUVPattern>> inputUVPatternsStrip;
+  event.getByToken(tokenUVPatternsStrip, inputUVPatternsStrip);
 
   Handle<DetSetVector<CTPPSDiamondRecHit>> inputDiamondHits;
   event.getByToken(tokenDiamondHits, inputDiamondHits);
@@ -108,7 +107,7 @@ void CTPPSStraightTrackAligner::analyze(const edm::Event &event, const edm::Even
   event.getByToken(tokenPixelHits, inputPixelHits);
 
   // feed worker
-  worker.ProcessEvent(*inputPatternCollection, *inputDiamondHits, *inputPixelHits);
+  worker.ProcessEvent(*inputUVPatternsStrip, *inputDiamondHits, *inputPixelHits);
 }
 
 //----------------------------------------------------------------------------------------------------

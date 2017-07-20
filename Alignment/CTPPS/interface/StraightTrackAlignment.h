@@ -3,7 +3,7 @@
 * This is a part of TOTEM offline software.
 * Authors: 
 *  Jan Kašpar (jan.kaspar@gmail.com) 
-*  Cristian Baldenegro (crisx.baldenegro@gmail.com) [UV pattern]
+*  Cristian Baldenegro (crisx.baldenegro@gmail.com)
 ****************************************************************************/
 
 #ifndef _StraightTrackAlignment_h_
@@ -19,11 +19,10 @@
 
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/CTPPSReco/interface/TotemRPRecHit.h"
+#include "DataFormats/CTPPSReco/interface/TotemRPUVPattern.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSDiamondRecHit.h"
 #include "DataFormats/CTPPSReco/interface/CTPPSPixelRecHit.h"
 
-#include "DataFormats/CTPPSReco/interface/TotemRPUVPattern.h"
-#include "DataFormats/CTPPSReco/interface/TotemRPLocalTrack.h"
 #include "DataFormats/CTPPSAlignment/interface/RPAlignmentCorrectionData.h"
 #include "DataFormats/CTPPSAlignment/interface/RPAlignmentCorrectionsData.h"
 #include "DataFormats/CTPPSAlignment/interface/LocalTrackFit.h"
@@ -57,7 +56,7 @@ class StraightTrackAlignment
 
     virtual void Begin(const edm::EventSetup&);
 
-    virtual void ProcessEvent(const edm::DetSetVector<TotemRPUVPattern> &UVPattern, const edm::DetSetVector<CTPPSDiamondRecHit> &hitsDiamond,
+    virtual void ProcessEvent(const edm::DetSetVector<TotemRPUVPattern> &uvPatternsStrip, const edm::DetSetVector<CTPPSDiamondRecHit> &hitsDiamond,
       const edm::DetSetVector<CTPPSPixelRecHit> &hitsPixel);
     
     /// performs analyses and fill results variable
