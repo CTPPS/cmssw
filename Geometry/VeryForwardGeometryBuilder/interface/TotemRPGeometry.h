@@ -165,6 +165,21 @@ class TotemRPGeometry
       return theMap.size();
     }
 
+    const mapSetType& getStationsInArm() const
+    {
+      return stationsInArm;
+    }
+
+    const mapSetType& getRPsInStation() const
+    {
+      return rpsInStation;
+    }
+
+    const mapSetType& getDetsInRP() const
+    {
+      return detsInRP;
+    }
+
   protected:
     mapType theMap;                           ///< map: detectorID --> DetGeomDesc
     RPDeviceMapType theRomanPotMap;           ///< map: RPID --> DetGeomDesc

@@ -15,6 +15,7 @@
 #include "IOMC/ParticleGuns/interface/ExpoRandomPGunProducer.h"
 #include "IOMC/ParticleGuns/interface/MultiParticleInConeGunProducer.h"
 #include "IOMC/ParticleGuns/interface/FlatRandomXiGunProducer.h"
+#include "IOMC/ParticleGuns/interface/RandomtXiGunProducer.h"
 
 // particle gun prototypes
 //
@@ -43,5 +44,7 @@ using edm::ExpoRandomPGunProducer;
 DEFINE_FWK_MODULE(ExpoRandomPGunProducer);
 using edm::MultiParticleInConeGunProducer;
 DEFINE_FWK_MODULE(MultiParticleInConeGunProducer);
+using edm::RandomtXiGunProducer;
+DEFINE_FWK_MODULE(RandomtXiGunProducer);
 using edm::FlatRandomXiGunProducer;
 DEFINE_FWK_MODULE(FlatRandomXiGunProducer);
