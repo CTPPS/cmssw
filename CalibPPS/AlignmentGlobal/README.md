@@ -29,15 +29,15 @@ NB: Parameters here are written in snake_case. Many of them are in camelCase in 
 | `results_dir`          | `cms.string`  | `"./alignment_results.txt"`            | Directory of a file with the results. If empty (`""`), the file   will not be created.                       |
 | `sector_45`            | `cms.PSet`    | [details below](#Sector-config)        | Configuration of sector 45. [Details below](#Sector-config)                                                  |
 | `sector_56`            | `cms.PSet`    | [details below](#Sector-config)        | Configuration of sector 56. [Details below](#Sector-config)                                                  |
-| `x_ali_sh_step`        | `cms.double`  | `0.01`                                 | Step for x alignment algorithm                                                                               |
+| `x_ali_sh_step`        | `cms.double`  | `0.01`                                 | Step for x alignment algorithm [mm]                                                                          |
 | `y_mode_sys_unc`       | `cms.double`  | `0.03`                                 | Squared is an element of y mode uncertainty in y alignment.                                                  |
 | `chiSqThreshold`       | `cms.double`  | `50.`                                  | Chi-square threshold of y mode                                                                               |
-| `y_mode_unc_max_valid` | `cms.double`  | `5.`                                   | Maximal valid y mode uncertainty                                                                             |
-| `y_mode_max_valid`     | `cms.double`  | `20.`                                  | Maximal valid y mode                                                                                         |
-| `max_RP_tracks_size`   | `cms.uint32`  | `2.`                                   | Maximal tracksUp or tracksDw size to avoid crowded events                                                    |
+| `y_mode_unc_max_valid` | `cms.double`  | `5.`                                   | Maximum valid y mode uncertainty                                                                             |
+| `y_mode_max_valid`     | `cms.double`  | `20.`                                  | Maximum valid y mode                                                                                         |
+| `max_RP_tracks_size`   | `cms.uint32`  | `2`                                    | Maximum tracksUp or tracksDw size to avoid crowded events                                                    |
 | `n_si`                 | `cms.double`  | `4.`                                   | Element of checking whether the cuts passed                                                                  |
 | `matching`             | `cms.PSet`    | [details below](#matching)             | Reference dataset parameters. [Details below](#matching)                                                     |
-| `x_alignment_meth_o`   | `cms.PSet`    | [details below](#x_alignment_meth_o)   | X alignment parameters. (Details below)[#x_alignment_meth_o]                                                 |
+| `x_alignment_meth_o`   | `cms.PSet`    | [details below](#x_alignment_meth_o)   | X alignment parameters. [Details below](#x_alignment_meth_o)                                                 |
 | `x_alignment_relative` | `cms.PSet`    | [details below](#x_alignment_relative) | Relative x alignment parameters. [Details below](#x_aligmment_relative)                                      |
 | `y_alignment`          | `cms.PSet`    | [details below](#y_alignment)          | Y alignment parameters. [Details below](#y_alignment)                                                        |
 | `binning`              | `cms.PSet`    | [details below](#binning)              | Binning parameters for worker. [Details below](#binning)                                                     |
@@ -63,10 +63,10 @@ NB: Parameters here are written in snake_case. Many of them are in camelCase in 
 | `name`           | `cms.string` | `"L_1_F"`            | `"L_2_F"`            | `"R_1_F"`            | `"R_2_F"`            | Name of the RP                                                                                                                  |
 | `id`             | `cms.int32`  | `3`                  | `23`                 | `103`                | `123`                | ID of the RP                                                                                                                    |
 | `slope`          | `cms.double` | `0.19`               | `0.19`               | `0.40`               | `0.39`               | Base slope value                                                                                                                |
-| `sh_x`           | `cms.double` | `-3.6`               | `-42.`               | `-2.8`               | `-41.9`              | Base sh_x value. X alignment method overwrites it.                                                                              |
-| `x_min_fit_mode` | `cms.double` | `2.`                 | `2.`                 | `2.`                 | `2.`                 | Mode graph parameter. See [buildModeGraph](plugins/PPSAlignmentHarvester.cc#L648).                                            |
-| `x_max_fit_mode` | `cms.double` | `7.`                 | `7.5`                | `7.4`                | `8.`                 | Mode graph parameter. See [buildModeGraph](plugins/PPSAlignmentHarvester.cc#L648).                                            |
-| `y_max_fit_mode` | `cms.double` | `7.`                 | `7.5`                | `7.4`                | `8.`                 | Mode graph parameter (in 2018 the same value as x_max_fit_mode). See [buildModeGraph](plugins/PPSAlignmentHarvester.cc#L654). |
+| `sh_x`           | `cms.double` | `-3.6`               | `-42.`               | `-2.8`               | `-41.9`              | Base sh_x value [mm]. X alignment method overwrites it.                                                                         |
+| `x_min_fit_mode` | `cms.double` | `2.`                 | `2.`                 | `2.`                 | `2.`                 | Mode graph parameter. See [buildModeGraph](plugins/PPSAlignmentHarvester.cc#L648).                                              |
+| `x_max_fit_mode` | `cms.double` | `7.`                 | `7.5`                | `7.4`                | `8.`                 | Mode graph parameter. See [buildModeGraph](plugins/PPSAlignmentHarvester.cc#L648).                                              |
+| `y_max_fit_mode` | `cms.double` | `7.`                 | `7.5`                | `7.4`                | `8.`                 | Mode graph parameter (in 2018 the same value as x_max_fit_mode). See [buildModeGraph](plugins/PPSAlignmentHarvester.cc#L654).   |
 | `y_cen_add`      | `cms.double` | `-0.3`               | `-0.3`               | `-0.8`               | `-0.8`               | The value is added to y_cen (mean of y) while constructing a graph in x   alignment.                                            |
 | `y_width_mult`   | `cms.double` | `1.1`                | `1.1`                | `1.0`                | `1.`                 | y_width (RMS of y) is multiplied by the value when constructing a graph   in x alignment.                                       |
 | `x_slice_min`    | `cms.double` | `7.`                 | `46.`                | `6.`                 | `45.`                | Min x for slice plots (x alignment)                                                                                             |
@@ -78,10 +78,10 @@ Should be set in the reference config!
 | Name                | Type         | Default           | Description                                                                                                                                                                                     |
 |---------------------|--------------|-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `reference_dataset` | `cms.string` | `""`              | Directory of the file with reference dataset histograms. Should be empty   when running the worker for the reference dataset. After that, should be set   to the name of the created ROOT file. |
-| `rp_L_F`            | `cms.PSet`   | `-43.` - `-41.`   | Left far RP. Contains two parameters of type `cms.double`: `sh_min` and   `sh_max` - shift range for x alignment                                                                                |
-| `rp_L_N`            | `cms.PSet`   | `-4.2` - `-2.4`   | Left near RP. Contains two parameters of type `cms.double`: `sh_min` and   `sh_max` - shift range for x alignment                                                                               |
-| `rp_R_N`            | `cms.PSet`   | `-3.6` - `-1.8`   | Right near RP. Contains two parameters of type `cms.double`: `sh_min` and   `sh_max` - shift range for x alignment                                                                              |
-| `rp_R_F`            | `cms.PSet`   | `-43.2` - `-41.2` | Right far RP. Contains two parameters of type `cms.double`: `sh_min` and   `sh_max` - shift range for x alignment                                                                               |
+| `rp_L_F`            | `cms.PSet`   | `-43.` - `-41.`   | Left far RP. Contains two parameters of type `cms.double`: `sh_min` and   `sh_max` - shift range for x alignment [mm]                                                                           |
+| `rp_L_N`            | `cms.PSet`   | `-4.2` - `-2.4`   | Left near RP. Contains two parameters of type `cms.double`: `sh_min` and   `sh_max` - shift range for x alignment [mm]                                                                          |
+| `rp_R_N`            | `cms.PSet`   | `-3.6` - `-1.8`   | Right near RP. Contains two parameters of type `cms.double`: `sh_min` and   `sh_max` - shift range for x alignment [mm]                                                                         |
+| `rp_R_F`            | `cms.PSet`   | `-43.2` - `-41.2` | Right far RP. Contains two parameters of type `cms.double`: `sh_min` and   `sh_max` - shift range for x alignment [mm]                                                                          |
 
 ## x_alignment_meth_o
 | Name                           | Type         | Default        | Description                                                                                                  |
@@ -90,9 +90,9 @@ Should be set in the reference config!
 | `rp_L_N`                       | `cms.PSet`   | `9.` - `18.5`  | Left near RP. Contains two parameters of type `cms.double`: `x_min` and   `x_max` - x range for x alignment  |
 | `rp_R_N`                       | `cms.PSet`   | `7.` - `15.`   | Right near RP. Contains two parameters of type `cms.double`: `x_min` and   `x_max` - x range for x alignment |
 | `rp_R_F`                       | `cms.PSet`   | `46.` - `54.`  | Right far RP. Contains two parameters of type `cms.double`: `x_min` and   `x_max` - x range for x alignment  |
-| `fit_profile_min_bin_entries`  | `cms.uint32` | `5`            | Minimal number of entries in each bin in fitProfile method                                                   |
-| `fit_profile_min_N_reasonable` | `cms.uint32` | `10`           | Minimal number of valid bins in fitProfile method                                                            |
-| `meth_o_graph_min_N`           | `cms.uint32` | `5`            | Minimal number of points in each of reference and test graph                                                 |
+| `fit_profile_min_bin_entries`  | `cms.uint32` | `5`            | Minimum number of entries in each bin in fitProfile method                                                   |
+| `fit_profile_min_N_reasonable` | `cms.uint32` | `10`           | Minimum number of valid bins in fitProfile method                                                            |
+| `meth_o_graph_min_N`           | `cms.uint32` | `5`            | Minimum number of points in each of reference and test graph                                                 |
 | `meth_o_unc_fit_range`         | `cms.double` | `0.5`          | Fit range for chi-square graph.                                                                              |
 
 ## x_alignment_relative
@@ -102,7 +102,7 @@ Should be set in the reference config!
 | `rp_L_N`               | `cms.PSet`   | `7.5` - `12.` | Left near RP. Contains two parameters of type `cms.double`: `x_min` and   `x_max` - x range for relative x alignment  |
 | `rp_R_N`               | `cms.PSet`   | `6.` - `10.`  | Right near RP. Contains two parameters of type `cms.double`: `x_min` and   `x_max` - x range for relative x alignment |
 | `rp_R_F`               | `cms.PSet`   | `0.` - `0.`   | Right far RP. Contains two parameters of type `cms.double`: `x_min` and   `x_max` - x range for relative x alignment  |
-| `near_far_min_entries` | `cms.uint32` | `100`         | Minimal number of entries in near_far histograms                                                                      |
+| `near_far_min_entries` | `cms.uint32` | `100`         | Minimum number of entries in near_far histograms                                                                      |
 
 ## y_alignment
 | Name                          | Type         | Default        | Description                                                                                                  |
@@ -111,8 +111,8 @@ Should be set in the reference config!
 | `rp_L_N`                      | `cms.PSet`   | `6.7` - `11.`  | Left near RP. Contains two parameters of type `cms.double`: `x_min` and   `x_max` - x range for y alignment  |
 | `rp_R_N`                      | `cms.PSet`   | `5.9` - `10.`  | Right near RP. Contains two parameters of type `cms.double`: `x_min` and   `x_max` - x range for y alignment |
 | `rp_R_F`                      | `cms.PSet`   | `44.5` - `49.` | Right far RP. Contains two parameters of type `cms.double`: `x_min` and   `x_max` - x range for y alignment  |
-| `mode_graph_min_N`            | `cms.uint32` | `5`            | Minimal number of points in mode graph                                                                       |
-| `mult_sel_proj_y_min_entries` | `cms.uint32` | `300`          | Minimal number of entries in y projection of multiplicity selection   histograms                             |
+| `mode_graph_min_N`            | `cms.uint32` | `5`            | Minimum number of points in mode graph                                                                       |
+| `mult_sel_proj_y_min_entries` | `cms.uint32` | `300`          | Minimum number of entries in y projection of multiplicity selection   histograms                             |
 
 ## binning
 | Name             | Type         | Default       | Description                       |
@@ -122,4 +122,4 @@ Should be set in the reference config!
 | `pixel_x_offset` | `cms.double` | `40.`         | Pixel x offset                    |
 | `n_bins_y`       | `cms.uint32` | `400`         | Number of bins in many histograms |
 | `y_min`          | `cms.double` | `-20.`        | Min y for 2D histograms           |
-| `y_max`          | `cms.double` | `20.`         | Min y for 2D histograms           |
+| `y_max`          | `cms.double` | `20.`         | Max y for 2D histograms           |

@@ -1,14 +1,8 @@
 /****************************************************************************
- *
- *  CalibPPS/AlignmentGlobal/plugins/PPSAlignmentHarvester.cc
- *
- *  Description : PPS Alignment DQM harvester
- *
- *  Authors:
- *  - Jan Kašpar
- *  - Mateusz Kocot
- *
- ****************************************************************************/
+* Authors: 
+*  Jan Kašpar (jan.kaspar@gmail.com) 
+*  Mateusz Kocot (mateuszkocot99@gmail.com)
+****************************************************************************/
 
 #include "DQMServices/Core/interface/DQMEDHarvester.h"
 #include "DQMServices/Core/interface/DQMStore.h"
@@ -852,12 +846,21 @@ void PPSAlignmentHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
 
   // setting default sh_x values from config
   for (const auto &sd : {cfg.sectorConfig45(), cfg.sectorConfig56()}) {
-    for (const auto &rpd : {sd.rp_N_, sd.rp_F_}) {
-      edm::LogInfo("PPS") << "[harvester] " << std::fixed << std::setprecision(3) << "Setting sh_x of " << rpd.name_
-                          << " to " << rpd.sh_x_;
-      sh_x_map[rpd.id_] = rpd.sh_x_;
-    }
+      for (const auto &rpd : {sd.rp_N_, sd.rp_F_}) {
+        sh_x_map[rpd.id_] = rpd.sh_x_;
+      }
   }
+  edm::LogInfo("PPS").log([&](auto &li) {
+    li << "[harvester] Setting sh_x from config of:\n";
+    for (const auto &sd : {cfg.sectorConfig45(), cfg.sectorConfig56()}) {
+      for (const auto &rpd : {sd.rp_N_, sd.rp_F_}) {
+        li << "    " << rpd.name_ << " to " << std::fixed << std::setprecision(3) << rpd.sh_x_;
+        if (rpd.name_ != "R_2_F")
+          li << "\n";
+      }
+    }
+  });
+  
 
   for (unsigned int i = 0; i < cfg.sequence().size(); i++) {
     if (cfg.sequence()[i] == "x_alignment")

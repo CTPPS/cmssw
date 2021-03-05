@@ -1,14 +1,8 @@
 /****************************************************************************
- *
- *  CalibPPS/AlignmentGlobal/plugins/PPSAlignmentWorker.cc
- *
- *  Description : PPS Alignment DQM worker
- *
- *  Authors:
- *  - Jan Kašpar
- *  - Mateusz Kocot
- *
- ****************************************************************************/
+* Authors: 
+*  Jan Kašpar (jan.kaspar@gmail.com) 
+*  Mateusz Kocot (mateuszkocot99@gmail.com)
+****************************************************************************/
 
 #include "DQMServices/Core/interface/DQMEDAnalyzer.h"
 #include "DQMServices/Core/interface/DQMStore.h"
@@ -209,30 +203,11 @@ unsigned int PPSAlignmentWorker::SectorData::process(const CTPPSLocalTrackLiteCo
     if (rpDecId != scfg.rp_N_.id_ && rpDecId != scfg.rp_F_.id_)
       continue;
 
-    double x = tr.x();
-    double y = tr.y();
-
-    // re-build track object
-    CTPPSLocalTrackLite trCorr(tr.rpId(),
-                               x,
-                               0.,
-                               y,
-                               0.,
-                               tr.tx(),
-                               tr.txUnc(),
-                               tr.ty(),
-                               tr.tyUnc(),
-                               tr.chiSquaredOverNDF(),
-                               tr.pixelTrackRecoInfo(),
-                               tr.numberOfPointsUsedForFit(),
-                               tr.time(),
-                               tr.timeUnc());
-
-    // store corrected track into the right collection
+    // store the track in the right collection
     if (rpDecId == scfg.rp_N_.id_)
-      tracksUp.push_back(trCorr);
+      tracksUp.push_back(tr);
     if (rpDecId == scfg.rp_F_.id_)
-      tracksDw.push_back(trCorr);
+      tracksDw.push_back(tr);
   }
 
   // update plots before selection

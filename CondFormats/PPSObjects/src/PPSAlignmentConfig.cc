@@ -1,14 +1,8 @@
 /****************************************************************************
- *
- *  CondFormats/PPSObjects/interface/PPSAlignmentConfig.cc
- *
- *  Description : Class with alignment parameters
- *
- *  Authors:
- *  - Jan Kašpar
- *  - Mateusz Kocot
- *
- ****************************************************************************/
+* Authors: 
+*  Jan Kašpar (jan.kaspar@gmail.com) 
+*  Mateusz Kocot (mateuszkocot99@gmail.com)
+****************************************************************************/
 
 #include "FWCore/Utilities/interface/typelookup.h"
 

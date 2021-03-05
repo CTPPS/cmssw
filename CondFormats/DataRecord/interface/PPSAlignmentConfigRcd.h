@@ -1,10 +1,8 @@
 /****************************************************************************
- * 
- * Authors:
- *  - Jan Kašpar
- *  - Mateusz Kocot
- *
- ****************************************************************************/
+* Authors: 
+*  Jan Kašpar (jan.kaspar@gmail.com) 
+*  Mateusz Kocot (mateuszkocot99@gmail.com)
+****************************************************************************/
 
 #ifndef CondFormats_DataRecord_PPSAlignmentConfigRcd_h
 #define CondFormats_DataRecord_PPSAlignmentConfigRcd_h

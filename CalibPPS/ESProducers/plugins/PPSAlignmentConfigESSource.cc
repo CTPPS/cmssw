@@ -1,14 +1,8 @@
 /****************************************************************************
- *
- *  CalibPPS/ESProducers/plugins/PPSAlignmentConfigESSource.cc
- * 
- *  Description: Constructs PPSAlignmentConfig instance
- *
- *  Authors:
- *  - Jan Kašpar
- *  - Mateusz Kocot
- *
- ****************************************************************************/
+* Authors: 
+*  Jan Kašpar (jan.kaspar@gmail.com) 
+*  Mateusz Kocot (mateuszkocot99@gmail.com)
+****************************************************************************/
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/Framework/interface/SourceFactory.h"
