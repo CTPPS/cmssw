@@ -10,10 +10,10 @@ options.register ('calibInput',
 				  VarParsing.varType.string,
 				  "Calibration input file for this iteration")
 options.register ('outputName',
-				  '',
+				  'calib.sqlite',
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.string,
-				  "calib.sqlite")
+				  "output filename")
 options.register ('IOVFirst',
 				  1,
 				  VarParsing.multiplicity.singleton,
