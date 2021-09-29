@@ -136,6 +136,7 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
         std::make_pair(iConfig.getParameter<std::vector<int>>("Ntracks_Lcuts")[3],
                        iConfig.getParameter<std::vector<int>>("Ntracks_Ucuts")[3]);
 
+    //read planes config
     planes_config = JSON::read_planes_config(iConfig.getParameter<std::string>("planesConfig"));
 }
 
@@ -228,13 +229,9 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
     //
     /////////////////////////////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////////////
-    //
-    //		4 planes!!!!!
-    //
-    /////////////////////////////////////////////////////////////////
-
+    //which planes are active
     std::array<bool, 4> active_plane{ {false, false, false, false} };
+
     for (const auto& LocalTrack_mapIter : DiamondDet.GetDiamondTrack_map()) {  // loop on predigested tracks
         int sector = LocalTrack_mapIter.first.z0() > 0.0 ? SECTOR::_45_ID : SECTOR::_56_ID;
 
@@ -244,15 +241,19 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         if (LocalTrack_mapIter.second.size() == 0)
             continue;
 
+        //station id
         int station = LocalTrack_mapIter.second.at(0).first.planeKey.station;
         auto stationKey = std::pair<int, int>{sector, station};
 
+        //which planes are active
         active_plane[0] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 0)) == 1;
         active_plane[1] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 1)) == 1;
         active_plane[2] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 2)) == 1;
         active_plane[3] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 3)) == 1;
+        //number of active planes
         int active_num = std::count_if(active_plane.begin(), active_plane.end(), [](bool it) -> bool{return it;});
 
+        //we don't check active planes here, because each channel might require different number of them
         bool mark_tag = DiamondDet.GetTrackMuxInSector(sector) == 1;
 
         std::vector<ChannelKey> hit_selected(PLANES_X_DETECTOR);
@@ -297,6 +298,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
                 ChannelKey key(sector, station, pl_mark, Marked_hit_channel);
 
+                //we continue calculations for this channel only if the number of active planes is the same as in the configuration
                 if(active_num != planes_config[key]) continue;
 
                 for (int pl_loop = 0; pl_loop < PLANES_X_DETECTOR; pl_loop++) {

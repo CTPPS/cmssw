@@ -68,8 +68,12 @@ private:
   edm::ESGetToken<PPSTimingCalibration, PPSTimingCalibrationRcd> calibEsToken_;
 
   std::string output_file;
-  std::vector<std::string> calib_files;
+  std::vector<std::string> calib_files; //files from previous iterations, where:
   std::vector<DiamondTimingCalibration> calibs;
+  //[0] - input to first iterstion: DB or JSON
+  //[1] - output from first iteration and input to second
+  //[loop_index] - input to this iteration and output from previous
+
   int loop_index;
 
   double mean_max;
@@ -101,7 +105,7 @@ DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
         edm::LogError("DiamondTimingHarvester")<<"Not enough calibration files";
     }
 
-    calibs.push_back(DiamondTimingCalibration()); //empty to be replaced by db calibration
+    calibs.push_back(DiamondTimingCalibration()); //empty to be replaced by input calibration to first iteration
     for(auto& file : calib_files){
         edm::LogInfo("DiamondTimingHarvester")<<"Opening file "<<file;
         calibs.push_back(DiamondTimingCalibration(JSON::read_calib(file)));
@@ -130,21 +134,25 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
     ///////////////////////////////////////////
     std::cout<<"####### EndRun #######"<<std::endl;
 
-    std::string ch_name, ch_path;
+    //get data
     const auto& geom = iSetup.getData(geomEsToken_);
     calibs[0] = DiamondTimingCalibration(iSetup.getData(calibEsToken_));
     const auto& calib = calibs[loop_index];
 
+    std::string ch_name, ch_path;
     for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
         if (!CTPPSDiamondDetId::check(it->first))
             continue;
     
+        //channel id and path
         const CTPPSDiamondDetId detid(it->first);
         ChannelKey histo_key(detid);
         ch_name = histo_key.to_string();
         detid.channelName(ch_path, CTPPSDiamondDetId::nPath);
 
         auto* t = iGetter.get(ch_path + "/" + "Valid Time distribution " + ch_name);
+
+        //warnings
         auto m = t->getMean();
         auto rms = t->getRMS();
         if(std::abs(m) >= mean_max)
@@ -152,6 +160,7 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
         if(rms >= rms_max)
             edm::LogWarning("DiamondTimingHarvester::dqmEndRun")<<"[WARNING] RMS value for "<<histo_key<<" is bigger than "<<rms_max<<std::endl;
 
+        //RESOLUTION
         auto* l2_res = iGetter.get(ch_path + "/" + "l2_res_" + ch_name);
         auto* expected_trk_time = iGetter.get(ch_path + "/" + "Expected track time resolution distribution " + ch_name);
 		if(l2_res->getEntries() > 100){
@@ -178,10 +187,11 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
 
         iBooker.setCurrentFolder(ch_path);
 
-
+        //current resolution
         auto* resHist = iBooker.book1D("curr_res_" + ch_name, "Resolution in current step;Resolution (ns);Entries", 1200, 0, 0.5);
         resHist->Fill(Resolution_L2_map_[histo_key]);
 
+        //res vs step
         auto* resStepHist = iBooker.book2D("res_vs_step_" + ch_name, "Resolution vs Step;Step;Resolution (ns)", 1200, -1, loop_index+2, 1200, 0, 0.5);
         resStepHist->getTH2F()->SetMarkerStyle(20);
         for(int i=0; i<=loop_index; i++){
@@ -189,6 +199,7 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
         }
         resStepHist->Fill(loop_index+1, Resolution_L2_map_[histo_key]);
     
+        //res diff
         if(loop_index > 0){
             auto* mEl = iBooker.book1D("diff_res_" + ch_name, "Resolution difference;Difference (ns);Entries", 1200, -1, 1);
                 
@@ -197,6 +208,7 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
         }
     }
 
+    //create JSON file
     JSON::save_calib(geom, calib, Resolution_L2_map_, output_file);
 }
 
