@@ -10,6 +10,10 @@ enum SECTOR{
 };
 
 struct PlaneKey{
+	/**
+	* Identifies speciified plane.
+	* Used to create object per plane (for example histogram for each plane).
+	**/
     int sector, station, plane;
 	
 	bool operator < (const PlaneKey &rhs) const {
@@ -32,6 +36,9 @@ struct PlaneKey{
 };
 
 struct ChannelKey{
+	/**
+	* Same as PlaneKey, but for each channel.
+	**/
     PlaneKey planeKey;
 	int channel;
 	
@@ -55,6 +62,9 @@ struct ChannelKey{
 };
 	
 struct Calib_par{
+	/**
+	* Calibration parameters each channel contains.
+	**/
 	double offset, precision;
 	std::vector<double> params;
 	
@@ -64,6 +74,9 @@ struct Calib_par{
 };
 
 class DiamondTimingCalibration{
+	/**
+	* Interface to PPSTimingCalibration, which uses different naming.
+	**/
 public:
 	DiamondTimingCalibration() {};
     DiamondTimingCalibration(const PPSTimingCalibration& calib) : calib(calib) {};
@@ -81,7 +94,6 @@ public:
     };
 
     double timePrecision(const ChannelKey& key) const {
-		//std::cout<<key<<" = "<<calib.timePrecision(key.planeKey.sector, key.planeKey.station, key.planeKey.plane, key.channel)<<std::endl;
         return calib.timePrecision(key.planeKey.sector, key.planeKey.station, key.planeKey.plane, key.channel);
     };
 
