@@ -98,7 +98,9 @@ namespace l1t {
     CondCorrelation,
     CondExternal,
     CondCorrelationWithOverlapRemoval,
-    CondCorrelationThreeBody
+    CondCorrelationThreeBodyByTwoBody,
+    CondCorrelationThreeBody,
+    CondMuonShower,
   };
 
   struct GtConditionCategoryStringToEnum {

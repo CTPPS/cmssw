@@ -21,7 +21,22 @@
 // Original Author:  Imran Yusuff
 //         Created:  Thu, 27 May 2021 19:47:08 GMT
 //
-//
+// Additional Author(s): Yulun Miao
+/*
+  Changelog:
+
+    Wed, 17 Nov 2021 21:04:10 UTC by Yulun Miao:
+
+      * Use the l or h preceding the thickness to determine the type of flat file
+      * Unified partial wafer information to HGCalTypes.h to allow cross-compare
+
+    Tue, 14 Dmr 2021 by Imran Yusuff:
+
+      * Further tidying the code
+      * Now uses the first line of the flat file to determine flat file type (single number means new format)
+      * Separate out shape and rotation matching operation into functions
+      * Fixed validation for D86 geometry (especially in rotation for type-3 layers)
+*/
 
 // system include files
 #include <memory>
@@ -70,9 +85,41 @@ private:
 
   std::string strWaferCoord(const WaferCoord& coord);
 
+  // mapping of wafer shape codes: DD / old format -> new format (LD/HD)
+  using WaferShapeMap = std::map<std::string, int>;
+
+  const WaferShapeMap waferShapeMapDD = {{"F", HGCalTypes::WaferPartialType::WaferFull},
+                                         {"a", HGCalTypes::WaferPartialType::WaferHalf},
+                                         {"am", HGCalTypes::WaferPartialType::WaferHalf2},
+                                         {"b", HGCalTypes::WaferPartialType::WaferFive},
+                                         {"bm", HGCalTypes::WaferPartialType::WaferFive2},
+                                         {"c", HGCalTypes::WaferPartialType::WaferThree},
+                                         {"d", HGCalTypes::WaferPartialType::WaferSemi},
+                                         {"dm", HGCalTypes::WaferPartialType::WaferSemi2},
+                                         {"g", HGCalTypes::WaferPartialType::WaferChopTwo},
+                                         {"gm", HGCalTypes::WaferPartialType::WaferChopTwoM}};
+
+  const WaferShapeMap waferShapeMapLD = {{"0", HGCalTypes::WaferPartialType::WaferFull},
+                                         {"1", HGCalTypes::WaferPartialType::WaferHalf},
+                                         {"2", HGCalTypes::WaferPartialType::WaferHalf},
+                                         {"3", HGCalTypes::WaferPartialType::WaferSemi},
+                                         {"4", HGCalTypes::WaferPartialType::WaferSemi},
+                                         {"5", HGCalTypes::WaferPartialType::WaferFive},
+                                         {"6", HGCalTypes::WaferPartialType::WaferThree}};
+
+  const WaferShapeMap waferShapeMapHD = {{"0", HGCalTypes::WaferPartialType::WaferFull},
+                                         {"1", HGCalTypes::WaferPartialType::WaferHalf2},
+                                         {"2", HGCalTypes::WaferPartialType::WaferChopTwoM},
+                                         {"3", HGCalTypes::WaferPartialType::WaferSemi2},
+                                         {"4", HGCalTypes::WaferPartialType::WaferSemi2},
+                                         {"5", HGCalTypes::WaferPartialType::WaferFive2}};
+
   bool DDFindHGCal(DDCompactView::GraphWalker& walker, std::string targetName);
   void DDFindWafers(DDCompactView::GraphWalker& walker);
   void ProcessWaferLayer(DDCompactView::GraphWalker& walker);
+  bool isThicknessMatched(const int geoThickClass, const int fileThickness);
+  bool isRotationMatched(
+      const bool isNewFile, const int layer, const int fileShapeCode, const int geoRotCode, const int fileRotCode);
 
   void beginJob() override;
   void analyze(const edm::Event&, const edm::EventSetup&) override;
@@ -82,23 +129,28 @@ private:
   // module parameters
   edm::FileInPath geometryFileName_;
 
+  // information from newer flat file header
+  unsigned int layerCount_;
+  std::vector<int> layerTypes_;
+
   // struct to hold wafer information from DD in map
   struct WaferInfo {
     int thickClass;
     double x;
     double y;
-    std::string shapeCode;
+    int shapeCode;
     int rotCode;
+    std::string waferName;  // TEMPORARY
   };
 
   // EDM token to access DD
   edm::ESGetToken<DDCompactView, IdealGeometryRecord> viewToken_;
 
   // map holding all wafer properties from DD
-  std::map<WaferCoord, struct WaferInfo> waferData;
+  std::map<WaferCoord, struct WaferInfo> waferData_;
 
   // boolean map to keep track of unaccounted DD wafers (not in flat file)
-  std::map<WaferCoord, bool> waferValidated;
+  std::map<WaferCoord, bool> waferValidated_;
 };
 
 //
@@ -177,6 +229,7 @@ void HGCalWaferValidation::ProcessWaferLayer(DDCompactView::GraphWalker& walker)
     if (walker.current().first.name().fullname().rfind("hgcalwafer:", 0) == 0) {
       auto wafer = walker.current();
       const std::string waferName(walker.current().first.name().fullname());
+      //edm::LogVerbatim(logcat) << "  " << waferName; // DEBUG: in case wafer name info is needed
       const int copyNo = wafer.second->copyno();
       // extract DD layer properties
       const int waferType = HGCalTypes::getUnpackedType(copyNo);
@@ -185,6 +238,7 @@ void HGCalWaferValidation::ProcessWaferLayer(DDCompactView::GraphWalker& walker)
       const WaferCoord waferCoord(waferLayer, waferU, waferV);  // map index
       // build struct of DD wafer properties
       struct WaferInfo waferInfo;
+      waferInfo.waferName = waferName;  //TEMPORARY
       waferInfo.thickClass = waferType;
       waferInfo.x = wafer.second->translation().x();
       waferInfo.y = wafer.second->translation().y();
@@ -206,13 +260,44 @@ void HGCalWaferValidation::ProcessWaferLayer(DDCompactView::GraphWalker& walker)
         rotStr = "0";
       const int rotCode(std::stoi(rotStr));
       //edm::LogVerbatim(logcat) << "rotStr " << rotStr << " rotCode " << rotCode;
-      waferInfo.shapeCode = shapeStr;
+
+      // convert shape code to wafer types defined in HGCalTypes.h
+      waferInfo.shapeCode = waferShapeMapDD.at(shapeStr);
+
       waferInfo.rotCode = rotCode;
       // populate the map
-      waferData[waferCoord] = waferInfo;
-      waferValidated[waferCoord] = false;
+      waferData_[waferCoord] = waferInfo;
+      waferValidated_[waferCoord] = false;
     }
   } while (walker.nextSibling());
+}
+
+// ------------ check if wafer thickness in geo matches in file (true = is a match) ------------
+bool HGCalWaferValidation::isThicknessMatched(const int geoThickClass, const int fileThickness) {
+  if (geoThickClass == 0 && fileThickness == 120)
+    return true;
+  if (geoThickClass == 1 && fileThickness == 200)
+    return true;
+  if (geoThickClass == 2 && fileThickness == 300)
+    return true;
+  return false;
+}
+
+// ------------ check if wafer rotation in geo matches in file (true = is a match) ------------
+bool HGCalWaferValidation::isRotationMatched(
+    const bool isNewFile, const int layer, const int fileShapeCode, const int geoRotCode, const int fileRotCode) {
+  if (fileShapeCode != HGCalTypes::WaferPartialType::WaferFull && geoRotCode == fileRotCode)
+    return true;
+  if (fileShapeCode == HGCalTypes::WaferPartialType::WaferFull) {
+    if (isNewFile && layerTypes_[layer - 1] == 3) {  // this array is index-0 based
+      if ((geoRotCode + 1) % 2 == fileRotCode % 2)
+        return true;
+    } else {
+      if (geoRotCode % 2 == fileRotCode % 2)
+        return true;
+    }
+  }
+  return false;
 }
 
 // ------------ method called for each event  ------------
@@ -285,7 +370,7 @@ void HGCalWaferValidation::analyze(const edm::Event& iEvent, const edm::EventSet
   DDFindWafers(hemixWalker);
 
   // Confirm all the DD wafers have been read
-  edm::LogVerbatim(logcat) << "Number of wafers read from DD: " << waferData.size();
+  edm::LogVerbatim(logcat) << "Number of wafers read from DD: " << waferData_.size();
 
   // Now open the geometry text file
   std::string fileName = geometryFileName_.fullPath();
@@ -311,6 +396,39 @@ void HGCalWaferValidation::analyze(const edm::Event& iEvent, const edm::EventSet
 
   std::string buf;
 
+  // find out if this file is an old file or a new file
+  std::getline(geoTxtFile, buf);
+  std::stringstream ss(buf);
+  std::vector<std::string> first_tokens;
+  while (ss >> buf)
+    if (!buf.empty())
+      first_tokens.push_back(buf);
+
+  const bool isNewFile(first_tokens.size() == 1);
+
+  if (isNewFile) {
+    edm::LogVerbatim(logcat) << "Text file is of newer version.";
+    layerCount_ = std::stoi(buf);
+    std::getline(geoTxtFile, buf);
+    std::stringstream layerTypesSS(buf);
+    while (layerTypesSS >> buf)
+      if (!buf.empty())
+        layerTypes_.push_back(std::stoi(buf));
+    if (layerTypes_.size() != layerCount_)
+      edm::LogWarning(logcat) << "Number of layer types does not tally with layer count.";
+
+    // TEMP: make sure reading is correct
+    edm::LogVerbatim(logcat) << "layerCount = " << layerCount_;
+    for (unsigned i = 0; i < layerTypes_.size(); i++) {
+      edm::LogVerbatim(logcat) << "  layerType " << i + 1 << " = " << layerTypes_[i];  // 1-based
+    }
+  } else {
+    layerCount_ = 0;
+    // rewind back
+    geoTxtFile.clear();
+    geoTxtFile.seekg(0);
+  }
+
   // process each line on the text file
   while (std::getline(geoTxtFile, buf)) {
     std::stringstream ss(buf);
@@ -325,30 +443,34 @@ void HGCalWaferValidation::analyze(const edm::Event& iEvent, const edm::EventSet
 
     // extract wafer info from a textfile line
     const int waferLayer(std::stoi(tokens[0]));
-    const std::string waferShapeCode(tokens[1]);
-    const int waferThickness(std::stoi(tokens[2]));
+    const std::string waferShapeStr(tokens[1]);
+    const std::string waferDensityStr(isNewFile ? tokens[2].substr(0, 1) : "");
+    const int waferThickness(isNewFile ? std::stoi(tokens[2].substr(1)) : std::stoi(tokens[2]));
     const double waferX(std::stod(tokens[3]));
     const double waferY(std::stod(tokens[4]));
     const int waferRotCode(std::stoi(tokens[5]));
     const int waferU(std::stoi(tokens[6]));
     const int waferV(std::stoi(tokens[7]));
+    const int waferShapeCode(isNewFile ? (waferDensityStr == "l"   ? waferShapeMapLD.at(waferShapeStr)
+                                          : waferDensityStr == "h" ? waferShapeMapHD.at(waferShapeStr)
+                                                                   : HGCalTypes::WaferPartialType::WaferOut)
+                                       : waferShapeMapDD.at(waferShapeStr));
 
     // map index for crosschecking with DD
     const WaferCoord waferCoord(waferLayer, waferU, waferV);
 
     // now check for (and report) wafer data disagreements
 
-    if (waferData.find(waferCoord) == waferData.end()) {
+    if (waferData_.find(waferCoord) == waferData_.end()) {
       nMissing++;
       edm::LogVerbatim(logcat) << "MISSING: " << strWaferCoord(waferCoord);
       continue;
     }
 
-    const struct WaferInfo waferInfo = waferData[waferCoord];
-    waferValidated[waferCoord] = true;
+    const struct WaferInfo waferInfo = waferData_[waferCoord];
+    waferValidated_[waferCoord] = true;
 
-    if ((waferInfo.thickClass == 0 && waferThickness != 120) || (waferInfo.thickClass == 1 && waferThickness != 200) ||
-        (waferInfo.thickClass == 2 && waferThickness != 300)) {
+    if (!isThicknessMatched(waferInfo.thickClass, waferThickness)) {
       nThicknessError++;
       edm::LogVerbatim(logcat) << "THICKNESS ERROR: " << strWaferCoord(waferCoord);
     }
@@ -364,23 +486,24 @@ void HGCalWaferValidation::analyze(const edm::Event& iEvent, const edm::EventSet
       edm::LogVerbatim(logcat) << "POSITION y ERROR: " << strWaferCoord(waferCoord);
     }
 
-    if (waferInfo.shapeCode != waferShapeCode) {
+    if (waferInfo.shapeCode != waferShapeCode || waferShapeCode == HGCalTypes::WaferPartialType::WaferOut) {
       nShapeError++;
-      edm::LogVerbatim(logcat) << "SHAPE ERROR: " << strWaferCoord(waferCoord);
+      edm::LogVerbatim(logcat) << "SHAPE ERROR: " << strWaferCoord(waferCoord) << "  ( " << waferInfo.shapeCode
+                               << " != " << waferDensityStr << waferShapeCode << " )  name=" << waferInfo.waferName;
     }
 
-    if ((waferShapeCode != 'F' && waferInfo.rotCode != waferRotCode) ||
-        (waferShapeCode == 'F' && (waferInfo.rotCode % 2 != waferRotCode % 2))) {
+    if (!isRotationMatched(isNewFile, std::get<0>(waferCoord), waferShapeCode, waferInfo.rotCode, waferRotCode)) {
       nRotError++;
       edm::LogVerbatim(logcat) << "ROTATION ERROR: " << strWaferCoord(waferCoord) << "  ( " << waferInfo.rotCode
-                               << " != " << waferRotCode << " )";
+                               << " != " << waferRotCode << " (" << waferShapeCode
+                               << ") )  name=" << waferInfo.waferName;
     }
   }
 
   geoTxtFile.close();
 
   // Find unaccounted DD wafers
-  for (auto const& accounted : waferValidated) {
+  for (auto const& accounted : waferValidated_) {
     if (!accounted.second) {
       nUnaccounted++;
       edm::LogVerbatim(logcat) << "UNACCOUNTED: " << strWaferCoord(accounted.first);

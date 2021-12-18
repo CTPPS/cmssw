@@ -59,6 +59,8 @@ upgradeKeys[2026] = [
     '2026D86PU',
     '2026D87',
     '2026D87PU',
+    '2026D88',
+    '2026D88PU',
 ]
 
 # pre-generation of WF numbers
@@ -152,7 +154,6 @@ class UpgradeWorkflow_baseline(UpgradeWorkflow):
         if cust is not None: stepDict[stepName][k]['--customise']=cust
         if era is not None: 
             stepDict[stepName][k]['--era']=era
-            if 'RecNan' in stepName: stepDict[stepName][k]['--era'] += ',run3_nanoAOD_devel'
         if modifier is not None: stepDict[stepName][k]['--procModifier']=modifier
     def condition(self, fragment, stepList, key, hasHarvest):
         return True
@@ -168,16 +169,16 @@ upgradeWFs['baseline'] = UpgradeWorkflow_baseline(
         'Reco',
         'RecoFakeHLT',
         'RecoGlobal',
+        'RecoNano',
         'HARVEST',
         'HARVESTFakeHLT',
-        'HARVESTRecNan',
+        'HARVESTNano',
         'FastSim',
         'HARVESTFast',
         'HARVESTGlobal',
         'ALCA',
         'Nano',
         'MiniAOD',
-        'RecNan',
     ],
     PU =  [
         'DigiTrigger',
@@ -186,13 +187,13 @@ upgradeWFs['baseline'] = UpgradeWorkflow_baseline(
         'Digi',
         'Reco',
         'RecoFakeHLT',
+        'RecoNano',
         'HARVEST',
         'HARVESTFakeHLT',
-        'HARVESTRecNan',
+        'HARVESTNano',
         'HARVESTGlobal',
         'MiniAOD',
         'Nano',
-        'RecNan',
     ],
     suffix = '',
     offset = 0.0,
@@ -200,19 +201,27 @@ upgradeWFs['baseline'] = UpgradeWorkflow_baseline(
 
 # some commonalities among tracking WFs
 class UpgradeWorkflowTracking(UpgradeWorkflow):
+    # skip the PU argument since PU workflows never used here
+    def __init__(self, steps, suffix, offset):
+        # always include some steps that will be skipped
+        steps = steps + ["ALCA","Nano"]
+        super().__init__(steps, [], suffix, offset)
     def condition(self, fragment, stepList, key, hasHarvest):
         result = (fragment=="TTbar_13" or fragment=="TTbar_14TeV") and not 'PU' in key and hasHarvest and self.condition_(fragment, stepList, key, hasHarvest)
-        if result:
-            # skip ALCA and Nano
-            skipList = [s for s in stepList if (("ALCA" in s) or ("Nano" in s))]
-            for skip in skipList:
-                stepList.remove(skip)
         return result
     def condition_(self, fragment, stepList, key, hasHarvest):
         return True
+    def setup_(self, step, stepName, stepDict, k, properties):
+        # skip ALCA and Nano steps (but not RecoNano or HARVESTNano for Run3)
+        if 'ALCA' in step or 'Nano'==step:
+            stepDict[stepName][k] = None
+        self.setup__(step, stepName, stepDict, k, properties)
+    # subordinate function for inherited classes
+    def setup__(self, step, stepName, stepDict, k, properties):
+        pass
 
 class UpgradeWorkflow_trackingOnly(UpgradeWorkflowTracking):
-    def setup_(self, step, stepName, stepDict, k, properties):
+    def setup__(self, step, stepName, stepDict, k, properties):
         if 'Reco' in step: stepDict[stepName][k] = merge([self.step3, stepDict[step][k]])
         elif 'HARVEST' in step: stepDict[stepName][k] = merge([{'-s': 'HARVESTING:@trackingOnlyValidation+@trackingOnlyDQM'}, stepDict[step][k]])
 upgradeWFs['trackingOnly'] = UpgradeWorkflow_trackingOnly(
@@ -221,8 +230,11 @@ upgradeWFs['trackingOnly'] = UpgradeWorkflow_trackingOnly(
         'HARVEST',
         'RecoGlobal',
         'HARVESTGlobal',
+        'RecoNano',
+        'HARVESTNano',
+        'RecoFakeHLT',
+        'HARVESTFakeHLT',
     ],
-    PU = [],
     suffix = '_trackingOnly',
     offset = 0.1,
 )
@@ -235,7 +247,7 @@ upgradeWFs['trackingOnly'].step3 = {
 step3_trackingOnly = upgradeWFs['trackingOnly'].step3
 
 class UpgradeWorkflow_trackingRun2(UpgradeWorkflowTracking):
-    def setup_(self, step, stepName, stepDict, k, properties):
+    def setup__(self, step, stepName, stepDict, k, properties):
         if 'Reco' in step and stepDict[step][k]['--era']=='Run2_2017':
             stepDict[stepName][k] = merge([{'--era': 'Run2_2017_trackingRun2'}, stepDict[step][k]])
     def condition_(self, fragment, stepList, key, hasHarvest):
@@ -243,14 +255,14 @@ class UpgradeWorkflow_trackingRun2(UpgradeWorkflowTracking):
 upgradeWFs['trackingRun2'] = UpgradeWorkflow_trackingRun2(
     steps = [
         'Reco',
+        'RecoFakeHLT',
     ],
-    PU = [],
     suffix = '_trackingRun2',
     offset = 0.2,
 )
 
 class UpgradeWorkflow_trackingOnlyRun2(UpgradeWorkflowTracking):
-    def setup_(self, step, stepName, stepDict, k, properties):
+    def setup__(self, step, stepName, stepDict, k, properties):
         if 'Reco' in step and stepDict[step][k]['--era']=='Run2_2017':
             stepDict[stepName][k] = merge([{'--era': 'Run2_2017_trackingRun2'}, self.step3, stepDict[step][k]])
         elif 'HARVEST' in step: stepDict[stepName][k] = merge([{'-s': 'HARVESTING:@trackingOnlyValidation+@trackingOnlyDQM'}, stepDict[step][k]])
@@ -260,15 +272,16 @@ upgradeWFs['trackingOnlyRun2'] = UpgradeWorkflow_trackingOnlyRun2(
     steps = [
         'Reco',
         'HARVEST',
+        'RecoFakeHLT',
+        'HARVESTFakeHLT',
     ],
-    PU = [],
     suffix = '_trackingOnlyRun2',
     offset = 0.3,
 )
 upgradeWFs['trackingOnlyRun2'].step3 = upgradeWFs['trackingOnly'].step3
 
 class UpgradeWorkflow_trackingLowPU(UpgradeWorkflowTracking):
-    def setup_(self, step, stepName, stepDict, k, properties):
+    def setup__(self, step, stepName, stepDict, k, properties):
         if 'Reco' in step and stepDict[step][k]['--era']=='Run2_2017':
             stepDict[stepName][k] = merge([{'--era': 'Run2_2017_trackingLowPU'}, stepDict[step][k]])
     def condition_(self, fragment, stepList, key, hasHarvest):
@@ -276,14 +289,14 @@ class UpgradeWorkflow_trackingLowPU(UpgradeWorkflowTracking):
 upgradeWFs['trackingLowPU'] = UpgradeWorkflow_trackingLowPU(
     steps = [
         'Reco',
+        'RecoFakeHLT',
     ],
-    PU = [],
     suffix = '_trackingLowPU',
     offset = 0.4,
 )
 
 class UpgradeWorkflow_pixelTrackingOnly(UpgradeWorkflowTracking):
-    def setup_(self, step, stepName, stepDict, k, properties):
+    def setup__(self, step, stepName, stepDict, k, properties):
         if 'Reco' in step: stepDict[stepName][k] = merge([self.step3, stepDict[step][k]])
         elif 'HARVEST' in step: stepDict[stepName][k] = merge([{'-s': 'HARVESTING:@trackingOnlyValidation+@pixelTrackingOnlyDQM'}, stepDict[step][k]])
     def condition_(self, fragment, stepList, key, hasHarvest):
@@ -294,8 +307,11 @@ upgradeWFs['pixelTrackingOnly'] = UpgradeWorkflow_pixelTrackingOnly(
         'HARVEST',
         'RecoGlobal',
         'HARVESTGlobal',
+        'RecoNano',
+        'HARVESTNano',
+        'RecoFakeHLT',
+        'HARVESTFakeHLT',
     ],
-    PU = [],
     suffix = '_pixelTrackingOnly',
     offset = 0.5,
 )
@@ -306,7 +322,7 @@ upgradeWFs['pixelTrackingOnly'].step3 = {
 }
 
 class UpgradeWorkflow_trackingMkFit(UpgradeWorkflowTracking):
-    def setup_(self, step, stepName, stepDict, k, properties):
+    def setup__(self, step, stepName, stepDict, k, properties):
         if 'Digi' in step: stepDict[stepName][k] = merge([self.step2, stepDict[step][k]])
         if 'Reco' in step: stepDict[stepName][k] = merge([self.step3, stepDict[step][k]])
     def condition_(self, fragment, stepList, key, hasHarvest):
@@ -317,8 +333,9 @@ upgradeWFs['trackingMkFit'] = UpgradeWorkflow_trackingMkFit(
         'DigiTrigger',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
+        'RecoFakeHLT',
     ],
-    PU = [],
     suffix = '_trackingMkFit',
     offset = 0.7,
 )
@@ -332,14 +349,12 @@ upgradeWFs['trackingMkFit'].step3 = {
 #DeepCore seeding for JetCore iteration workflow
 class UpgradeWorkflow_seedingDeepCore(UpgradeWorkflow):
     def setup_(self, step, stepName, stepDict, k, properties):
-        if 'Reco' in step or 'HARVEST' in step: stepDict[stepName][k] = merge([{'--procModifiers': 'seedingDeepCore'}, stepDict[step][k]])
+        # skip ALCA and Nano steps (but not RecoNano or HARVESTNano for Run3)
+        if 'ALCA' in step or 'Nano'==step:
+            stepDict[stepName][k] = None
+        elif 'Reco' in step or 'HARVEST' in step: stepDict[stepName][k] = merge([{'--procModifiers': 'seedingDeepCore'}, stepDict[step][k]])
     def condition(self, fragment, stepList, key, hasHarvest):
         result = (fragment=="QCD_Pt_1800_2400_14" or fragment=="TTbar_14TeV" ) and ('2021' in key or '2024' in key) and hasHarvest
-        if result:
-            # skip ALCA and Nano
-            skipList = [s for s in stepList if (("ALCA" in s) or ("Nano" in s))]
-            for skip in skipList:
-                stepList.remove(skip)
         return result
 upgradeWFs['seedingDeepCore'] = UpgradeWorkflow_seedingDeepCore(
     steps = [
@@ -347,6 +362,10 @@ upgradeWFs['seedingDeepCore'] = UpgradeWorkflow_seedingDeepCore(
         'HARVEST',
         'RecoGlobal',
         'HARVESTGlobal',
+        'RecoNano',
+        'HARVESTNano',
+        'Nano',
+        'ALCA',
     ],
     PU = [],
     suffix = '_seedingDeepCore',
@@ -382,9 +401,11 @@ class UpgradeWorkflow_trackdnn(UpgradeWorkflow):
 upgradeWFs['trackdnn'] = UpgradeWorkflow_trackdnn(
     steps = [
         'Reco',
+        'RecoNano',
     ],
     PU = [
         'Reco',
+        'RecoNano',
     ],
     suffix = '_trackdnn',
     offset = 0.91,
@@ -402,16 +423,18 @@ class UpgradeWorkflow_mlpf(UpgradeWorkflow):
 upgradeWFs['mlpf'] = UpgradeWorkflow_mlpf(
     steps = [
         'Reco',
+        'RecoNano',
     ],
     PU = [
         'Reco',
+        'RecoNano',
     ],
     suffix = '_mlpf',
     offset = 0.13,
 )
 upgradeWFs['mlpf'].step3 = {
-    '--datatier': 'GEN-SIM-RECO,RECOSIM,MINIAODSIM,DQMIO',
-    '--eventcontent': 'FEVTDEBUGHLT,RECOSIM,MINIAODSIM,DQM',
+    '--datatier': 'GEN-SIM-RECO,RECOSIM,MINIAODSIM,NANOAODSIM,DQMIO',
+    '--eventcontent': 'FEVTDEBUGHLT,RECOSIM,MINIAODSIM,NANOEDMAODSIM,DQM',
     '--procModifiers': 'mlpf'
 }
 
@@ -433,6 +456,10 @@ class PatatrackWorkflow(UpgradeWorkflow):
                 'HARVESTFakeHLT',
                 'RecoGlobal',
                 'HARVESTGlobal',
+                'RecoNano',
+                'HARVESTNano',
+                'Nano',
+                'ALCA',
             ],
             PU = [],
             **kwargs)
@@ -454,14 +481,13 @@ class PatatrackWorkflow(UpgradeWorkflow):
         ]
         result = any(selected) and hasHarvest
 
-        # skip ALCA and Nano steps
-        for skip in copy(stepList):
-            if ("ALCA" in skip) or ("Nano" in skip):
-                stepList.remove(skip)
         return result
 
     def setup_(self, step, stepName, stepDict, k, properties):
-        if 'Digi' in step:
+        # skip ALCA and Nano steps (but not RecoNano or HARVESTNano for Run3)
+        if 'ALCA' in step or 'Nano'==step:
+            stepDict[stepName][k] = None
+        elif 'Digi' in step:
             if self.__digi is None:
               stepDict[stepName][k] = None
             else:
@@ -736,10 +762,10 @@ class UpgradeWorkflow_ProdLike(UpgradeWorkflow):
         elif 'MiniAOD' in step:
             # the separate miniAOD step is used here
             stepDict[stepName][k] = deepcopy(stepDict[step][k])
-        if 'ALCA' in step or 'HARVEST' in step:
+        elif 'ALCA' in step or 'HARVEST' in step:
             # remove step
             stepDict[stepName][k] = None
-        if 'Nano' in step:
+        elif 'Nano'==step:
             stepDict[stepName][k] = merge([{'--filein':'file:step4.root','-s':'NANO','--datatier':'NANOAODSIM','--eventcontent':'NANOEDMAODSIM'}, stepDict[step][k]])
     def condition(self, fragment, stepList, key, hasHarvest):
         return fragment=="TTbar_14TeV" and ('2026' in key or '2021' in key)
@@ -750,8 +776,10 @@ upgradeWFs['ProdLike'] = UpgradeWorkflow_ProdLike(
         'DigiTrigger',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'HARVEST',
         'HARVESTGlobal',
+        'HARVESTNano',
         'MiniAOD',
         'ALCA',
         'Nano',
@@ -762,8 +790,10 @@ upgradeWFs['ProdLike'] = UpgradeWorkflow_ProdLike(
         'DigiTrigger',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'HARVEST',
         'HARVESTGlobal',
+        'HARVESTNano',
         'MiniAOD',
         'ALCA',
         'Nano',
@@ -855,6 +885,9 @@ class UpgradeWorkflow_0T(UpgradeWorkflow):
         myGT=stepDict[step][k]['--conditions']
         myGT+="_0T"
         stepDict[stepName][k] = merge([{'-n':'1','--magField':'0T','--conditions':myGT}, stepDict[step][k]])
+    def setupPU_(self, step, stepName, stepDict, k, properties):
+        # override '-n' setting from PUDataSets in relval_steps.py
+        stepDict[stepName][k] = merge([{'-n':'1'}, stepDict[step][k]])
     def condition(self, fragment, stepList, key, hasHarvest):
         return (fragment=="TTbar_13" or fragment=="TTbar_14TeV") and ('2017' in key or '2018' in key or '2021' in key)
 upgradeWFs['0T'] = UpgradeWorkflow_0T(
@@ -863,12 +896,16 @@ upgradeWFs['0T'] = UpgradeWorkflow_0T(
         'Digi',
         'Reco',
         'HARVEST',
+        'RecoNano',
+        'HARVESTNano',
         'ALCA',
     ],
     PU = [
         'Digi',
         'Reco',
         'HARVEST',
+        'RecoNano',
+        'HARVESTNano',
     ],
     suffix = '_0T',
     offset = 0.24,
@@ -995,7 +1032,7 @@ class UpgradeWorkflowPremix(UpgradeWorkflow):
                     d["--procModifiers"] = "premix_stage2"
             stepDict[stepName][k] = d
         # Increase the input file step number by one for Nano in combined stage1+stage2
-        elif "Nano" in step:
+        elif "Nano"==step:
             # go back to non-PU step version
             d = merge([stepDict[self.getStepName(step)][k]])
             if "--filein" in d:
@@ -1040,6 +1077,7 @@ upgradeWFs['PMXS2'] = UpgradeWorkflowPremix(
         'RecoLocal',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'Nano',
     ],
     suffix = '_PMXS2',
@@ -1057,6 +1095,7 @@ upgradeWFs['PMXS1S2'] = UpgradeWorkflowPremix(
         'RecoLocal',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'Nano',
     ],
     suffix = '_PMXS1S2',
@@ -1109,7 +1148,7 @@ class UpgradeWorkflowPremixProdLike(UpgradeWorkflowPremix,UpgradeWorkflow_ProdLi
                         "--eventcontent": "PREMIXRAW"},
                        d])
             stepDict[stepName][k] = d
-        if 'Nano' in step:
+        if 'Nano'==step:
             stepDict[stepName][k] = merge([{'--filein':'file:step5.root','-s':'NANO','--datatier':'NANOAODSIM','--eventcontent':'NANOEDMAODSIM'}, stepDict[step][k]])
     def condition(self, fragment, stepList, key, hasHarvest):
         # use both conditions
@@ -1123,9 +1162,11 @@ upgradeWFs['PMXS2ProdLike'] = UpgradeWorkflowPremixProdLike(
         'RecoLocal',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'Nano',
         'HARVEST',
         'HARVESTGlobal',
+        'HARVESTNano',
         'MiniAOD',
         'ALCA',
     ],
@@ -1144,9 +1185,11 @@ upgradeWFs['PMXS1S2ProdLike'] = UpgradeWorkflowPremixProdLike(
         'RecoLocal',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'Nano',
         'HARVEST',
         'HARVESTGlobal',
+        'HARVESTNano',
         'MiniAOD',
         'ALCA',
     ],
@@ -1173,8 +1216,10 @@ upgradeWFs['DD4hep'] = UpgradeWorkflow_DD4hep(
         'DigiTrigger',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'HARVEST',
         'HARVESTGlobal',
+        'HARVESTNano',
         'ALCA',
     ],
     PU = [],
@@ -1200,8 +1245,10 @@ upgradeWFs['DD4hepDB'] = UpgradeWorkflow_DD4hepDB(
         'DigiTrigger',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'HARVEST',
         'HARVESTGlobal',
+        'HARVESTNano',
         'ALCA',
     ],
     PU = [],
@@ -1213,7 +1260,11 @@ upgradeWFs['DD4hepDB'].allowReuse = False
 class UpgradeWorkflow_DDDDB(UpgradeWorkflow):
     def setup_(self, step, stepName, stepDict, k, properties):
         if 'Run3' in stepDict[step][k]['--era']:
-            stepDict[stepName][k] = merge([{'--conditions': 'auto:phase1_2021_realistic_ddd', '--geometry': 'DB:Extended', '--era': 'Run3_DDD'}, stepDict[step][k]])
+            # retain any other eras
+            tmp_eras = stepDict[step][k]['--era'].split(',')
+            tmp_eras[tmp_eras.index("Run3")] = 'Run3_DDD'
+            tmp_eras = ','.join(tmp_eras)
+            stepDict[stepName][k] = merge([{'--conditions': 'auto:phase1_2021_realistic_ddd', '--geometry': 'DB:Extended', '--era': tmp_eras}, stepDict[step][k]])
     def condition(self, fragment, stepList, key, hasHarvest):
         return '2021' in key
 upgradeWFs['DDDDB'] = UpgradeWorkflow_DDDDB(
@@ -1225,8 +1276,10 @@ upgradeWFs['DDDDB'] = UpgradeWorkflow_DDDDB(
         'DigiTrigger',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'HARVEST',
         'HARVESTGlobal',
+        'HARVESTNano',
         'ALCA',
     ],
     PU = [],
@@ -1250,8 +1303,10 @@ upgradeWFs['SonicTriton'] = UpgradeWorkflow_SonicTriton(
         'DigiTrigger',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'HARVEST',
         'HARVESTGlobal',
+        'HARVESTNano',
         'ALCA',
     ],
     PU = [
@@ -1262,8 +1317,10 @@ upgradeWFs['SonicTriton'] = UpgradeWorkflow_SonicTriton(
         'DigiTrigger',
         'Reco',
         'RecoGlobal',
+        'RecoNano',
         'HARVEST',
         'HARVESTGlobal',
+        'HARVESTNano',
         'ALCA',
     ],
     suffix = '_SonicTriton',
@@ -1317,7 +1374,7 @@ upgradeProperties[2017] = {
         'HLTmenu': '@relval2021',
         'Era' : 'Run3',
         'BeamSpot': 'Run3RoundOptics25ns13TeVLowSigmaZ',
-        'ScenToRun' : ['GenSim','Digi','Reco','HARVEST','ALCA'],
+        'ScenToRun' : ['GenSim','Digi','RecoNano','HARVESTNano','ALCA'],
     },
     '2021Design' : {
         'Geom' : 'DB:Extended',
@@ -1325,7 +1382,7 @@ upgradeProperties[2017] = {
         'HLTmenu': '@relval2021',
         'Era' : 'Run3',
         'BeamSpot': 'GaussSigmaZ4cm',
-        'ScenToRun' : ['GenSim','Digi','Reco','HARVEST'],
+        'ScenToRun' : ['GenSim','Digi','RecoNano','HARVESTNano'],
     },
     '2023' : {
         'Geom' : 'DB:Extended',
@@ -1333,7 +1390,7 @@ upgradeProperties[2017] = {
         'HLTmenu': '@relval2021',
         'Era' : 'Run3',
         'BeamSpot': 'Run3RoundOptics25ns13TeVLowSigmaZ',
-        'ScenToRun' : ['GenSim','Digi','Reco','HARVEST','ALCA'],
+        'ScenToRun' : ['GenSim','Digi','RecoNano','HARVESTNano','ALCA'],
     },
     '2024' : {
         'Geom' : 'DB:Extended',
@@ -1341,7 +1398,7 @@ upgradeProperties[2017] = {
         'HLTmenu': '@relval2021',
         'Era' : 'Run3',
         'BeamSpot': 'Run3RoundOptics25ns13TeVLowSigmaZ',
-        'ScenToRun' : ['GenSim','Digi','Reco','HARVEST','ALCA'],
+        'ScenToRun' : ['GenSim','Digi','RecoNano','HARVESTNano','ALCA'],
     },
 }
 
@@ -1349,8 +1406,8 @@ upgradeProperties[2017] = {
 for key in list(upgradeProperties[2017].keys()):
     upgradeProperties[2017][key+'PU'] = deepcopy(upgradeProperties[2017][key])
     upgradeProperties[2017][key+'PU']['ScenToRun'] = ['GenSim','DigiPU'] + \
-                                                     (['RecoPU','HARVESTPU'] if '202' in key else ['RecoFakeHLTPU','HARVESTFakeHLTPU']) + \
-                                                     (['Nano'] if 'Design' not in key else [])
+                                                     (['RecoNanoPU','HARVESTNanoPU'] if '202' in key else ['RecoFakeHLTPU','HARVESTFakeHLTPU']) + \
+                                                     (['Nano'] if 'Nano' in upgradeProperties[2017][key]['ScenToRun'] else [])
 
 upgradeProperties[2026] = {
     '2026D49' : {
@@ -1464,6 +1521,13 @@ upgradeProperties[2026] = {
         'HLTmenu': '@fake2',
         'GT' : 'auto:phase2_realistic_T27',
         'Era' : 'Phase2C11I13T27M9', # customized for bricked pixels and Muon M9
+        'ScenToRun' : ['GenSimHLBeamSpot','DigiTrigger','RecoGlobal', 'HARVESTGlobal'],
+    },
+    '2026D88' : {
+        'Geom' : 'Extended2026D88',
+        'HLTmenu': '@fake2',
+        'GT' : 'auto:phase2_realistic_T21',
+        'Era' : 'Phase2C11I13M9',
         'ScenToRun' : ['GenSimHLBeamSpot','DigiTrigger','RecoGlobal', 'HARVESTGlobal'],
     },
 }

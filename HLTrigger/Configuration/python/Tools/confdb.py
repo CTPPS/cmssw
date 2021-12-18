@@ -492,10 +492,18 @@ from HLTrigger.Configuration.CustomConfigs import L1REPACK
     ),
     outputCommands = cms.untracked.vstring( 'drop *',
         'keep edmTriggerResults_*_*_*',
-        'keep triggerTriggerEvent_*_*_*'
+        'keep triggerTriggerEvent_*_*_*',
+        'keep GlobalAlgBlkBXVector_*_*_*',                  
+        'keep GlobalExtBlkBXVector_*_*_*',
+        'keep l1tEGammaBXVector_*_EGamma_*',
+        'keep l1tEtSumBXVector_*_EtSum_*',
+        'keep l1tJetBXVector_*_Jet_*',
+        'keep l1tMuonBXVector_*_Muon_*',
+        'keep l1tTauBXVector_*_Tau_*',
     )
 )
 %(process)s.MinimalOutput = cms.EndPath( %(process)s.hltOutputMinimal )
+%(process)s.schedule.append( %(process)s.MinimalOutput )
 """
     elif not self.config.fragment and self.config.output == 'full':
       # add a single "keep *" output
@@ -511,6 +519,7 @@ from HLTrigger.Configuration.CustomConfigs import L1REPACK
     outputCommands = cms.untracked.vstring( 'keep *' )
 )
 %(process)s.FullOutput = cms.EndPath( %(process)s.hltOutputFull )
+%(process)s.schedule.append( %(process)s.FullOutput )
 """
 
   # select specific Eras
@@ -675,9 +684,10 @@ if 'GlobalTag' in %%(dict)s:
         # prepend the dqmOutput to the DQMOutput path
         self.data = other_path.sub(dqmstore + r'\g<1> %(process)s.dqmOutput +\g<3>', self.data)
       else:
-        # ceate a new DQMOutput path with the dqmOutput module
+        # create a new DQMOutput path with the dqmOutput module
         self.data += dqmstore
         self.data += '\n%(process)s.DQMOutput = cms.EndPath( %(process)s.dqmOutput )\n'
+        self.data += '%(process)s.schedule.append( %(process)s.DQMOutput )\n'
 
 
   @staticmethod
