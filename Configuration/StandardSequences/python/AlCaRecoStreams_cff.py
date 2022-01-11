@@ -164,6 +164,9 @@ from CalibTracker.SiPixelQuality.ALCARECOPromptCalibProdSiPixel_cff import *
 
 from Calibration.EcalCalibAlgos.ALCARECOPromptCalibProdEcalPedestals_cff import *
 from Calibration.LumiAlCaRecoProducers.ALCARECOPromptCalibProdLumiPCC_cff import *
+
+from Calibration.PPSAlCaRecoProducer.ALCARECOPPSCalMaxTracks_cff import *
+
 ###############################################################
 # hotline skim workflows
 ###############################################################
@@ -1025,6 +1028,14 @@ ALCARECOStreamPromptCalibProdLumiPCC = cms.FilteredStream(
 	dataTier = cms.untracked.string('ALCARECO')
 	)
 
+ALCARECOStreamPromptCalibProdPPSMaxTracks = cms.FilteredStream(
+	responsible = 'Leszek Grzanka',
+	name = 'PromptCalibProdPPSMaxTracks',
+	paths  = (pathALCARECOPromptCalibProdPPSMaxTracks),
+	content = OutALCARECOPromptCalibProdPPSMaxTracks.outputCommands,
+	selectEvents = OutALCARECOPromptCalibProdPPSMaxTracks.SelectEvents,
+	dataTier = cms.untracked.string('ALCARECO')
+	)
 
 ALCARECOStreamHotline = cms.FilteredStream(
         responsible = 'Dustin Anderson',
