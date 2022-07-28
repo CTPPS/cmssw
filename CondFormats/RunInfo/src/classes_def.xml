@@ -22,4 +22,22 @@
    <field name="m_bunchConfiguration1" mapping="blob"/>
    <field name="m_bunchConfiguration2" mapping="blob"/>
  </class>  
+
+ <class name="LHCInfoPerLS" class_version="0"/>
+
+ <class name="LHCInfoPerFill" class_version="0">
+   <field name="m_bunchConfiguration1" mapping="blob"/>
+   <field name="m_bunchConfiguration2" mapping="blob"/>
+ </class>  
+
+ <class name="std::vector<unsigned int>"/>
+ <class name="std::vector<float>"/>
+ <class name="std::vector<unsigned long long>"/>
+ <class name="std::vector<std::string>"/>
+ <class name="LHCInfoVectorizedFields" class_version="0">
+   <field name="m_intParams" mapping="blob"/>
+   <field name="m_floatParams" mapping="blob"/>
+   <field name="m_timeParams" mapping="blob"/>
+   <field name="m_stringParams" mapping="blob"/>
+ </class>
 </lcgdict>  
