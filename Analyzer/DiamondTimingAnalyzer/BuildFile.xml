@@ -9,6 +9,7 @@
 <use name="FWCore/PluginManager"/>
 <use name="FWCore/ParameterSet"/>
 <use name="DQMServices/Core"/>
+<flags CXXFLAGS="-O0 -g -DDEBUG"/>
 <export>
   <lib name="1"/>
 </export>
