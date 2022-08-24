@@ -301,7 +301,13 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
                 double Marked_track_time = 12.5;
                 double Marked_track_precision = 25.0;
-                // edm::LogWarning("MyInfoLog") << "Analyze method: hit_selected.data: " << hit_selected.data;
+
+                edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze methodL get item form hit_selected " << hit_selected[pl_mark];
+                for(auto& item_map: DiamondDet.RecHit_map_){
+                    edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: RecHit_map " << item_map.first << " ", item_map.second;
+                }
+
+
                 double Marked_hit_time = DiamondDet.GetTime(hit_selected[pl_mark]);; //TODO: error is here
                 int Marked_hit_channel = hit_selected[pl_mark].channel;
 
