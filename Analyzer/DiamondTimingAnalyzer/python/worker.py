@@ -1,6 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 from FWCore.ParameterSet.VarParsing import VarParsing
 from RecoPPS.Local.ctppsDiamondLocalReconstruction_cff import *
+from Geometry.VeryForwardGeometry.geometryRPFromDB_cfi import *
 
 process = cms.Process("TIMINGSTUDY")
 options = VarParsing ('analysis')
@@ -30,12 +31,6 @@ options.register ('planesConfig',
 				  VarParsing.varType.string,
 				  "planes config file")
 
-options.register ('geometryFile',
-				  'Geometry.VeryForwardGeometry.geometryRPFromDD_2018_cfi',
-				  VarParsing.multiplicity.singleton,
-				  VarParsing.varType.string,
-				  "Geometry input file")
-
 options.register ('validOOT',
 				  -1,
 				  VarParsing.multiplicity.singleton,
@@ -50,6 +45,7 @@ process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi')
 
 
 process.source = cms.Source("PoolSource",
@@ -77,7 +73,6 @@ else:
     )
 
 # rechits production
-process.load(options.geometryFile)
 process.load('RecoPPS.Local.ctppsDiamondLocalReconstruction_cff')
 
 process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
