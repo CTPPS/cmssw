@@ -148,9 +148,9 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
 
 void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
     using namespace edm;
-
+    edm::LogWarning("MyInfoLog") << "Entering analyze method";
     //retrieve data
-    edm::Handle<edm::DetSetVector<CTPPSDiamondRecHit>> recHits;
+    edm::Handle<edm::DetSetVector<CTPPSDiamondRecHit>> recHits; // TODO
     edm::Handle<edm::DetSetVector<CTPPSDiamondLocalTrack>> localTracks;
     edm::Handle<edm::DetSetVector<CTPPSPixelLocalTrack>> pixelLocalTracks;
     edm::ESHandle<PPSTimingCalibration> calib;
@@ -159,6 +159,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
     iEvent.getByToken(tokenLocalTrack_, localTracks);
     iEvent.getByToken(tokenPixelLocalTrack_, pixelLocalTracks);
     calib = iSetup.getHandle(calibEsToken_);
+    edm::LogWarning("MyInfoLog") << "analyze method read tokens complete";
 
     DiamondDetectorClass DiamondDet(validOOT, *geom, *recHits, *localTracks, DiamondTimingCalibration(*calib));
 
@@ -182,6 +183,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             Pixel_Mux_map_[std::make_pair(detId.arm(), detId.station())]++;
         }
     }
+    edm::LogWarning("MyInfoLog") << "analyze method: Sector_TBA filled complete";
 
     for (const auto& Ntracks_cuts_iter_ : Ntracks_cuts_map_) {
         if ((Ntracks_cuts_iter_.second.first < 0) || (Ntracks_cuts_iter_.second.second < 0))
@@ -190,6 +192,8 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             (Pixel_Mux_map_[Ntracks_cuts_iter_.first] > Ntracks_cuts_iter_.second.second))  //condition violated
             Sector_TBA[Ntracks_cuts_iter_.first.first] = false;
     }
+    edm::LogWarning("MyInfoLog") << "analyze method: Pixel MAP complete";
+
 
     if (!(Sector_TBA[0] || Sector_TBA[1]))
         return;
@@ -199,6 +203,8 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
     //		control over PCL calibration quality
     //
     /////////////////////////////////////////////////////////////////
+    edm::LogWarning("MyInfoLog") << "Analyze method: begin of control over PCL calibration quality";
+
     for (const auto& _recHits : *recHits) {  //rechits = array of hits in one channel
         const CTPPSDiamondDetId detid(_recHits.detId());
         const ChannelKey key(detid);
@@ -228,6 +234,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
     //		RESOLUTION STUDIES
     //
     /////////////////////////////////////////////////////////////////
+    edm::LogWarning("MyInfoLog") << "Analyze method: begin of resolution studies";
 
     //which planes are active
     std::array<bool, 4> active_plane{ {false, false, false, false} };
@@ -263,6 +270,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         double Track_precision_SPC = 100.0;
 
         // hits in track loop LocalTrack_mapIter.second = std::vector<std::pair<ChannelKey,CTPPSDiamondRecHit>>
+        edm::LogWarning("MyInfoLog") << "Analyze method: before for L274";
         for (hit_iter = LocalTrack_mapIter.second.begin(); hit_iter < LocalTrack_mapIter.second.end(); hit_iter++) {
             auto& key = (*hit_iter).first;
 
@@ -270,7 +278,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
                 continue;
 
             double hit_time_SPC = DiamondDet.GetTime(key);
-            double hit_prec_SPC = DiamondDet.GetPadPrecision(key);
+            // double hit_prec_SPC = DiamondDet.GetPadPrecision(key); //TODO: Unused variable
             double hit_weig_SPC = DiamondDet.GetPadWeight(key);
 
             if (mark_tag)
@@ -293,7 +301,8 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
                 double Marked_track_time = 12.5;
                 double Marked_track_precision = 25.0;
-                double Marked_hit_time = DiamondDet.GetTime(hit_selected[pl_mark]);;
+                // edm::LogWarning("MyInfoLog") << "Analyze method: hit_selected.data: " << hit_selected.data;
+                double Marked_hit_time = DiamondDet.GetTime(hit_selected[pl_mark]);; //TODO: error is here
                 int Marked_hit_channel = hit_selected[pl_mark].channel;
 
                 ChannelKey key(sector, station, pl_mark, Marked_hit_channel);
@@ -306,7 +315,6 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
                     if (pl_loop == pl_mark) continue;
 
                     double Others_hit_time = DiamondDet.GetTime(hit_selected[pl_loop]);
-                    double Others_hit_prec = DiamondDet.GetPadPrecision(hit_selected[pl_loop]);
                     double Others_hit_weig = DiamondDet.GetPadWeight(hit_selected[pl_loop]);
 
                     Marked_track_time =
@@ -324,11 +332,14 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             }
         }
     }
+    edm::LogWarning("MyInfoLog") << "Analyze method complete";
+
 }
 
 void DiamondTimingWorker::bookHistograms(DQMStore::IBooker& iBooker,
                                          edm::Run const& run,
                                          edm::EventSetup const& iSetup) {
+    edm::LogWarning("MyInfoLog") << "Entering bookHistograms method";
     std::string ch_path;
     geom = iSetup.getHandle(geomEsToken_);
     for (auto it = (*geom).beginSensor(); it != (*geom).endSensor(); ++it) {
@@ -340,7 +351,11 @@ void DiamondTimingWorker::bookHistograms(DQMStore::IBooker& iBooker,
 
         if (histos.trk_time_SPC.count({detid.arm(), detid.station()}) == 0) {
             std::string station_path;
+            edm::LogWarning("MyInfoLog") << "Before stationName method";
+
             detid.stationName(station_path, CTPPSDiamondDetId::nPath);
+
+            edm::LogWarning("MyInfoLog") << "After stationName method";
 
             iBooker.setCurrentFolder(station_path);
 
