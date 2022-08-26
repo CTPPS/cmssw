@@ -51,12 +51,22 @@ public:
 	inline int GetMux(const PlaneKey& planeKey) 			{return Mux_map_[planeKey];}
 	inline int GetMuxValidT(const PlaneKey& planeKey) 	{return Mux_validT_map_[planeKey];}
 	inline int GetMuxInTrack(const PlaneKey& planeKey) 	{return Mux_inTrack_map_[planeKey];}
+	inline std::map<PlaneKey, int> GetMuxInTrackMap() 	{return Mux_inTrack_map_;}
 	
 	inline bool PadActive(const ChannelKey& key)   			
 	{ return (RecHit_map_.find(key) != RecHit_map_.end());}
 	
 	inline double GetTime(const ChannelKey& key)
 	{return RecHit_map_[key].at(0).time();}
+
+	inline std::vector<CTPPSDiamondRecHit> getRecHitVector(const ChannelKey& key)
+	{return RecHit_map_[key];}
+
+	inline std::map<ChannelKey, std::vector<CTPPSDiamondRecHit>> getRecHitMap()
+	{return RecHit_map_;}
+
+	inline bool isRecHitEmpty(const ChannelKey& key)
+	{return RecHit_map_[key].size() == 0;}
 	
 	inline double GetPadPrecision(const ChannelKey& key)
 	{return SPC_map_[key].precision;}
