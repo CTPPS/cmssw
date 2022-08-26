@@ -5,8 +5,9 @@ from Geometry.VeryForwardGeometry.geometryRPFromDB_cfi import *
 
 process = cms.Process("TIMINGSTUDY")
 options = VarParsing ('analysis')
+saveToDQM = False
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
 process.verbosity = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 # minimum of logs
@@ -45,7 +46,8 @@ process.load('Configuration.StandardSequences.Services_cff')
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi')
+# process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
+process.load('Geometry.VeryForwardGeometry.geometryRPFromDD_2022_cfi')
 
 
 process.source = cms.Source("PoolSource",
@@ -61,7 +63,8 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '124X_dataRun3_v9', '')
 if options.calibInput == '':
     process.GlobalTag.toGet = cms.VPSet(
         cms.PSet(record = cms.string('PPSTimingCalibrationRcd'),
-                    tag = cms.string('PPSDiamondTimingCalibration_v1'),
+                    tag = cms.string('PPSDiamondTimingCalibration_Run3_v1_hlt'), # working tag: PPSDiamondTimingCalibration_Run3_v1_hlt
+                    #TODO: old tag PPSDiamondTimingCalibration_v1  - to delete
                 connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
                 )
     )
@@ -89,9 +92,27 @@ process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
 #process.TFileService = cms.Service("TFileService",
 #    fileName = cms.string(options.outputFile)
 #)
+if(saveToDQM):
+    process.load("DQMServices.Core.DQMStore_cfi")
+    process.load("DQMServices.Components.DQMEnvironment_cfi")
+    process.dqmEnv.subSystemFolder = "CalibPPS"
+    process.dqmSaver.convention = 'Offline'
+    process.dqmSaver.workflow = "/CalibPPS/TimingCalibration/CMSSW_12_0_0_pre2"
+    process.dqmSaver.saveByRun = -1
+    process.dqmSaver.saveAtJobEnd = True
+    process.dqmSaver.forceRunNumber = 999999
+
+
+    process.dqmOutput = cms.OutputModule("DQMRootOutputModule",
+        fileName = cms.untracked.string("harvester_output.root")
+    )
+
+    process.load("DQMServices.Components.EDMtoMEConverter_cff")
+
+else: 
+    process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string(options.outputFileName))
 
 process.DQMStore = cms.Service("DQMStore")
-process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string(options.outputFileName))
 
 #print(vars(process))
 
@@ -99,7 +120,12 @@ process.path = cms.Path(
    process.diamondTimingWorker
 )
 
-process.end_path = cms.EndPath(process.dqmOutput)
+if(saveToDQM):
+    process.end_path = cms.EndPath(
+    process.dqmEnv +
+    process.dqmSaver)
+else:
+    process.end_path = cms.EndPath(process.dqmOutput)
 
 process.schedule = cms.Schedule(
     process.path,
