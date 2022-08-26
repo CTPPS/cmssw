@@ -57,7 +57,10 @@ void DiamondDetectorClass::ExtractData(){
 
 		// retrieve and order all events in map. 
 		for (const auto& recHit : _recHits){ //rechit
-			if(((recHit.ootIndex() != (int)(SPC_map_[key].offset/25)) 
+			if(((recHit.ootIndex() != (int)(SPC_map_[key].offset/25)) // TODO: To be used with newest tag
+			edm::LogWarning("Offset") <<"Offset:" << SPC_map_[key].offset;
+			// if(((recHit.ootIndex() != 0) // TODO: To be used with newest tag
+			
 				&&  valid_OOT_!=-1) ||  recHit.multipleHits()) continue;
 			
 			
