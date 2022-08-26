@@ -263,6 +263,9 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         int active_num = std::count_if(active_plane.begin(), active_plane.end(), [](bool it) -> bool{return it;});
         edm::LogWarning("ActivePlaneNumber") << active_num;
 
+        //EDO suggestion
+        if(active_num < 4) continue;
+
         //we don't check active planes here, because each channel might require different number of them
         edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
         bool mark_tag = DiamondDet.GetTrackMuxInSector(sector) == 1;
