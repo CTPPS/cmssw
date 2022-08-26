@@ -13,8 +13,8 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 options.register ('rootFiles',
-				  [],
-				  VarParsing.multiplicity.list,
+				  '', 
+                  VarParsing.multiplicity.singleton, #TODO: it was designed to be a list revert change before merging
 				  VarParsing.varType.string,
 				  "root files produced by DQMWorker")
 
@@ -37,7 +37,7 @@ options.register ('calibInput',
 				  "Input file")
 
 options.register ('geometryFile',
-				  'Geometry.VeryForwardGeometry.geometryRPFromDD_2018_cfi',
+				  'Geometry.VeryForwardGeometry.geometryRPFromDD_2022_cfi',
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.string,
 				  "Geometry input file")
@@ -82,12 +82,12 @@ process.source = cms.Source("DQMRootSource",
 
 from DQMServices.Core.DQMEDHarvester import DQMEDHarvester
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '106X_dataRun2_v26', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '124X_dataRun3_v9', '')
 
 if options.calibInput == '':
     process.GlobalTag.toGet = cms.VPSet(
         cms.PSet(record = cms.string('PPSTimingCalibrationRcd'),
-                    tag = cms.string('PPSDiamondTimingCalibration_v1'),
+                    tag = cms.string('PPSDiamondTimingCalibration_Run3_v1_hlt'),
                 connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
                 )
     )
@@ -116,7 +116,7 @@ process.diamondTimingHarvester = DQMEDHarvester("DiamondTimingHarvester",
 process.dqmEnv.subSystemFolder = "CalibPPS"
 process.dqmSaver.convention = 'Offline'
 process.dqmSaver.workflow = "/Analyzer/DiamondTimingAnalyzer/CMSSW_11_1_8"
-#process.dqmSaver.dirName = './OutputFiles/'
+process.dqmSaver.dirName = './OutputFiles/' # TODO: it was commented out - revert the change before merge
 
 process.path = cms.Path(
    process.diamondTimingHarvester
