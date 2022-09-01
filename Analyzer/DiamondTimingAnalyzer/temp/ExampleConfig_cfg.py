@@ -11,7 +11,7 @@ process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(1000)
+    input = cms.untracked.int32(100000)
 )
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
@@ -57,18 +57,21 @@ process.PoolDBESSource = cms.ESSource('PoolDBESSource',
 
 # JH - rerun reco sequence with new timing conditions
 process.load("RecoPPS.Configuration.recoCTPPS_cff")
-process.ctppsDiamondLocalTracks.recHitsTag = cms.InputTag("ctppsDiamondRecHits","","PPSTiming2")
+process.ctppsDiamondLocalTracks.recHitsTag = cms.InputTag("ctppsDiamondRecHitsAlCaRecoProducer")
 process.ctppsLocalTrackLiteProducer.tagDiamondTrack = cms.InputTag("ctppsDiamondLocalTracks","","PPSTiming2")
 process.ctppsProtons.tagLocalTrackLite = cms.InputTag("ctppsLocalTrackLiteProducer","","PPSTiming2")
 process.ctppsLocalTrackLiteProducer.includeDiamonds = cms.bool(True)
+process.ctppsLocalTrackLiteProducer.tagPixelTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer")
 process.ctppsLocalTrackLiteProducer.includePixels = cms.bool(True)
-process.ctppsDiamondRecHits.timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration")
+process.ctppsDiamondRecHits.timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration")
+process.ctppsDiamondRecHits.digiTag= cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer:TimingDiamond")
 
 from DQMServices.Core.DQMEDAnalyzer import DQMEDAnalyzer
 process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
     tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
     tagRecHit = cms.InputTag("ctppsDiamondRecHits","","PPSTiming2"),
     tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
+    timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
     tagLocalTrack = cms.InputTag("ctppsDiamondLocalTracks","","PPSTiming2"),
     tagValidOOT = cms.int32(-1),
     planesConfig = cms.string("planes.json"),
@@ -87,9 +90,9 @@ process.ALL = cms.Path(
     process.diamondTimingWorker
                        )
 
-# process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string("temp_run_output.root"))
+process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string("temp_run_output.root"))
 
-# process.end_path = cms.EndPath(process.dqmOutput)
+process.end_path = cms.EndPath(process.dqmOutput)
 
 
 process.schedule = cms.Schedule(process.ALL)
