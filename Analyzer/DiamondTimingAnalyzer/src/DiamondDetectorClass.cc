@@ -45,7 +45,7 @@ void DiamondDetectorClass::ExtractData(){
 		for (const auto& locTrack : locTracks){
 			if((valid_OOT_==2) && (locTrack.ootIndex() != valid_OOT_) && (locTrack.ootIndex() != valid_OOT_+1)) continue;
 			if (valid_OOT_!=2 && (locTrack.ootIndex() != valid_OOT_) &&  valid_OOT_!=-1 ) continue;
-			
+			//TODO: confirm if LocalTrackMap is filled corectly
 			LocalTrack_map_.insert(std::make_pair(locTrack, std::vector<std::pair<ChannelKey,CTPPSDiamondRecHit>>()));
 		}
 	}
