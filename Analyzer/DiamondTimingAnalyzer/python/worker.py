@@ -7,7 +7,7 @@ process = cms.Process("TIMINGSTUDY")
 options = VarParsing ('analysis')
 saveToDQM = False
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.verbosity = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 # minimum of logs
@@ -53,7 +53,9 @@ process.load('Geometry.VeryForwardGeometry.geometryRPFromDD_2022_cfi')
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
     # "file:/eos/cms/store/data/Run2022B/AlCaPPS/RAW/v1/000/355/207/00000/c23440f4-49c0-44aa-b8f6-f40598fb4705.root"
-    "file:/eos/home-m/mobrzut/357/734/00000/73c5eeec-578d-438f-92f1-3e1fff2ed390.root"
+    "file:/eos/home-m/mobrzut/357/734/00000/73c5eeec-578d-438f-92f1-3e1fff2ed390.root",
+    "file:/eos/home-m/mobrzut/357/734/00000/08e5ee70-ebff-4571-b14c-806961a3d9dd.root",
+    "file:/eos/home-m/mobrzut/357/734/00000/d42eaf2c-57bb-48fe-9a22-317053f89115.root"
 ))
 
 from DQMServices.Core.DQMEDAnalyzer import DQMEDAnalyzer
@@ -85,8 +87,8 @@ process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
     tagLocalTrack = cms.InputTag("ctppsDiamondLocalTracksAlCaRecoProducer"),
     tagValidOOT = cms.int32(-1),
     planesConfig = cms.string(options.planesConfig),
-    Ntracks_Lcuts = cms.vint32([-1,1,-1,1]),
-    Ntracks_Ucuts = cms.vint32([-1,6,-1,6]),
+    Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+    Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
 )
 
 #process.TFileService = cms.Service("TFileService",
