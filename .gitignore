@@ -15,9 +15,13 @@ __init__.py
 /*
 !/*/
 
-# ignore some IDE related files
-*.xcodeproj
-.vscode
+harvester_log_*.txt
+Logs/*
+worker_log_*.txt
+DQM_V*
+OutputFiles/*
 
-#ignore mac specific file
-.DS_Store
+*.root
+run_output.root
+Analyzer/DiamondTimingAnalyzer/run_output.root
+crab_DiamondTimingRes*
