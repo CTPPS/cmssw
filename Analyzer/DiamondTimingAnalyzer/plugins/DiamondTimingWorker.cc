@@ -117,9 +117,10 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
     tokenPixelLocalTrack_(
         consumes<edm::DetSetVector<CTPPSPixelLocalTrack>>(iConfig.getParameter<edm::InputTag>("tagPixelLocalTrack"))),
     geomEsToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord, edm::Transition::BeginRun>()),
-    calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>()),
+    // calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>()),
     validOOT(iConfig.getParameter<int>("tagValidOOT")) {
-    
+    calibEsToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>(
+        edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
     Ntracks_cuts_map_[std::make_pair(SECTOR::_45_ID, STATION::_210_M_ID)] =
         std::make_pair(iConfig.getParameter<std::vector<int>>("Ntracks_Lcuts")[0],
                        iConfig.getParameter<std::vector<int>>("Ntracks_Ucuts")[0]);
@@ -239,13 +240,16 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
     //which planes are active
     std::array<bool, 4> active_plane{ {false, false, false, false} };
     for (auto& item: DiamondDet.GetMuxInTrackMap()){
-               edm::LogWarning("MuxInTrackMap") <<  item.first << " " << item.second;
+               edm::LogWarning("MuxInTrackMap") << "Mux In Track Map item1:" << item.first << " item2: " << item.second;
     }
+
     for (const auto& LocalTrack_mapIter : DiamondDet.GetDiamondTrack_map()) {  // loop on predigested tracks
+        edm::LogWarning("DiamondTrackMapAKALocal") << "DiamondTrackMapSector:  z (sector): " << LocalTrack_mapIter.first.z0();
+
         int sector = LocalTrack_mapIter.first.z0() > 0.0 ? SECTOR::_45_ID : SECTOR::_56_ID; //TODO
 
-        if (!(Sector_TBA[sector]))
-            continue;
+        // if (!(Sector_TBA[sector]))
+        //     continue;
 
         if (LocalTrack_mapIter.second.size() == 0)
             continue;
@@ -253,15 +257,20 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         //station id
         int station = LocalTrack_mapIter.second.at(0).first.planeKey.station;
         auto stationKey = std::pair<int, int>{sector, station};
-        edm::LogWarning("SectorStationNumber") << "sector: " << sector << " station: " << station;
+        edm::LogWarning("SectorStationNumber") << "Sector Station:  sector: " << sector << " station: " << station;
         //which planes are active
         active_plane[0] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 0)) == 1;
         active_plane[1] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 1)) == 1;
         active_plane[2] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 2)) == 1;
         active_plane[3] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 3)) == 1;
+        edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 0 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 0));
+        edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 1 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 1));
+        edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 2 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 2));
+        edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 3 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 3));
+
         //number of active planes
         int active_num = std::count_if(active_plane.begin(), active_plane.end(), [](bool it) -> bool{return it;});
-        edm::LogWarning("ActivePlaneNumber") << active_num;
+        edm::LogWarning("ActivePlaneNumber") << "Active Plane Number: " << active_num;
 
         //EDO suggestion
         if(active_num < 4) continue;
@@ -281,7 +290,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             auto& key = (*hit_iter).first;
 
             if(!active_plane[key.planeKey.plane]) {
-                edm::LogWarning("HitSelectedFillingNotActive") << "Key ";
+                edm::LogWarning("HitSelectedFillingNotActive") << "Key "<< key.planeKey.plane;
                 continue;
             }
 
