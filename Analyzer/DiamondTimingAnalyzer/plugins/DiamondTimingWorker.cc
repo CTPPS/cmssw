@@ -149,7 +149,7 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
 
 void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
     using namespace edm;
-    edm::LogWarning("MyInfoLog") << "Entering analyze method";
+    // edm::LogWarning("MyInfoLog") << "Entering analyze method";
     //retrieve data
     edm::Handle<edm::DetSetVector<CTPPSDiamondRecHit>> recHits; // TODO
     edm::Handle<edm::DetSetVector<CTPPSDiamondLocalTrack>> localTracks;
@@ -160,7 +160,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
     iEvent.getByToken(tokenLocalTrack_, localTracks);
     iEvent.getByToken(tokenPixelLocalTrack_, pixelLocalTracks);
     calib = iSetup.getHandle(calibEsToken_);
-    edm::LogWarning("MyInfoLog") << "analyze method read tokens complete";
+    // edm::LogWarning("MyInfoLog") << "analyze method read tokens complete";
 
     DiamondDetectorClass DiamondDet(validOOT, *geom, *recHits, *localTracks, DiamondTimingCalibration(*calib));
 
@@ -176,7 +176,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
     for (const auto& RP_trks : *pixelLocalTracks) {  //array of tracks
         const CTPPSDetId detId(RP_trks.detId());
-        edm::LogWarning("TrackInArm") << "Tracks in arm " << detId.arm() << ", station " << detId.station() << ", rp " << detId.rp();
+        // edm::LogWarning("TrackInArm") << "Tracks in arm " << detId.arm() << ", station " << detId.station() << ", rp " << detId.rp();
 
         for (const auto& trk : RP_trks) {
             if (!trk.isValid())
@@ -184,7 +184,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             Pixel_Mux_map_[std::make_pair(detId.arm(), detId.station())]++;
         }
     }
-    edm::LogWarning("MyInfoLog") << "analyze method: Sector_TBA filled complete";
+    // edm::LogWarning("MyInfoLog") << "analyze method: Sector_TBA filled complete";
 
     for (const auto& Ntracks_cuts_iter_ : Ntracks_cuts_map_) {
         if ((Ntracks_cuts_iter_.second.first < 0) || (Ntracks_cuts_iter_.second.second < 0))
@@ -193,7 +193,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             (Pixel_Mux_map_[Ntracks_cuts_iter_.first] > Ntracks_cuts_iter_.second.second))  //condition violated
             Sector_TBA[Ntracks_cuts_iter_.first.first] = false;
     }
-    edm::LogWarning("MyInfoLog") << "analyze method: Pixel MAP complete";
+    // edm::LogWarning("MyInfoLog") << "analyze method: Pixel MAP complete";
 
 
     if (!(Sector_TBA[0] || Sector_TBA[1]))
@@ -204,7 +204,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
     //		control over PCL calibration quality
     //
     /////////////////////////////////////////////////////////////////
-    edm::LogWarning("MyInfoLog") << "Analyze method: begin of control over PCL calibration quality";
+    // edm::LogWarning("MyInfoLog") << "Analyze method: begin of control over PCL calibration quality";
 
     for (const auto& _recHits : *recHits) {  //rechits = array of hits in one channel
         const CTPPSDiamondDetId detid(_recHits.detId());
@@ -235,16 +235,16 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
     //		RESOLUTION STUDIES
     //
     /////////////////////////////////////////////////////////////////
-    edm::LogWarning("MyInfoLog") << "Analyze method: begin of resolution studies";
+    // edm::LogWarning("MyInfoLog") << "Analyze method: begin of resolution studies";
 
     //which planes are active
     std::array<bool, 4> active_plane{ {false, false, false, false} };
-    for (auto& item: DiamondDet.GetMuxInTrackMap()){
-               edm::LogWarning("MuxInTrackMap") << "Mux In Track Map item1:" << item.first << " item2: " << item.second;
-    }
+    // for (auto& item: DiamondDet.GetMuxInTrackMap()){
+               // edm::LogWarning("MuxInTrackMap") << "Mux In Track Map item1:" << item.first << " item2: " << item.second;
+    // }
 
     for (const auto& LocalTrack_mapIter : DiamondDet.GetDiamondTrack_map()) {  // loop on predigested tracks
-        edm::LogWarning("DiamondTrackMapAKALocal") << "DiamondTrackMapSector:  z (sector): " << LocalTrack_mapIter.first.z0();
+        // edm::LogWarning("DiamondTrackMapAKALocal") << "DiamondTrackMapSector:  z (sector): " << LocalTrack_mapIter.first.z0();
 
         int sector = LocalTrack_mapIter.first.z0() > 0.0 ? SECTOR::_45_ID : SECTOR::_56_ID; //TODO
 
@@ -257,26 +257,26 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         //station id
         int station = LocalTrack_mapIter.second.at(0).first.planeKey.station;
         auto stationKey = std::pair<int, int>{sector, station};
-        edm::LogWarning("SectorStationNumber") << "Sector Station:  sector: " << sector << " station: " << station;
+        // edm::LogWarning("SectorStationNumber") << "Sector Station:  sector: " << sector << " station: " << station;
         //which planes are active
         active_plane[0] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 0)) == 1;
         active_plane[1] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 1)) == 1;
         active_plane[2] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 2)) == 1;
         active_plane[3] = DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 3)) == 1;
-        edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 0 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 0));
-        edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 1 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 1));
-        edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 2 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 2));
-        edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 3 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 3));
+        // edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 0 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 0));
+        // edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 1 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 1));
+        // edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 2 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 2));
+        // edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 3 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 3));
 
         //number of active planes
         int active_num = std::count_if(active_plane.begin(), active_plane.end(), [](bool it) -> bool{return it;});
-        edm::LogWarning("ActivePlaneNumber") << "Active Plane Number: " << active_num;
+        // edm::LogWarning("ActivePlaneNumber") << "Active Plane Number: " << active_num;
 
         //EDO suggestion
         if(active_num < 4) continue;
 
         //we don't check active planes here, because each channel might require different number of them
-        edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
+        // edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
         bool mark_tag = DiamondDet.GetTrackMuxInSector(sector) == 1;
 
         std::vector<ChannelKey> hit_selected(PLANES_X_DETECTOR);
@@ -290,7 +290,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             auto& key = (*hit_iter).first;
 
             if(!active_plane[key.planeKey.plane]) {
-                edm::LogWarning("HitSelectedFillingNotActive") << "Key "<< key.planeKey.plane;
+                // edm::LogWarning("HitSelectedFillingNotActive") << "Key "<< key.planeKey.plane;
                 continue;
             }
 
@@ -299,10 +299,10 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             double hit_weig_SPC = DiamondDet.GetPadWeight(key);
 
             if (mark_tag) {
-                edm::LogWarning("HitSelectedIsFilling")  << "mark_tag true. " << "Key "<< key << "key.planeKey.plane "<< key.planeKey.plane;
+                // edm::LogWarning("HitSelectedIsFilling")  << "mark_tag true. " << "Key "<< key << "key.planeKey.plane "<< key.planeKey.plane;
                 hit_selected[key.planeKey.plane] = key;  // save for resolution reco
             } else {
-                edm::LogWarning("HitSelectedIsNotFilling") << "mark_tag false. " << "Key "<< key;
+                // edm::LogWarning("HitSelectedIsNotFilling") << "mark_tag false. " << "Key "<< key;
             }
             Track_time_SPC = (Track_time_SPC * pow(Track_precision_SPC, -2) + hit_time_SPC * hit_weig_SPC) /
                              (pow(Track_precision_SPC, -2) + hit_weig_SPC);
@@ -316,42 +316,42 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         histos.trk_time_SPC_vs_LS[stationKey]->Fill(iEvent.luminosityBlock(), Track_time_SPC);
 
         if (mark_tag) {
-            edm::LogWarning("RecHitMap") << "Analyze method: RecHitMap Size: " << DiamondDet.getRecHitMap().size();
+            // edm::LogWarning("RecHitMap") << "Analyze method: RecHitMap Size: " << DiamondDet.getRecHitMap().size();
 
-            edm::LogWarning("HitSelectedVector") << "Analyze method: hit_selected vector:  ";
-            for (auto item_hs: hit_selected) {
-                edm::LogWarning("HitSelectedVector") << "hit_selected vector item:  " << item_hs;
-            }
+            // edm::LogWarning("HitSelectedVector") << "Analyze method: hit_selected vector:  ";
+            // for (auto item_hs: hit_selected) {
+            //     // edm::LogWarning("HitSelectedVector") << "hit_selected vector item:  " << item_hs;
+            // }
             // MarkLoop
             for (int pl_mark = 0; pl_mark < PLANES_X_DETECTOR; pl_mark++) {
                 if(!active_plane[pl_mark]) {
-                    if(pl_mark + 1 == PLANES_X_DETECTOR)   edm::LogWarning("MarkLoopNoPlaneActive") << "No Plane active";
+                    // if(pl_mark + 1 == PLANES_X_DETECTOR)   edm::LogWarning("MarkLoopNoPlaneActive") << "No Plane active";
                     continue;
                 }
-                edm::LogWarning("MarkLoopBegin") << "****************** BEGIN OF THE LOOP ********************* ";
-                edm::LogWarning("MarkLoopPlMarkInfo") << "pl_mark: " << pl_mark;
+                // edm::LogWarning("MarkLoopBegin") << "****************** BEGIN OF THE LOOP ********************* ";
+                // edm::LogWarning("MarkLoopPlMarkInfo") << "pl_mark: " << pl_mark;
 
 
                 double Marked_track_time = 12.5;
                 double Marked_track_precision = 25.0;
 
 
-                // edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: get item hit_selected for pl_mark: " << pl_mark  << " value " << hit_selected[pl_mark];
+                // // edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: get item hit_selected for pl_mark: " << pl_mark  << " value " << hit_selected[pl_mark];
                     
-                edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: recHit vector size " << DiamondDet.getRecHitVector(hit_selected[pl_mark]).size();
-                for(const CTPPSDiamondRecHit& item: DiamondDet.getRecHitVector(hit_selected[pl_mark])) {
-                    edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: recHit vector element: " << item.tPrecision();
-                }
+                // edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: recHit vector size " << DiamondDet.getRecHitVector(hit_selected[pl_mark]).size();
+                // for(const CTPPSDiamondRecHit& item: DiamondDet.getRecHitVector(hit_selected[pl_mark])) {
+                //     // edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: recHit vector element: " << item.tPrecision();
+                // }
 
                 if(DiamondDet.isRecHitEmpty(hit_selected[pl_mark])) {
-                    edm::LogWarning("MarkLoopContinueGtErr") << "REC VECTOR IS EMPTY FOR PL_MARK: " << pl_mark;
-                    edm::LogWarning("Info") << "-------------- - --------------------------------------------";
+                    // edm::LogWarning("MarkLoopContinueGtErr") << "REC VECTOR IS EMPTY FOR PL_MARK: " << pl_mark;
+                    // edm::LogWarning("Info") << "-------------- - --------------------------------------------";
                     continue;
                 }
 
 
                 double Marked_hit_time = DiamondDet.GetTime(hit_selected[pl_mark]); //TODO: error is thrown here
-                edm::LogWarning("MarkLoopGetTimeWorked") << "Get time worked for pl mark: " << pl_mark;
+                // edm::LogWarning("MarkLoopGetTimeWorked") << "Get time worked for pl mark: " << pl_mark;
 
                 int Marked_hit_channel = hit_selected[pl_mark].channel;
 
@@ -364,13 +364,13 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
                     if(!active_plane[pl_loop]) continue;
                     if (pl_loop == pl_mark) continue;
                     if(DiamondDet.isRecHitEmpty(hit_selected[pl_loop])) {
-                            // edm::LogWarning("GetTimeWorked") << hit_selected[pl_loop];
-			                edm::LogWarning("MarkLoopPlLoopContinueGtErr") << "Get Time is Empty ";
+                            // // edm::LogWarning("GetTimeWorked") << hit_selected[pl_loop];
+			                // edm::LogWarning("MarkLoopPlLoopContinueGtErr") << "Get Time is Empty ";
 			                continue;
 		            }
                     double Others_hit_time = DiamondDet.GetTime(hit_selected[pl_loop]);
                     double Others_hit_weig = DiamondDet.GetPadWeight(hit_selected[pl_loop]);
-                    edm::LogWarning("MarkLoopPlLoopComplete") << "After the get time protection";
+                    // edm::LogWarning("MarkLoopPlLoopComplete") << "After the get time protection";
 
                     Marked_track_time =
                         (Marked_track_time * pow(Marked_track_precision, -2) + Others_hit_time * Others_hit_weig) /
@@ -384,18 +384,18 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
                 histos.l2_res[key]->Fill(Marked_hit_difference);
                 histos.trk_time[key]->Fill(Marked_track_time);
                 histos.expected_trk_time_res[key]->Fill(Marked_track_precision);
-                edm::LogWarning("MarkLoopComplete") << "MarkLoopComplete";
+                // edm::LogWarning("MarkLoopComplete") << "MarkLoopComplete";
             }
         }
     }
-    edm::LogWarning("AnalyzeComplete") << "Analyze method complete";
+    // edm::LogWarning("AnalyzeComplete") << "Analyze method complete";
 
 }
 
 void DiamondTimingWorker::bookHistograms(DQMStore::IBooker& iBooker,
                                          edm::Run const& run,
                                          edm::EventSetup const& iSetup) {
-    edm::LogWarning("MyInfoLog") << "Entering bookHistograms method";
+    // edm::LogWarning("MyInfoLog") << "Entering bookHistograms method";
     std::string ch_path;
     geom = iSetup.getHandle(geomEsToken_);
     for (auto it = (*geom).beginSensor(); it != (*geom).endSensor(); ++it) {
@@ -405,9 +405,10 @@ void DiamondTimingWorker::bookHistograms(DQMStore::IBooker& iBooker,
         const CTPPSDiamondDetId detid(it->first);
         ChannelKey key(detid);
 
+        // Booking summary histograms for station
         if (histos.trk_time_SPC.count({detid.arm(), detid.station()}) == 0) {
             std::string station_path;
-            edm::LogWarning("bookHistograms") << "Before stationName method";
+            // edm::LogWarning("bookHistograms") << "Before stationName method";
 
             detid.stationName(station_path, CTPPSDiamondDetId::nPath);
 
@@ -434,7 +435,8 @@ void DiamondTimingWorker::bookHistograms(DQMStore::IBooker& iBooker,
         iBooker.setCurrentFolder(ch_path);
 
         std::string name;
-
+        
+        // Booking histograms for channels
         name = "Time distribution " + ch_name;
         histos.t[key] = iBooker.book1D(name.c_str(), (name + ";t (ns);Entries").c_str(), 1200, -60., 60.);
 
