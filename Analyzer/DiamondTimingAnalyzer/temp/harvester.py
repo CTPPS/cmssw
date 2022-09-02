@@ -83,19 +83,20 @@ process.source = cms.Source("DQMRootSource",
 from DQMServices.Core.DQMEDHarvester import DQMEDHarvester
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '124X_dataRun3_v9', '')
-process.CondDB.connect = 'sqlite_file:/afs/cern.ch/user/m/mobrzut/automation/timing_calibration/CMSSW_12_4_6/src/Analyzer/DiamondTimingAnalyzer/temp/ppsDiamondTiming_calibration357734.sqlite' # SQLite input
 
+process.CondDB.connect = 'sqlite_file:/afs/cern.ch/user/m/mobrzut/automation/timing_calibration/CMSSW_12_4_6/src/Analyzer/DiamondTimingAnalyzer/temp/ppsDiamondTiming_calibration357734.sqlite' # SQLite input
 process.PoolDBESSource = cms.ESSource('PoolDBESSource',
-	process.CondDB,
-	DumpStats = cms.untracked.bool(True),
-	toGet = cms.VPSet(
-		cms.PSet(
-			record = cms.string('PPSTimingCalibrationRcd'),
-			tag = cms.string('DiamondTimingCalibration'),
-			label = cms.untracked.string('PPSTestCalibration')
-		)
-	)
-)
+        process.CondDB,
+        DumpStats = cms.untracked.bool(True),
+        toGet = cms.VPSet(
+            cms.PSet(
+                record = cms.string('PPSTimingCalibrationRcd'),
+                tag = cms.string('DiamondTimingCalibration'),
+				label = cms.untracked.string('PPSTestCalibration'), 
+            )
+        )
+    )
+
 
 # if options.calibInput == '':
 #     process.PoolDBESSource = cms.ESSource('PoolDBESSource',
@@ -122,7 +123,9 @@ process.load("DQMServices.Components.DQMEnvironment_cfi")
 process.load(options.geometryFile)
 
 process.diamondTimingHarvester = DQMEDHarvester("DiamondTimingHarvester",
-   timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
+#    timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
+#    timingCalibrationTag=cms.InputTag("PoolDBESSource:PPSTestCalibration"),
+
    calib_json_output = cms.string(options.calibOutput),
    calibInput = cms.string(options.calibInput),
    calibFiles = cms.vstring(options.calibFiles),

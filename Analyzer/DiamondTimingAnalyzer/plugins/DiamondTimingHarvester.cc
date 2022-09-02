@@ -94,7 +94,7 @@ private:
 DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
     : 
     geomEsToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord, edm::Transition::EndRun>()),
-    calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd, edm::Transition::EndRun>()),
+    calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd, edm::Transition::EndRun>(edm::ESInputTag("PoolDBESSource:PPSTestCalibration"))),
     output_file(iConfig.getParameter<std::string>("calib_json_output")),
     calib_files(iConfig.getParameter<std::vector<std::string>>("calibFiles")),
     loop_index(iConfig.getParameter<int>("loopIndex")),
@@ -104,6 +104,9 @@ DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
     if(calib_files.size() != (long unsigned int)loop_index){
         edm::LogError("DiamondTimingHarvester")<<"Not enough calibration files";
     }
+
+    // calibEsToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd,  edm::Transition::EndRun>(
+    // edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
 
     calibs.push_back(DiamondTimingCalibration()); //empty to be replaced by input calibration to first iteration
     for(auto& file : calib_files){
@@ -136,7 +139,9 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
 
     //get data
     const auto& geom = iSetup.getData(geomEsToken_);
-    calibs[0] = DiamondTimingCalibration(iSetup.getData(calibEsToken_));
+    edm::ESHandle<PPSTimingCalibration> calibEsTokenHandle_ = iSetup.getHandle(calibEsToken_);
+    calibs[0] = DiamondTimingCalibration(*calibEsTokenHandle_);
+    edm::LogWarning("Cailbs") << "calibs[0]" << calibs[0];
     const auto& calib = calibs[loop_index];
 
     std::string ch_name, ch_path;
