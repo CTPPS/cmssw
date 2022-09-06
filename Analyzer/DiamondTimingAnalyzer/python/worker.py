@@ -7,7 +7,7 @@ process = cms.Process("TIMINGSTUDY")
 options = VarParsing ('analysis')
 saveToDQM = False
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(30000) )
 process.verbosity = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 # minimum of logs
@@ -106,7 +106,7 @@ if(saveToDQM):
 
 
     process.dqmOutput = cms.OutputModule("DQMRootOutputModule",
-        fileName = cms.untracked.string("harvester_output.root")
+        fileName = cms.untracked.string("worker_output.root")
     )
 
     process.load("DQMServices.Components.EDMtoMEConverter_cff")
