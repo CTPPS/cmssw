@@ -115,7 +115,7 @@ process.diamondTimingHarvester = DQMEDHarvester("DiamondTimingHarvester",
 #CONFIGURE DQM Saver
 process.dqmEnv.subSystemFolder = "CalibPPS"
 process.dqmSaver.convention = 'Offline'
-process.dqmSaver.workflow = "/Analyzer/DiamondTimingAnalyzer/CMSSW_11_1_8"
+process.dqmSaver.workflow = "/AnalyzerWithShift9/DiamondTimingAnalyzer/CMSSW_12_4_6"
 process.dqmSaver.dirName = './OutputFiles/' # TODO: it was commented out - revert the change before merge
 
 process.path = cms.Path(
