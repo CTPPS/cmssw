@@ -1,30 +1,61 @@
-
 import FWCore.ParameterSet.Config as cms
 import copy
+from FWCore.ParameterSet.VarParsing import VarParsing
 
-process = cms.Process('PPSTiming2')
+# TEMP config:
+apply_shift = True                                        
+use_sqlite_file=True
+saveToDQM = False
 
-# import of standard configurations
-process.load('Configuration.StandardSequences.Services_cff')
+
+process = cms.Process('PPSTiming2') # or TIMINGSTUDY??
+options = VarParsing ('analysis')
+
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
+process.verbosity = cms.untracked.PSet( input = cms.untracked.int32(-1) ) # TODO: confirm if this is needed.
+
 process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('Configuration.EventContent.EventContent_cff')
-process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-
-process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(30000)
-)
-
-process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.threshold = ''
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
+options.register ('outputFileName',
+		  'run_output.root',
+		  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.string,
+                  "output file name")
+
+options.register ('calibInput',
+				  '',
+				  VarParsing.multiplicity.singleton,
+				  VarParsing.varType.string,
+				  "Calibration input file for this iteration")
+
+options.register ('planesConfig',
+				  'planes.json',
+				  VarParsing.multiplicity.singleton,
+				  VarParsing.varType.string,
+				  "planes config file")
+
+options.register ('validOOT',
+				  -1,
+				  VarParsing.multiplicity.singleton,
+				  VarParsing.varType.int,
+				  "valid OOT slice")		
+			  				  
+options.parseArguments()
 
 
+# import of standard configurations
+process.load('Configuration.StandardSequences.Services_cff')
+process.load('Configuration.EventContent.EventContent_cff')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+# process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
+process.load('Geometry.VeryForwardGeometry.geometryRPFromDD_2022_cfi')
 
 process.source = cms.Source ("PoolSource",
                              fileNames = cms.untracked.vstring(
-    "file:/eos/home-m/mobrzut/357/734/00000/73c5eeec-578d-438f-92f1-3e1fff2ed390.root",   
-    "file:/eos/home-m/mobrzut/357/734/00000/08e5ee70-ebff-4571-b14c-806961a3d9dd.root",
+    # "file:/eos/home-m/mobrzut/357/734/00000/73c5eeec-578d-438f-92f1-3e1fff2ed390.root",   
+    # "file:/eos/home-m/mobrzut/357/734/00000/08e5ee70-ebff-4571-b14c-806961a3d9dd.root",
     "file:/eos/home-m/mobrzut/357/734/00000/d42eaf2c-57bb-48fe-9a22-317053f89115.root"
 # "file:/eos/home-m/mobrzut/357/479/00000/68a5a64a-b756-4cf5-9a2a-00181e34f501.root"
 # RUN 442 - "357442": [[1,1392]],
@@ -48,25 +79,42 @@ process.GlobalTag = GlobalTag(process.GlobalTag, "124X_dataRun3_v9")
 
 
 #JH - use new tag for timing calibrations
+if (use_sqlite_file):                                        
+        process.load('CondCore.CondDB.CondDB_cfi')
+        process.CondDB.connect = 'sqlite_file:/afs/cern.ch/user/m/mobrzut/public/timing_calibration_env/CMSSW_12_4_6/src/Analyzer/DiamondTimingAnalyzer/temp/ppsDiamondTiming_calibration357734.sqlite' # SQLite input TODO: migrate to using tag
+        process.PoolDBESSource = cms.ESSource('PoolDBESSource',
+                process.CondDB,
+                DumpStats = cms.untracked.bool(True),
+                toGet = cms.VPSet(
+                    cms.PSet(
+                        record = cms.string('PPSTimingCalibrationRcd'),
+                        tag = cms.string('DiamondTimingCalibration'),
+                                label = cms.untracked.string('PPSTestCalibration'), 
+                    )
+                )
+)
 
-
-
-                                        
-process.load('CondCore.CondDB.CondDB_cfi')
-process.CondDB.connect = 'sqlite_file:/afs/cern.ch/user/m/mobrzut/public/timing_calibration_env/CMSSW_12_4_6/src/Analyzer/DiamondTimingAnalyzer/temp/ppsDiamondTiming_calibration357734.sqlite' # SQLite input TODO: migrate to using tag
-process.PoolDBESSource = cms.ESSource('PoolDBESSource',
-        process.CondDB,
-        DumpStats = cms.untracked.bool(True),
-        toGet = cms.VPSet(
-            cms.PSet(
-                record = cms.string('PPSTimingCalibrationRcd'),
-                tag = cms.string('DiamondTimingCalibration'),
-                           label = cms.untracked.string('PPSTestCalibration'), 
-            )
-        )
+if options.calibInput == '':
+    print('') 
+    #TODO: uncomment below when delete sqlite file dependency 
+    # process.GlobalTag.toGet = cms.VPSet(
+    #     cms.PSet(record = cms.string('PPSTimingCalibrationRcd'),
+    #                 tag = cms.string('PPSDiamondTimingCalibration_Run3_v1_hlt'), # working tag: PPSDiamondTimingCalibration_Run3_v1_hlt
+    #                 #TODO: old tag PPSDiamondTimingCalibration_v1  - to delete
+    #             connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+    #             )
+    # )
+else:
+    process.ppsTimingCalibrationESSource = cms.ESSource('PPSTimingCalibrationESSource',
+        calibrationFile = cms.string(options.calibInput),
+        subDetector = cms.uint32(2),
+        appendToDataLabel = cms.string('')
     )
 
-apply_shift = True                                        
+# TODO: we miss tjhis from worker.py vvvvv
+#  rechits production
+#process.load('RecoPPS.Local.ctppsDiamondLocalReconstruction_cff')
+# ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # JH - rerun reco sequence with new timing conditions
 process.load("RecoPPS.Configuration.recoCTPPS_cff")
@@ -87,8 +135,8 @@ if(apply_shift):
         tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
         timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
         tagLocalTrack = cms.InputTag("ctppsDiamondLocalTracks","","PPSTiming2"),
-        tagValidOOT = cms.int32(-1),
-        planesConfig = cms.string("planes.json"),
+        tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
+        planesConfig = cms.string("planes.json"), #TODO: remove parameter from options or don't hardcode it. 
         Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     )
@@ -99,7 +147,7 @@ else:
     tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
     tagLocalTrack = cms.InputTag("ctppsDiamondLocalTracksAlCaRecoProducer"),
     timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
-    tagValidOOT = cms.int32(-1),
+    tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
     planesConfig = cms.string("planes.json"),
     Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
@@ -115,7 +163,6 @@ if(apply_shift):
 else: 
     process.ALL = cms.Path(process.diamondTimingWorker)
 
-saveToDQM = False
 if(saveToDQM):
     process.load("DQMServices.Core.DQMStore_cfi")
     process.load("DQMServices.Components.DQMEnvironment_cfi")
