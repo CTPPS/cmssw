@@ -1,17 +1,17 @@
 import FWCore.ParameterSet.Config as cms
 import copy
 from FWCore.ParameterSet.VarParsing import VarParsing
+from Geometry.VeryForwardGeometry.geometryRPFromDB_cfi import * # TODO it looks like it can be deleted
+
 
 # TEMP config:
-apply_shift = True                                        
-use_sqlite_file=True
+apply_shift = False                                        
 saveToDQM = False
 
 
 process = cms.Process('PPSTiming2') # or TIMINGSTUDY??
 options = VarParsing ('analysis')
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
 process.verbosity = cms.untracked.PSet( input = cms.untracked.int32(-1) ) # TODO: confirm if this is needed.
 
 process.load('FWCore.MessageService.MessageLogger_cfi')
@@ -40,24 +40,56 @@ options.register ('validOOT',
 				  -1,
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.int,
-				  "valid OOT slice")		
+				  "valid OOT slice")	
+options.register('useSQLFile', 
+                    '',
+				  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.string,
+                  'useSQLFileAsACalibration'
+)
+
+options.register('sqlFileName', 
+                    '',
+				  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.string,
+                  'sqlFileNameForCalib'
+)
+
+options.register('maxEventsToProcess', 
+                    -1,
+				  VarParsing.multiplicity.singleton,
+                  VarParsing.varType.int,
+                  'maxEvents to process'
+)
+
+
 			  				  
 options.parseArguments()
+
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
+
 
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-# process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
-process.load('Geometry.VeryForwardGeometry.geometryRPFromDD_2022_cfi')
+process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
+# process.load('Geometry.VeryForwardGeometry.geometryRPFromDD_2022_cfi')
 
 process.source = cms.Source ("PoolSource",
                              fileNames = cms.untracked.vstring(
     # "file:/eos/home-m/mobrzut/357/734/00000/73c5eeec-578d-438f-92f1-3e1fff2ed390.root",   
     # "file:/eos/home-m/mobrzut/357/734/00000/08e5ee70-ebff-4571-b14c-806961a3d9dd.root",
-    "file:/eos/home-m/mobrzut/357/734/00000/d42eaf2c-57bb-48fe-9a22-317053f89115.root"
+    # "file:/eos/home-m/mobrzut/357/734/00000/d42eaf2c-57bb-48fe-9a22-317053f89115.root"
 # "file:/eos/home-m/mobrzut/357/479/00000/68a5a64a-b756-4cf5-9a2a-00181e34f501.root"
+# RUN 440 - "357440": [[1,354]],
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/53746080-d21b-4fdf-9d19-67c6dae347ac.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/b8d3f012-0b59-43b4-adbc-811bcb59c9c4.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/cfa9f82a-5296-49cf-8353-11f8761b675c.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/db3c6c33-9ad0-4d61-9a64-a1aa9578550e.root"
+
+
 # RUN 442 - "357442": [[1,1392]],
 # "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/19b41c28-cc6e-4df9-b73a-ae8b187021c7.root",
 # "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/4d2b38b9-f03f-4887-ad72-e53e448cc52d.root"
@@ -79,9 +111,17 @@ process.GlobalTag = GlobalTag(process.GlobalTag, "124X_dataRun3_v9")
 
 
 #JH - use new tag for timing calibrations
+if options.useSQLFile=='True':
+    use_sqlite_file=True
+elif options.useSQLFile=='False':
+    use_sqlite_file=False
+else:
+    print('Provide true or false for useSQLLiteFile')
+    exit()
+
 if (use_sqlite_file):                                        
         process.load('CondCore.CondDB.CondDB_cfi')
-        process.CondDB.connect = 'sqlite_file:/afs/cern.ch/user/m/mobrzut/public/timing_calibration_env/CMSSW_12_4_6/src/Analyzer/DiamondTimingAnalyzer/temp/ppsDiamondTiming_calibration357734.sqlite' # SQLite input TODO: migrate to using tag
+        process.CondDB.connect = options.sqlFileName # SQLite input TODO: migrate to using tag
         process.PoolDBESSource = cms.ESSource('PoolDBESSource',
                 process.CondDB,
                 DumpStats = cms.untracked.bool(True),
@@ -175,13 +215,13 @@ if(saveToDQM):
 
 
     process.dqmOutput = cms.OutputModule("DQMRootOutputModule",
-        fileName = cms.untracked.string("worker_output.root")
+        fileName = cms.untracked.string(options.outputFileName)
     )
 
     process.load("DQMServices.Components.EDMtoMEConverter_cff")
     process.end_path = cms.EndPath(process.dqmSaver)
 else:
-    process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string("run_output_shift_357734.root"))
+    process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string(options.outputFileName))
     process.end_path = cms.EndPath(process.dqmOutput)
 
 
