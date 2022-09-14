@@ -5,7 +5,7 @@ from Geometry.VeryForwardGeometry.geometryRPFromDB_cfi import * # TODO it looks 
 
 
 # TEMP config:
-apply_shift = False                                        
+apply_shift = True                                        
 saveToDQM = False
 
 
@@ -84,23 +84,23 @@ process.source = cms.Source ("PoolSource",
     # "file:/eos/home-m/mobrzut/357/734/00000/d42eaf2c-57bb-48fe-9a22-317053f89115.root"
 # "file:/eos/home-m/mobrzut/357/479/00000/68a5a64a-b756-4cf5-9a2a-00181e34f501.root"
 # RUN 440 - "357440": [[1,354]],
-"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/53746080-d21b-4fdf-9d19-67c6dae347ac.root",
-"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/b8d3f012-0b59-43b4-adbc-811bcb59c9c4.root",
-"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/cfa9f82a-5296-49cf-8353-11f8761b675c.root",
-"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/db3c6c33-9ad0-4d61-9a64-a1aa9578550e.root"
+# "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/53746080-d21b-4fdf-9d19-67c6dae347ac.root",
+# "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/b8d3f012-0b59-43b4-adbc-811bcb59c9c4.root",
+# "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/cfa9f82a-5296-49cf-8353-11f8761b675c.root",
+# "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/db3c6c33-9ad0-4d61-9a64-a1aa9578550e.root"
 
 
 # RUN 442 - "357442": [[1,1392]],
-# "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/19b41c28-cc6e-4df9-b73a-ae8b187021c7.root",
-# "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/4d2b38b9-f03f-4887-ad72-e53e448cc52d.root"
-#"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/5987c37e-850f-4c00-9e69-d6a3ed8df910.root",
-#"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/9450abb5-9478-4209-b1dd-7ff06beab620.root",
-#"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/a2536da7-b15f-4d3c-be30-9feefb303f41.root",
-#"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/a2f71e31-b36b-4a05-bb14-17e6b404ceec.root",
-#"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/ca8d0e9c-5ac7-4987-ba7b-b771cd933485.root",
-#"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/e6a28ca6-f978-430c-bacf-7b0d59f8c069.root",
-#"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/eac6865b-3265-4d9d-aee9-579dc95e7f63.root",
-#"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/ee2f7caa-dcb5-4ab3-b6cf-b302031dd105.root"
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/19b41c28-cc6e-4df9-b73a-ae8b187021c7.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/4d2b38b9-f03f-4887-ad72-e53e448cc52d.root"
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/5987c37e-850f-4c00-9e69-d6a3ed8df910.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/9450abb5-9478-4209-b1dd-7ff06beab620.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/a2536da7-b15f-4d3c-be30-9feefb303f41.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/a2f71e31-b36b-4a05-bb14-17e6b404ceec.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/ca8d0e9c-5ac7-4987-ba7b-b771cd933485.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/e6a28ca6-f978-430c-bacf-7b0d59f8c069.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/eac6865b-3265-4d9d-aee9-579dc95e7f63.root",
+"/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/442/00000/ee2f7caa-dcb5-4ab3-b6cf-b302031dd105.root"
 )
 )
 
