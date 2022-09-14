@@ -107,15 +107,18 @@ process.ctppsDiamondRecHits.digiTag= cms.InputTag("ctppsDiamondRawToDigiAlCaReco
 #     ),
 # )
 
-
+# DQM DQM DQM DQM
+process.load("DQM.Integration.config.environment_cfi")
+process.dqmEnv.eventInfoFolder = "EventInfo"
+process.dqmSaver.path = ""
+process.dqmSaver.tag = "CTPPS"
 process.load("DQMServices.Core.DQMStore_cfi")
 process.load("DQMServices.Components.DQMEnvironment_cfi")
 process.dqmEnv.subSystemFolder = "CalibPPS"
 process.dqmSaver.convention = 'Offline'
 process.dqmSaver.workflow = "/CalibPPS/TimingCalibration/CMSSW_12_0_0_pre2"
-process.dqmSaver.saveByRun = -1
+# process.dqmSaver.saveByRun = -1
 process.dqmSaver.saveAtJobEnd = True
-process.dqmSaver.forceRunNumber = 999999
 
 
 process.dqmOutput = cms.OutputModule("DQMRootOutputModule",
@@ -123,7 +126,7 @@ process.dqmOutput = cms.OutputModule("DQMRootOutputModule",
 )
 
 process.load("DQMServices.Components.EDMtoMEConverter_cff")
-process.end_path = cms.EndPath(process.dqmSaver)
+process.end_path = cms.EndPath( process.dqmEnv + process.dqmSaver )
 
 # execution configuration
 process.p = cms.Path(
@@ -133,6 +136,6 @@ process.p = cms.Path(
 
 )
 
-process.outpath = cms.EndPath(process.output)
+# process.outpath = cms.EndPath(process.output)
 
-# process.schedule = cms.Schedule(process.ALL,   process.end_path)
+process.schedule = cms.Schedule(process.p,   process.end_path)
