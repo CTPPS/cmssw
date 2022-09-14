@@ -95,6 +95,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '124X_dataRun3_v9', '')
 
 useSQLFile = True
 if useSQLFile:
+	process.load('CondCore.CondDB.CondDB_cfi')
 	process.CondDB.connect =  options.sqlFileName # SQLite input
 	process.PoolDBESSource = cms.ESSource('PoolDBESSource',
 			process.CondDB,
