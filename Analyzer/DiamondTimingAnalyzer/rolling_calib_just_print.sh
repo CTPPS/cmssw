@@ -1,9 +1,9 @@
 
 #config
-runNumber=357442
+runNumber=357440
 maxEvents=90000
-experimentName=rollingTest
-resultsFolderName=test_for_loop${runNumber}_maxEv${maxEvents}_${experimentName}
+experimentName=loop0shift_workerUseCalib
+resultsFolderName=test_run_${runNumber}_maxEv${maxEvents}_${experimentName}
 #local variables
 workerPrefix=${resultsFolderName}/worker_timeshift_${runNumber}_maxEv_${maxEvents}
 sqlFileName=sqlite_file:/afs/cern.ch/user/m/mobrzut/public/timing_sqlcalib/ppsDiamondTiming_calibration${runNumber}.sqlite
@@ -11,17 +11,18 @@ sqlFileName=sqlite_file:/afs/cern.ch/user/m/mobrzut/public/timing_sqlcalib/ppsDi
 mkdir $resultsFolderName
 echo "######################################## ##########################################"
 echo "WORKER 0:"
-worker0="cmsRun temp/ExampleConfig_cfg.py " 
+worker0="cmsRun temp/ExampleConfig_cfg_2_2_with_shift_multisource.py " 
 worker0+="outputFileName=${workerPrefix}_loop_0.root "
-# worker0+="calibInput=calib_357440_90k.json "
-worker0+="useSQLFile=True sqlFileName=${sqlFileName} "
+worker0+="calibInput=${PWD}/calib_${runNumber}.json "
+# worker0+="sqlFileName=${sqlFileName} "
 worker0+="maxEventsToProcess=${maxEvents}"
 echo $worker0
 echo "HARVESTER 0:"
-harvester0="cmsRun temp/harvester2.py "
+harvester0="cmsRun temp/harvester2_multisource.py "
 harvester0+="rootFiles=file:${workerPrefix}_loop_0.root "
 harvester0+="calibOutput=${resultsFolderName}/calib_loop_0.json "
-harvester0+="sqlFileName=${sqlFileName} "
+harvester0+="calibInput=${PWD}/calib_${runNumber}.json "
+# harvester0+="sqlFileName=${sqlFileName} "
 harvester0+="outputDirectoryRoot=${resultsFolderName}"
 echo $harvester0
 
