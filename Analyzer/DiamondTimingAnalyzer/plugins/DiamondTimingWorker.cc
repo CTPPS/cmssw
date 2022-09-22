@@ -119,6 +119,7 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
     geomEsToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord, edm::Transition::BeginRun>()),
     // calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>()),
     validOOT(iConfig.getParameter<int>("tagValidOOT")) {
+        //TODO check if this tag is provde or no
     calibEsToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>(
         edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
     Ntracks_cuts_map_[std::make_pair(SECTOR::_45_ID, STATION::_210_M_ID)] =
@@ -384,7 +385,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
                 histos.l2_res[key]->Fill(Marked_hit_difference);
                 histos.trk_time[key]->Fill(Marked_track_time);
                 histos.expected_trk_time_res[key]->Fill(Marked_track_precision);
-                // edm::LogWarning("MarkLoopComplete") << "MarkLoopComplete";
+                // edm::LogWarning("MarkLoopComplete") << "Mark loop complete key: " << key.to_string();
             }
         }
     }

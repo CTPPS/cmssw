@@ -94,7 +94,7 @@ private:
 DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
     : 
     geomEsToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord, edm::Transition::EndRun>()),
-    calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd, edm::Transition::EndRun>(edm::ESInputTag("PoolDBESSource:PPSTestCalibration"))),
+    // calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd, edm::Transition::EndRun>(edm::ESInputTag("PoolDBESSource:PPSTestCalibration"))),
     output_file(iConfig.getParameter<std::string>("calib_json_output")),
     calib_files(iConfig.getParameter<std::vector<std::string>>("calibFiles")),
     loop_index(iConfig.getParameter<int>("loopIndex")),
@@ -105,12 +105,13 @@ DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
         edm::LogError("DiamondTimingHarvester")<<"Not enough calibration files";
     }
 
-    // calibEsToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd,  edm::Transition::EndRun>(
-    // edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
+    calibEsToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd,  edm::Transition::EndRun>(
+    edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
 
     calibs.push_back(DiamondTimingCalibration()); //empty to be replaced by input calibration to first iteration
+
     for(auto& file : calib_files){
-        edm::LogInfo("DiamondTimingHarvester")<<"Opening file "<<file;
+        edm::LogWarning("DiamondTimingHarvester")<<"Opening file "<<file;
         calibs.push_back(DiamondTimingCalibration(JSON::read_calib(file)));
     }
 }
@@ -141,8 +142,10 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
     const auto& geom = iSetup.getData(geomEsToken_);
     edm::ESHandle<PPSTimingCalibration> calibEsTokenHandle_ = iSetup.getHandle(calibEsToken_);
     calibs[0] = DiamondTimingCalibration(*calibEsTokenHandle_);
-    edm::LogWarning("Cailbs") << "calibs[0]" << calibs[0];
+
+    edm::LogWarning("Calibs") << "calibs[0]" << calibs[0];
     const auto& calib = calibs[loop_index];
+    edm::LogWarning("Calibs") << "calibs["<< loop_index << "]" << calibs[loop_index];
 
     std::string ch_name, ch_path;
     for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
@@ -168,7 +171,8 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
         //RESOLUTION
         auto* l2_res = iGetter.get(ch_path + "/" + "l2_res_" + ch_name);
         auto* expected_trk_time = iGetter.get(ch_path + "/" + "Expected track time resolution distribution " + ch_name);
-		if(l2_res->getEntries() > 100){
+        edm::LogWarning("l2_res")<<"l2 res number: "<<  l2_res->getEntries() << " for path" <<ch_path << std::endl;
+        if(l2_res->getEntries() > 100){
 			l2_res->getTH1F()->Fit("gaus","+Q","",-10,10);
 			
 			if(l2_res->getTH1F()->GetFunction("gaus") != NULL){				
@@ -180,6 +184,7 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
 				double Exp_sigma = expected_trk_time->getTH1F()->GetMean();
 				if (ResL2_sigma > Exp_sigma)
 					Resolution_L2_map_[histo_key] = pow(pow(ResL2_sigma,2)-pow(Exp_sigma,2), 0.5);
+                    // Resolution_L2_map_[histo_key] = 1.111;
 				else
 					Resolution_L2_map_[histo_key] = 0.050;
 			}else{
