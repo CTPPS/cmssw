@@ -25,3 +25,7 @@ OutputFiles/*
 run_output.root
 Analyzer/DiamondTimingAnalyzer/run_output.root
 crab_DiamondTimingRes*
+*.log
+temp_rollingcalib/
+calib.json
+test_*
