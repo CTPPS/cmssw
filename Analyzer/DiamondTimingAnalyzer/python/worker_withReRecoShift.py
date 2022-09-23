@@ -178,6 +178,12 @@ process.ctppsDiamondDQMSource.tagPixelLocalTracks=cms.InputTag('ctppsPixelLocalT
 process.ctppsDiamondDQMSource.plotOnline = cms.untracked.bool(True)
 process.ctppsDiamondDQMSource.plotOffline = cms.untracked.bool(False)
 
+process.load("DQM.Integration.config.environment_cfi")
+process.dqmEnv.subSystemFolder = "CTPPS"
+process.dqmEnv.eventInfoFolder = "EventInfo"
+process.dqmSaver.path = ""
+process.dqmSaver.tag = "CTPPS"
+
 process.ALL = cms.Path(
     process.ctppsDiamondRecHits *
     process.ctppsDiamondLocalTracks *
@@ -189,7 +195,7 @@ process.ALL = cms.Path(
 
 
 process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string(options.outputFileName))
-process.end_path = cms.EndPath(process.dqmOutput)
+process.end_path = cms.EndPath(process.dqmOutput + process.dqmEnv + process.dqmSaver)
 
 process.schedule = cms.Schedule(process.ALL,   process.end_path)
 
