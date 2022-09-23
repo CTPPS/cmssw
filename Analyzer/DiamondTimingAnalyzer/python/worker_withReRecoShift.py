@@ -152,6 +152,7 @@ elif (use_sqlite_file):
             Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         )
+    )
 else:
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
                 tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond",""),
@@ -163,7 +164,7 @@ else:
                 planesConfig = cms.string(options.planesConfig),  
                 Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
                 Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-            )
+    )
 
 process.ALL = cms.Path(
     process.ctppsDiamondRecHits *
