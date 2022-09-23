@@ -206,7 +206,7 @@ else: # defualt use db
 process.dqmEnv.subSystemFolder = "CalibPPS"
 process.dqmSaver.convention = 'Offline'
 process.dqmSaver.workflow = "/AnalyzerWithShift9/DiamondTimingAnalyzer/CMSSW_12_4_6"
-process.dqmSaver.dirName = './OutputFiles/' # TODO: it was commented out - revert the change before merge
+# process.dqmSaver.dirName = './OutputFiles/' # TODO: it was commented out - revert the change before merge
 
 process.path = cms.Path(
    process.diamondTimingHarvester
