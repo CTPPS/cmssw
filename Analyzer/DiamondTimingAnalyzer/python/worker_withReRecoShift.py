@@ -14,13 +14,6 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.threshold = ''
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
-options.register ('rootInput',
-		  'file:/eos/project/c/ctpps/subsystems/Automation/hptdc-timing-offline/AOD.root', # test file run 357440
-		  VarParsing.multiplicity.singleton,
-                  VarParsing.varType.string,
-                  "root input file name")
-
-
 options.register ('outputFileName',
 		  'run_output.root',
 		  VarParsing.multiplicity.singleton,
@@ -76,8 +69,14 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
 
 process.source = cms.Source ("PoolSource",
-                             fileNames = cms.untracked.vstring(options.rootInput)
-                             )
+    fileNames = cms.untracked.vstring(
+        #  RUN 440 - "357440": [[1,354]],
+        "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/53746080-d21b-4fdf-9d19-67c6dae347ac.root",
+        "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/b8d3f012-0b59-43b4-adbc-811bcb59c9c4.root",
+        "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/cfa9f82a-5296-49cf-8353-11f8761b675c.root",
+        "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/db3c6c33-9ad0-4d61-9a64-a1aa9578550e.root"    
+    )
+)
 
 # Manipulate GT to pick up the right time shift
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
