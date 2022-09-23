@@ -111,7 +111,8 @@ else: # default use db
     print('Using db') 
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
-    cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
+    cms.PSet(
+            record = cms.string("PPSTimingCalibrationRcd"),
             tag =  cms.string("PPSDiamondTimingCalibration_Run3_recovered_v1"),
             label = cms.untracked.string('PPSTestCalibration'),
             connect = cms.string("frontier://FrontierPrep/CMS_CONDITIONS")
@@ -131,9 +132,9 @@ if(options.calibInput != ''):
     print('Using calib input')
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
         tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
-        tagRecHit = tagRecHit_, # changed
+        tagRecHit = tagRecHit_, 
         tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer", "", "RECO"),
-        tagLocalTrack = tagLocalTrack_, #changed
+        tagLocalTrack = tagLocalTrack_, 
         timingCalibrationTag=cms.string(":"),
         tagValidOOT = cms.int32(options.validOOT), 
         planesConfig = cms.string(options.planesConfig),
@@ -142,34 +143,33 @@ if(options.calibInput != ''):
     ) 
 elif (use_sqlite_file):
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
-            tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
-            tagRecHit =tagRecHit_,
-            tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
-            timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
-            tagLocalTrack = tagLocalTrack_,
-            tagValidOOT = cms.int32(options.validOOT, 
-            planesConfig = cms.string(options.planesConfig), 
-            Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-            Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-        )
+        tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
+        tagRecHit =tagRecHit_,
+        tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
+        timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
+        tagLocalTrack = tagLocalTrack_,
+        tagValidOOT = cms.int32(options.validOOT), 
+        planesConfig = cms.string(options.planesConfig), 
+        Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+        Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     )
 else:
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
-                tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond",""),
-                tagRecHit = tagRecHit_,
-                tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
-                timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration"),
-                tagLocalTrack =tagLocalTrack_,
-                tagValidOOT = cms.int32(-1), 
-                planesConfig = cms.string(options.planesConfig),  
-                Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-                Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+        tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond",""),
+        tagRecHit = tagRecHit_,
+        tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
+        timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration"),
+        tagLocalTrack =tagLocalTrack_,
+        tagValidOOT = cms.int32(options.validOOT), 
+        planesConfig = cms.string(options.planesConfig),  
+        Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+        Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     )
 
 process.ALL = cms.Path(
     process.ctppsDiamondRecHits *
     process.ctppsDiamondLocalTracks *
-    process.diamondTimingWorker *
+    process.diamondTimingWorker
 )
 
 process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string(options.outputFileName))
