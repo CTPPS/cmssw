@@ -56,8 +56,7 @@ options.register('maxEventsToProcess',
 				  VarParsing.multiplicity.singleton,
                   VarParsing.varType.int,
                   'maxEvents to process'
-)
-			  				  
+)		  
 options.parseArguments()
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
@@ -66,7 +65,7 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEv
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
+process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi')
 
 process.source = cms.Source ("PoolSource",
     fileNames = cms.untracked.vstring(
@@ -88,7 +87,7 @@ use_sqlite_file = options.sqlFileName != ''
 if (use_sqlite_file):
     print('Using SQL file')                                        
     process.load('CondCore.CondDB.CondDB_cfi')
-    process.CondDB.connect = options.sqlFileName # SQLite input TODO: migrate to using tag
+    process.CondDB.connect = options.sqlFileName 
     process.PoolDBESSource = cms.ESSource('PoolDBESSource',
             process.CondDB,
             DumpStats = cms.untracked.bool(True),
@@ -110,7 +109,6 @@ elif options.calibInput != '':
 
 else: # default use db
     print('Using db') 
-    # TODO: uncomment below when delete sqlite file dependency 
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
     cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
@@ -137,8 +135,8 @@ if(options.calibInput != ''):
         tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer", "", "RECO"),
         tagLocalTrack = tagLocalTrack_, #changed
         timingCalibrationTag=cms.string(":"),
-        tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-        planesConfig = cms.string("planes.json"),
+        tagValidOOT = cms.int32(options.validOOT), 
+        planesConfig = cms.string(options.planesConfig),
         Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     ) 
@@ -149,8 +147,8 @@ elif (use_sqlite_file):
             tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
             timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
             tagLocalTrack = tagLocalTrack_,
-            tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-            planesConfig = cms.string("planes.json"), #TODO: remove parameter from options or don't hardcode it. 
+            tagValidOOT = cms.int32(options.validOOT, 
+            planesConfig = cms.string(options.planesConfig), 
             Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         )
@@ -161,42 +159,19 @@ else:
                 tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
                 timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration"),
                 tagLocalTrack =tagLocalTrack_,
-                tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-                planesConfig = cms.string("planes.json"), #TODO: remove parameter from options or don't hardcode it. 
+                tagValidOOT = cms.int32(-1), 
+                planesConfig = cms.string(options.planesConfig),  
                 Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
                 Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             )
-
-#tmp stuff below
-# CTPPS DQM modules
-process.load("DQM.CTPPS.ctppsDQM_cff")
-process.ctppsDiamondDQMSource.tagDigi=cms.InputTag('ctppsDiamondRawToDigiAlCaRecoProducer:TimingDiamond')
-process.ctppsDiamondDQMSource.tagFEDInfo=cms.InputTag('ctppsDiamondRawToDigiAlCaRecoProducer:TimingDiamond')
-process.ctppsDiamondDQMSource.tagStatus=cms.InputTag('ctppsDiamondRawToDigiAlCaRecoProducer:TimingDiamond')
-process.ctppsDiamondDQMSource.tagPixelLocalTracks=cms.InputTag('ctppsPixelLocalTracksAlCaRecoProducer')
-#process.ctppsDiamondDQMSource.excludeMultipleHits = cms.bool(True)
-process.ctppsDiamondDQMSource.plotOnline = cms.untracked.bool(True)
-process.ctppsDiamondDQMSource.plotOffline = cms.untracked.bool(False)
-
-process.load("DQM.Integration.config.environment_cfi")
-process.dqmEnv.subSystemFolder = "CTPPS"
-process.dqmEnv.eventInfoFolder = "EventInfo"
-process.dqmSaver.path = ""
-process.dqmSaver.tag = "CTPPS"
 
 process.ALL = cms.Path(
     process.ctppsDiamondRecHits *
     process.ctppsDiamondLocalTracks *
     process.diamondTimingWorker *
-    # tmp stuff below
-    process.ctppsDiamondDQMSource *
-    process.ctppsDQMOnlineHarvest
 )
 
-
 process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string(options.outputFileName))
-process.end_path = cms.EndPath(process.dqmOutput + process.dqmEnv + process.dqmSaver)
+process.end_path = cms.EndPath(process.dqmOutput)
 
 process.schedule = cms.Schedule(process.ALL,   process.end_path)
-
-#print(process.dumpPython())
