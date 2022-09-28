@@ -17,8 +17,8 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 options.register ('rootFiles',
-				  [],
-				  VarParsing.multiplicity.list, #TODO: it was designed to be a list revert change before merging
+				  'file:/afs/cern.ch/user/m/mobrzut/automation/timing_calibration/CMSSW_12_4_6/src/Analyzer/DiamondTimingAnalyzer/run_output.root', 
+                  VarParsing.multiplicity.singleton, #TODO: it was designed to be a list revert change before merging
 				  VarParsing.varType.string,
 				  "root files produced by DQMWorker")
 
@@ -114,8 +114,8 @@ else:
     use_db=False
 
 
-# if((options.sqlFileName != '') ^  (options.calibInput  != '') ^ (options.useDB !='')):
-    # assert 'Please specify exactly one source of time shift paramiters. One from set {calib.json, SQLLite File or globalDB}'
+if((options.sqlFileName != '') ^  (options.calibInput  != '') ^ (options.useDB !='')):
+    assert 'Please specify exactly one source of time shift paramiters. One from set {calib.json, SQLLite File or globalDB}'
 
 use_sqlite_file = options.sqlFileName != ''
 if (use_sqlite_file):
@@ -133,14 +133,16 @@ if (use_sqlite_file):
                     )
                 )
 )
-elif options.calibInput != '':
+
+if options.calibInput != '':
     print('Using CalibInput file ')
     process.ppsTimingCalibrationESSource = cms.ESSource('PPSTimingCalibrationESSource',
         calibrationFile = cms.string(options.calibInput),
         subDetector = cms.uint32(2),
         appendToDataLabel = cms.string('')
-    ) 
-else: #default use db
+    )
+
+if(use_db):
     print('Using db') 
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
@@ -171,6 +173,7 @@ if(options.calibInput != ''):
 	#    timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
 	#    timingCalibrationTag=cms.string("PPSTimingCalibrationESSource:PPSTiming"),
 	# timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
+
 	timingCalibrationTag=cms.string(":"),
 	calib_json_output = cms.string(options.calibOutput),
 	calibFiles = cms.vstring(options.calibFiles),
@@ -180,6 +183,7 @@ if(options.calibInput != ''):
 	)
 elif (use_sqlite_file):
 	process.diamondTimingHarvester = DQMEDHarvester("DiamondTimingHarvester",
+#    timingCalibrationTag=cms.string("PPSTimingCalibrationESSource:PPSTiming"),
 	timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
    calib_json_output = cms.string(options.calibOutput),
    calibFiles = cms.vstring(options.calibFiles),
@@ -187,7 +191,7 @@ elif (use_sqlite_file):
    meanMax = cms.double(options.meanMax),
    rmsMax = cms.double(options.rmsMax)
 )
-else: # defualt use db
+elif(use_db):
     process.diamondTimingHarvester = DQMEDHarvester("DiamondTimingHarvester",
     timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration"),
 	calib_json_output = cms.string(options.calibOutput),
@@ -196,8 +200,8 @@ else: # defualt use db
 	meanMax = cms.double(options.meanMax),
 	rmsMax = cms.double(options.rmsMax)
 	)
-# else: 
-#     assert "need to provide timing calibration tag from json, slq file or db"
+else: 
+    assert "need to provide timing calibration tag from json, slq file or db"
 
 # process.diamondTimingHarvester.timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration")
 
@@ -205,8 +209,8 @@ else: # defualt use db
 #CONFIGURE DQM Saver
 process.dqmEnv.subSystemFolder = "CalibPPS"
 process.dqmSaver.convention = 'Offline'
-process.dqmSaver.workflow = "/AnalyzerWithShift9/DiamondTimingAnalyzer/CMSSW_12_4_6"
-process.dqmSaver.dirName = './OutputFiles/' # TODO: it was commented out - revert the change before merge
+process.dqmSaver.workflow = f'/AnalyzerWithShiftRolling/DiamondTimingAnalyzer/CMSSW_12_4_6_loop{options.loopIndex}'
+process.dqmSaver.dirName = f'./{options.outputDirectoryRoot}/' # TODO: it was commented out - revert the change before merge
 
 process.path = cms.Path(
    process.diamondTimingHarvester

@@ -45,7 +45,7 @@ void DiamondDetectorClass::ExtractData(){
 		for (const auto& locTrack : locTracks){
 			if((valid_OOT_==2) && (locTrack.ootIndex() != valid_OOT_) && (locTrack.ootIndex() != valid_OOT_+1)) continue;
 			if (valid_OOT_!=2 && (locTrack.ootIndex() != valid_OOT_) &&  valid_OOT_!=-1 ) continue;
-			
+			//TODO: confirm if LocalTrackMap is filled corectly
 			LocalTrack_map_.insert(std::make_pair(locTrack, std::vector<std::pair<ChannelKey,CTPPSDiamondRecHit>>()));
 		}
 	}
@@ -57,7 +57,9 @@ void DiamondDetectorClass::ExtractData(){
 
 		// retrieve and order all events in map. 
 		for (const auto& recHit : _recHits){ //rechit
-			if(((recHit.ootIndex() != (int)(SPC_map_[key].offset/25)) 
+			// if(((recHit.ootIndex() != 0) // TODO: To be used with newest tag
+			// edm::LogWarning("Offset") <<"Offset:" << SPC_map_[key].offset;
+			if(((recHit.ootIndex() != (int)(SPC_map_[key].offset/25)) // TODO: To be used with newest tag
 				&&  valid_OOT_!=-1) ||  recHit.multipleHits()) continue;
 			
 			
