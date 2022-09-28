@@ -113,8 +113,8 @@ executable = """
                 workflow=<workflow>
                 dataPeriod=<data_period>
              """
-
-storage_path = "/eos/user/l/lkita"
+             
+storage_path = "/eos/user/m/mobrzut"
 
 def aggregate_files(path: str) -> str:
     if path[-1] != '/':
@@ -138,6 +138,8 @@ def submit_task_to_condor(campaign, workflow, data_period):
         input_files_path = dir_name[0]
     
     executable = executable.replace("<input_files>", aggregate_files(input_files_path) )
+    # why this is hardcoded??
+
     output_dir = "/afs/cern.ch/user/e/ecalgit/CMSSW_11_3_2/src/RecoPPS/RPixEfficiencyTools/OutputFiles/"+"/".join([campaign, workflow, data_period])
     executable = executable.replace("<output_dir>", output_dir)
     executable = executable.replace("<campaign>", campaign)
