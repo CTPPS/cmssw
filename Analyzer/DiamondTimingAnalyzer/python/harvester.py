@@ -101,7 +101,7 @@ process.source = cms.Source("DQMRootSource",
 
 from DQMServices.Core.DQMEDHarvester import DQMEDHarvester
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '124X_dataRun3_v9', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
 
 ### SET TIME SHIFT SOURCE BEGIN
 if options.useDB=='True':

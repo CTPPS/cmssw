@@ -29,7 +29,7 @@ struct PlaneKey{
 	{};
 
 	std::string to_string() const {
-		return "Plane{sector=" + std::to_string(this->sector) + ", station=" + std::to_string(this->station) + ", plane=" + std::to_string(this->plane) + "}";
+		return "Plane(sector=" + std::to_string(this->sector) + " station=" + std::to_string(this->station) + " plane=" + std::to_string(this->plane) + ")";
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const PlaneKey& planeKey);
@@ -55,7 +55,7 @@ struct ChannelKey{
 	{};
 
 	std::string to_string() const {
-		return "Channel{planeKey=" + this->planeKey.to_string() + ", channel=" + std::to_string(this->channel) + "}";
+		return "Channel(planeKey=" + this->planeKey.to_string() + " channel=" + std::to_string(this->channel) + ")";
 	}
 
 	friend std::ostream& operator<<(std::ostream& os, const ChannelKey& key);
