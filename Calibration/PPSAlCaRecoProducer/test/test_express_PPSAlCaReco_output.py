@@ -7,7 +7,7 @@ process = cms.Process( 'TEST',ctpps_2022)
 
 # LHCInfo plotter
 process.load("Validation.CTPPS.ctppsLHCInfoPlotter_cfi")
-process.ctppsLHCInfoPlotter.outputFile = "alcareco_lhc_info_express.root"
+process.ctppsLHCInfoPlotter.outputFile = "outALCAPPS_RECO_EXPRESS_Fill9019/alcareco_lhc_info_express.root"
 
 # Load geometry from DB
 process.load("Geometry.VeryForwardGeometry.geometryRPFromDB_cfi")
@@ -21,7 +21,7 @@ process.ctppsTrackDistributionPlotter = cms.EDAnalyzer("CTPPSTrackDistributionPl
   rpId_56_N = cms.uint32(103),
   rpId_56_F = cms.uint32(123),
 
-  outputFile = cms.string("alcareco_tracks_express.root")
+  outputFile = cms.string("outALCAPPS_RECO_EXPRESS_Fill9019/alcareco_tracks_express.root")
 )
 
 # reconstruction plotter
@@ -35,7 +35,7 @@ process.ctppsProtonReconstructionPlotter = cms.EDAnalyzer("CTPPSProtonReconstruc
   rpId_56_N = cms.uint32(103),
   rpId_56_F = cms.uint32(123),
 
-  outputFile = cms.string("alcareco_protons_express.root")
+  outputFile = cms.string("outALCAPPS_RECO_EXPRESS_Fill9019/alcareco_protons_express.root")
 )
 
 process.p = cms.Path(
@@ -55,7 +55,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run3_data_express')
 
 process.source = cms.Source( 'PoolSource',
     fileNames = cms.untracked.vstring(
-        'file:outputALCAPPS_RECO_express.root',
+        'file:outALCAPPS_RECO_EXPRESS_Fill9019/outputALCAPPS_RECO_express_new.root',
     ),
     inputCommands = cms.untracked.vstring(
         'keep *'
