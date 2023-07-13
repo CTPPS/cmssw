@@ -17,7 +17,7 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 options.register ('rootFiles',
-				  '', 
+				  'file:run_output.root', 
                   VarParsing.multiplicity.list,
 				  VarParsing.varType.string,
 				  "root files produced by DQMWorker")
