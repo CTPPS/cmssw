@@ -35,12 +35,12 @@ public:
 
   /// run proton reconstruction using single-RP strategy
   reco::ForwardProton reconstructFromSingleRP(const CTPPSLocalTrackLiteRef &track,
-                                              const float &energy,
+                                              const float energy,
                                               std::ostream &os) const;
 
   /// run proton reconstruction using multiple-RP strategy
   reco::ForwardProton reconstructFromMultiRP(const CTPPSLocalTrackLiteRefVector &tracks,
-                                             const float &energy,
+                                             const float energy,
                                              std::ostream &os) const;
 
 private:
@@ -82,7 +82,7 @@ private:
   /// object to calculate chi^2
   std::unique_ptr<ChiSquareCalculator> chiSquareCalculator_;
 
-  static void doLinearFit(const std::vector<double> &vx, const std::vector<double> &vy, double &b, double &a);
+  static void doLinearFit(const std::vector<double> &vx, const std::vector<double> &vy, double b, double a);
 
   static double newtonGoalFcn(double xi, double x_N, double x_F, const RPOpticsData &i_N, const RPOpticsData &i_F);
 };

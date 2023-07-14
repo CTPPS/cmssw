@@ -98,8 +98,8 @@ void ProtonReconstructionAlgorithm::init(const LHCInterpolatedOpticalFunctionsSe
 
 void ProtonReconstructionAlgorithm::doLinearFit(const std::vector<double> &vx,
                                                 const std::vector<double> &vy,
-                                                double &b,
-                                                double &a) {
+                                                double b,
+                                                double a) {
   double s_1 = 0., s_x = 0., s_xx = 0., s_y = 0., s_xy = 0.;
   for (unsigned int i = 0; i < vx.size(); ++i) {
     s_1 += 1.;
@@ -169,7 +169,7 @@ double ProtonReconstructionAlgorithm::newtonGoalFcn(double xi,
 //----------------------------------------------------------------------------------------------------
 
 reco::ForwardProton ProtonReconstructionAlgorithm::reconstructFromMultiRP(const CTPPSLocalTrackLiteRefVector &tracks,
-                                                                          const float &energy,
+                                                                          const float energy,
                                                                           std::ostream &os) const {
   // make sure optics is available for all tracks
   for (const auto &it : tracks) {
@@ -403,7 +403,7 @@ reco::ForwardProton ProtonReconstructionAlgorithm::reconstructFromMultiRP(const 
 //----------------------------------------------------------------------------------------------------
 
 reco::ForwardProton ProtonReconstructionAlgorithm::reconstructFromSingleRP(const CTPPSLocalTrackLiteRef &track,
-                                                                           const float &energy,
+                                                                           const float energy,
                                                                            std::ostream &os) const {
   CTPPSDetId rpId(track->rpId());
 
