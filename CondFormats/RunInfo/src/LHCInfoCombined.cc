@@ -37,8 +37,8 @@ void LHCInfoCombined::setFromPerLS(const LHCInfoPerLS& infoPerLS) {
 }
 void LHCInfoCombined::setFromPerFill(const LHCInfoPerFill& infoPerFill) { energy = infoPerFill.energy(); }
 
-void LHCInfoCombined::print(std::stringstream& ss) const {
-  ss << "Crossing angle x (urad): " << crossingAngleX << std::endl
+void LHCInfoCombined::print(std::ostream& os) const {
+  os << "Crossing angle x (urad): " << crossingAngleX << std::endl
      << "Crossing angle y (urad): " << crossingAngleY << std::endl
      << "Beta star x (m): " << betaStarX << std::endl
      << "Beta star y (m): " << betaStarY << std::endl
@@ -46,8 +46,6 @@ void LHCInfoCombined::print(std::stringstream& ss) const {
 }
 
 std::ostream& operator<<(std::ostream& os, LHCInfoCombined beamInfo) {
-  std::stringstream ss;
-  beamInfo.print(ss);
-  os << ss.str();
+  beamInfo.print(os);
   return os;
 }

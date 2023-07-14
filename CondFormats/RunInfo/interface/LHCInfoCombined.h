@@ -38,7 +38,7 @@ public:
   float betaStarY;
   float energy;
 
-  void print(std::stringstream& ss) const;
+  void print(std::ostream& os) const;
 };
 
 std::ostream& operator<<(std::ostream& os, LHCInfoCombined beamInfo);
