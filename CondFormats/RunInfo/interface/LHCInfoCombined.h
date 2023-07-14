@@ -1,14 +1,7 @@
 #ifndef CondFormats_RunInfo_LHCInfoCombined_H
 #define CondFormats_RunInfo_LHCInfoCombined_H
 
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/one/EDAnalyzer.h"
-#include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/ESWatcher.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/ConsumesCollector.h"
 
 #include "CondFormats/RunInfo/interface/LHCInfo.h"
 #include "CondFormats/RunInfo/interface/LHCInfoPerLS.h"
@@ -17,8 +10,6 @@
 #include "CondFormats/DataRecord/interface/LHCInfoPerLSRcd.h"
 #include "CondFormats/DataRecord/interface/LHCInfoPerFillRcd.h"
 #include "CondFormats/DataRecord/interface/LHCInfoRcd.h"
-
-#include "CondCore/CondDB/interface/Types.h"
 
 #include <bitset>
 #include <iostream>
