@@ -25,7 +25,7 @@
 
 #include "CondFormats/RunInfo/interface/LHCInfo.h"
 #include "CondFormats/DataRecord/interface/LHCInfoRcd.h"
-#include "CondFormats/RunInfo/interface/LHCInfoCombined.h"
+#include "CondTools/RunInfo/interface/LHCInfoCombined.h"
 #include "CondFormats/RunInfo/interface/LHCInfoPerLS.h"
 #include "CondFormats/DataRecord/interface/LHCInfoPerLSRcd.h"
 #include "CondFormats/RunInfo/interface/LHCInfoPerFill.h"

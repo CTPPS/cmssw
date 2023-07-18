@@ -1,4 +1,4 @@
-#include "CondFormats/RunInfo/interface/LHCInfoCombined.h"
+#include "CondTools/RunInfo/interface/LHCInfoCombined.h"
 
 LHCInfoCombined::LHCInfoCombined(const LHCInfo& lhcInfo) { setFromLHCInfo(lhcInfo); }
 
