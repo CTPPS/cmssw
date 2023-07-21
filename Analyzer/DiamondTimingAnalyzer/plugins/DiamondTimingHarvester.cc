@@ -123,6 +123,7 @@ DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
 // ------------ method called for each event  ------------
 
 void DiamondTimingHarvester::dqmEndJob(DQMStore::IBooker &iBooker, DQMStore::IGetter &iGetter) {
+  std::cout << "LOOP INDEX! = " << loop_index << std::endl; 
   std::cout<<"######## EndJob ########"<<std::endl;
 }
 
@@ -202,8 +203,11 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
         resHist->Fill(Resolution_L2_map_[histo_key]);
 
         //res vs step
-        auto* resStepHist = iBooker.book2D("res_vs_step_" + ch_name, "Resolution vs Step;Step;Resolution (ns)", 1200, -1, loop_index+2, 1200, 0, 0.5);
+        auto* resStepHist = iBooker.book2D("res_vs_step_" + ch_name, "Resolution vs Step;Step;Resolution (ns)", 1200, -1, loop_index+2, 1200, 0, 1);
         resStepHist->getTH2F()->SetMarkerStyle(20);
+        
+        
+        
         for(int i=0; i<=loop_index; i++){
             resStepHist->Fill(i, calibs[i].timePrecision(histo_key));
         }
