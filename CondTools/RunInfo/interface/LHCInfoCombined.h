@@ -1,5 +1,5 @@
-#ifndef CondFormats_RunInfo_LHCInfoCombined_H
-#define CondFormats_RunInfo_LHCInfoCombined_H
+#ifndef CondTools_RunInfo_LHCInfoCombined_H
+#define CondTools_RunInfo_LHCInfoCombined_H
 
 #include "FWCore/Framework/interface/EventSetup.h"
 
@@ -43,4 +43,4 @@ public:
 
 std::ostream& operator<<(std::ostream& os, LHCInfoCombined beamInfo);
 
-#endif  // CondFormats_RunInfo_LHCInfoCombined_H
+#endif  // CondTools_RunInfo_LHCInfoCombined_H
