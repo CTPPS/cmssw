@@ -26,7 +26,7 @@ public:
   LHCInfoCombined(const edm::EventSetup& iSetup,
                   const edm::ESGetToken<LHCInfoPerLS, LHCInfoPerLSRcd>& tokenInfoPerLS,
                   const edm::ESGetToken<LHCInfoPerFill, LHCInfoPerFillRcd>& tokenInfoPerFill,
-                  const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo);
+                  const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo, bool useNewLHCInfo);
 
   void setFromLHCInfo(const LHCInfo& lhcInfo);
   void setFromPerLS(const LHCInfoPerLS& infoPerLS);

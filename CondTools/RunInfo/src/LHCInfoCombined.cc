@@ -10,8 +10,8 @@ LHCInfoCombined::LHCInfoCombined(const LHCInfoPerLS& infoPerLS, const LHCInfoPer
 LHCInfoCombined::LHCInfoCombined(const edm::EventSetup& iSetup,
                                  const edm::ESGetToken<LHCInfoPerLS, LHCInfoPerLSRcd>& tokenInfoPerLS,
                                  const edm::ESGetToken<LHCInfoPerFill, LHCInfoPerFillRcd>& tokenInfoPerFill,
-                                 const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo) {
-  if (true /* era run3 */) {
+                                 const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo, bool useNewLHCInfo) {
+  if (useNewLHCInfo) {
     edm::ESHandle<LHCInfoPerLS> hLHCInfoPerLS = iSetup.getHandle(tokenInfoPerLS);
     edm::ESHandle<LHCInfoPerFill> hLHCInfoFill = iSetup.getHandle(tokenInfoPerFill);
     setFromPerLS(*hLHCInfoPerLS);

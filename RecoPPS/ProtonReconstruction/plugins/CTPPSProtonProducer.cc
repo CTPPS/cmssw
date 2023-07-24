@@ -61,6 +61,7 @@ private:
   std::string lhcInfoLabel_;
   std::string opticsLabel_;
   std::string ppsAssociationCutsLabel_;
+  bool useNewLHCInfo_;
 
   unsigned int verbosity_;
 
@@ -100,6 +101,7 @@ CTPPSProtonProducer::CTPPSProtonProducer(const edm::ParameterSet &iConfig)
       lhcInfoLabel_(iConfig.getParameter<std::string>("lhcInfoLabel")),
       opticsLabel_(iConfig.getParameter<std::string>("opticsLabel")),
       ppsAssociationCutsLabel_(iConfig.getParameter<std::string>("ppsAssociationCutsLabel")),
+      useNewLHCInfo_(iConfig.getParameter<bool>("useNewLHCInfo")),
       verbosity_(iConfig.getUntrackedParameter<unsigned int>("verbosity", 0)),
       doSingleRPReconstruction_(iConfig.getParameter<bool>("doSingleRPReconstruction")),
       doMultiRPReconstruction_(iConfig.getParameter<bool>("doMultiRPReconstruction")),
@@ -146,10 +148,13 @@ void CTPPSProtonProducer::fillDescriptions(edm::ConfigurationDescriptions &descr
       ->setComment("whether to discard pixel tracks built from BX-shifted planes");
 
   desc.add<std::string>("lhcInfoPerFillLabel", "")->setComment("label of the LHCInfoPerFill record");
-  desc.add<std::string>("lhcInfoPerLSLabel", "")->setComment("label of the LHCInfoPerLS record");
+  desc.add<bool>("useNewLHCInfo", true)
+      ->setComment("flag whether to use new LHCInfoPer* records or old LHCInfo");
   desc.add<std::string>("lhcInfoLabel", "")->setComment("label of the LHCInfo record");
   desc.add<std::string>("opticsLabel", "")->setComment("label of the optics record");
   desc.add<std::string>("ppsAssociationCutsLabel", "")->setComment("label of the association cuts record");
+
+  desc.add<std::string>("lhcInfoPerLSLabel", "")->setComment("label of the LHCInfoPerLS record");
 
   desc.addUntracked<unsigned int>("verbosity", 0)->setComment("verbosity level");
 
@@ -203,7 +208,7 @@ void CTPPSProtonProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSe
   // NB: this avoids loading (possibly non-existing) conditions in workflows without proton data
   if (!hTracks->empty()) {
     // get conditions
-    LHCInfoCombined lhcInfoCombined(iSetup, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_);
+    LHCInfoCombined lhcInfoCombined(iSetup, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_, useNewLHCInfo_);
 
     edm::ESHandle<LHCInterpolatedOpticalFunctionsSetCollection> hOpticalFunctions =
         iSetup.getHandle(opticalFunctionsToken_);
