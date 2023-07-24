@@ -50,7 +50,6 @@ process.ctppsProtonReconstructionPlotter = cms.EDAnalyzer("CTPPSProtonReconstruc
   rpId_56_F = cms.uint32(123),
 
   outputFile = cms.string("alcareco_protons_express.root"),
-  useNewLHCInfo = cms.bool(True)
 )
 
 
@@ -71,6 +70,7 @@ process.schedule = cms.Schedule(
     process.path,
     process.end_path
 )
+
 
 process.GlobalTag.toGet = cms.VPSet()
 process.GlobalTag.toGet.append(cms.PSet(record = cms.string("CTPPSOpticsRcd"),tag =  cms.string("PPSOpticalFunctions_2023_v1_validation"), connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")))
