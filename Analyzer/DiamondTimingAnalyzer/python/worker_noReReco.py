@@ -14,10 +14,17 @@ process.MessageLogger.cerr.threshold = ''
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 options.register ('rootInput',
-		  'file:/eos/project/c/ctpps/subsystems/Automation/hptdc-timing-offline/AOD.root', # test file run 357440
-		  VarParsing.multiplicity.singleton,
-                  VarParsing.varType.string,
-                  "root input file name")
+		  ["/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/36ea1bb9-f031-41da-a7a2-3bd258d0e255.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/8d7b7d9a-a891-4027-aeeb-e198037e1a0b.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/a0f8f0b6-ee2b-4b0d-aa59-72ab1d74235d.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/79c30c13-96bf-4193-a432-48e83616b553.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/3f60fd90-b91c-44d3-a4cb-e667cebf1137.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/aefb71f3-3aa3-4fcd-bdd9-513e3620a3c8.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/84e9108d-c99d-4bb6-ae75-59992ab55e02.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/0f00e63b-b735-42d4-b3b1-13184cae5f1e.root"], # test file run 369956
+		  VarParsing.multiplicity.list,
+          VarParsing.varType.string,
+          "root input file name")
 
 
 options.register ('outputFileName',
@@ -77,13 +84,24 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
 
 process.source = cms.Source ("PoolSource",
-                             fileNames = cms.untracked.vstring(options.rootInput)
+                             fileNames = cms.untracked.vstring(*options.rootInput)
                              )
 
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
 # 2022 prompt: to be updated
 process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
+
+# WHEN CHANGING THIS CHANGE ALSO THE LINES AT ELSE STATEMENT AROUND LINES 153-156
+process.GlobalTag.toGet.append(
+  cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
+           tag =  cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v1_prompt"),
+           label = cms.untracked.string('PPSTimingCalibrationbyPCL'),
+           connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+	)
+)
+
+
 
 
 #JH - use new tag for timing calibration
@@ -133,9 +151,9 @@ else: # default use db
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
     cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
-            tag =  cms.string("PPSDiamondTimingCalibration_Run3_recovered_v1"),
-            label = cms.untracked.string('PPSTestCalibration'),
-            connect = cms.string("frontier://FrontierPrep/CMS_CONDITIONS")
+            tag =  cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v1_prompt"),
+            label = cms.untracked.string('PPSTimingCalibrationbyPCL'),
+            connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
         )
     )
     # process.GlobalTag.toGet = cms.VPSet(
@@ -151,10 +169,12 @@ else: # default use db
 # TODO: we miss tjhis from worker.py vvvvv
 #  rechits production
 process.load('RecoPPS.Local.ctppsDiamondLocalReconstruction_cff')
+process.ctppsDiamondRecHits.timingCalibrationTag="GlobalTag:PPSTimingCalibrationbyPCL"
+process.ctppsDiamondRecHits.digiTag="ctppsDiamondRawToDigiAlCaRecoProducer:TimingDiamond"
 # ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-tagLocalTrack_ = cms.InputTag("ctppsDiamondLocalTracks","" ,"RECODQM")
-tagRecHit_ =  cms.InputTag("ctppsDiamondRecHits","" ,"RECODQM")
+tagLocalTrack_ = cms.InputTag("ctppsDiamondLocalTracks","" ,"TIMINGSTUDY")
+tagRecHit_ =  cms.InputTag("ctppsDiamondRecHits","" ,"TIMINGSTUDY")
 from DQMServices.Core.DQMEDAnalyzer import DQMEDAnalyzer
 if(options.calibInput != ''):
     print('Using calib input')
@@ -186,7 +206,7 @@ else:
                 tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
                 tagRecHit = tagRecHit_,
                 tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
-                timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration"),
+                timingCalibrationTag=cms.string("GlobalTag:PPSTimingCalibrationbyPCL"),
                 tagLocalTrack =tagLocalTrack_,
                 tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
                 planesConfig = cms.string("planes.json"), #TODO: remove parameter from options or don't hardcode it. 
@@ -195,7 +215,12 @@ else:
             )
 # else: 
     # assert "need to provide timing calibration tag from json, slq file or db"
-process.ALL = cms.Path(process.diamondTimingWorker)
+process.content = cms.EDAnalyzer("EventContentAnalyzer") 
+process.ALL = cms.Path(
+    process.ctppsDiamondLocalReconstruction *
+    #process.content*
+    process.diamondTimingWorker    
+    ) 
 
 
 process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string(options.outputFileName))
