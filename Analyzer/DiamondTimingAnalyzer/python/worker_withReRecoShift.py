@@ -2,10 +2,9 @@ import FWCore.ParameterSet.Config as cms
 import copy
 from FWCore.ParameterSet.VarParsing import VarParsing
 from Geometry.VeryForwardGeometry.geometryRPFromDB_cfi import * # TODO it looks like it can be deleted
-from Configuration.Eras.Era_Run3_cff import Run3
 
 
-process = cms.Process('TIMINGSTUDY', Run3) 
+process = cms.Process('TIMINGSTUDY') # or TIMINGSTUDY??
 options = VarParsing ('analysis')
 
 process.verbosity = cms.untracked.PSet( input = cms.untracked.int32(-1) ) # TODO: confirm if this is needed.
@@ -13,6 +12,20 @@ process.verbosity = cms.untracked.PSet( input = cms.untracked.int32(-1) ) # TODO
 process.load('FWCore.MessageService.MessageLogger_cfi')
 process.MessageLogger.cerr.threshold = ''
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+
+options.register ('rootInput',
+		  ["/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/36ea1bb9-f031-41da-a7a2-3bd258d0e255.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/8d7b7d9a-a891-4027-aeeb-e198037e1a0b.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/a0f8f0b6-ee2b-4b0d-aa59-72ab1d74235d.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/79c30c13-96bf-4193-a432-48e83616b553.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/3f60fd90-b91c-44d3-a4cb-e667cebf1137.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/aefb71f3-3aa3-4fcd-bdd9-513e3620a3c8.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/84e9108d-c99d-4bb6-ae75-59992ab55e02.root",
+          "/store/data/Run2023D/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/369/956/00000/0f00e63b-b735-42d4-b3b1-13184cae5f1e.root"], # test file run 369956
+		  VarParsing.multiplicity.list,
+          VarParsing.varType.string,
+          "root input file name")
+
 
 options.register ('outputFileName',
 		  'run_output.root',
@@ -56,49 +69,74 @@ options.register('maxEventsToProcess',
 				  VarParsing.multiplicity.singleton,
                   VarParsing.varType.int,
                   'maxEvents to process'
-)		  
+)
+			  				  
 options.parseArguments()
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
+
+
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi')
+process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
 
 process.source = cms.Source ("PoolSource",
-    fileNames = cms.untracked.vstring(
-        #  RUN 440 - "357440": [[1,354]],
-        "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/53746080-d21b-4fdf-9d19-67c6dae347ac.root",
-        "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/b8d3f012-0b59-43b4-adbc-811bcb59c9c4.root",
-        "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/cfa9f82a-5296-49cf-8353-11f8761b675c.root",
-        "/store/data/Run2022C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v1/000/357/440/00000/db3c6c33-9ad0-4d61-9a64-a1aa9578550e.root"    
-    )
-)
+                             fileNames = cms.untracked.vstring(*options.rootInput)
+                             )
 
-# Manipulate GT to pick up the right time shift
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
 # 2022 prompt: to be updated
-process.GlobalTag = GlobalTag(process.GlobalTag, '124X_dataRun3_Prompt_frozen_v4', '')
+process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
+
+# WHEN CHANGING THIS CHANGE ALSO THE LINES AT ELSE STATEMENT AROUND 153-156
+process.GlobalTag.toGet.append(
+  cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
+           tag =  cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v1_prompt"),
+           label = cms.untracked.string('PPSTimingCalibrationbyPCL'),
+           connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+	)
+)
+
+
+
+
+#JH - use new tag for timing calibration
+
+### SET TIME SHIFT SOURCE BEGIN
+# if options.useDB=='True':
+#     use_db=True
+# elif options.useDB=='False':
+#     use_db=False
+# elif options.useDB!='':
+#     assert 'UseDB paramter is not valid. It should be True or False (case sensitive)'
+# else: 
+#     use_db=False
+
+
+# if((options.sqlFileName != '') ^  (options.calibInput  != '') ^ (options.useDB !='')):
+    # assert 'Please specify exactly one source of time shift paramiters. One from set {calib.json, SQLLite File or globalDB}'
 
 use_sqlite_file = options.sqlFileName != ''
 if (use_sqlite_file):
-    print('Using SQL file')                                        
-    process.load('CondCore.CondDB.CondDB_cfi')
-    process.CondDB.connect = options.sqlFileName 
-    process.PoolDBESSource = cms.ESSource('PoolDBESSource',
-            process.CondDB,
-            DumpStats = cms.untracked.bool(True),
-            toGet = cms.VPSet(
-                cms.PSet(
-                    record = cms.string('PPSTimingCalibrationRcd'),
-                    tag = cms.string('DiamondTimingCalibration'),
-                            label = cms.untracked.string('PPSTestCalibration'), 
+        print('Using SQL file')                                        
+        process.load('CondCore.CondDB.CondDB_cfi')
+        process.CondDB.connect = options.sqlFileName # SQLite input TODO: migrate to using tag
+        process.PoolDBESSource = cms.ESSource('PoolDBESSource',
+                process.CondDB,
+                DumpStats = cms.untracked.bool(True),
+                toGet = cms.VPSet(
+                    cms.PSet(
+                        record = cms.string('PPSTimingCalibrationRcd'),
+                        tag = cms.string('DiamondTimingCalibration'),
+                                label = cms.untracked.string('PPSTestCalibration'), 
+                    )
                 )
-            )
-    )
+)
+
 elif options.calibInput != '':
     print('Using CalibInput file ')
     process.ppsTimingCalibrationESSource = cms.ESSource('PPSTimingCalibrationESSource',
@@ -109,70 +147,85 @@ elif options.calibInput != '':
 
 else: # default use db
     print('Using db') 
+    # TODO: uncomment below when delete sqlite file dependency 
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
-    cms.PSet(
-            record = cms.string("PPSTimingCalibrationRcd"),
-            tag =  cms.string("PPSDiamondTimingCalibration_Run3_recovered_v1"),
-            label = cms.untracked.string('PPSTestCalibration'),
-            connect = cms.string("frontier://FrontierPrep/CMS_CONDITIONS")
+    cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
+            tag =  cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v1_prompt"),
+            label = cms.untracked.string('PPSTimingCalibrationbyPCL'),
+            connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
         )
     )
+    # process.GlobalTag.toGet = cms.VPSet(
+    #     cms.PSet(record = cms.string('PPSTimingCalibrationRcd'),
+    #                 tag = cms.string('PPSDiamondTimingCalibration_Run3_v1_hlt'), # working tag: PPSDiamondTimingCalibration_Run3_v1_hlt
+    #                 #TODO: old tag PPSDiamondTimingCalibration_v1  - to delete
+    #             connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+    #             )
+    # )
+### SET TIME SHIFT SOURCE END
 
-process.load("RecoPPS.Configuration.recoCTPPS_cff")
-process.ctppsDiamondRecHits.digiTag=cms.InputTag('ctppsDiamondRawToDigiAlCaRecoProducer:TimingDiamond')
-process.ctppsDiamondRecHits.timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration")
 
-# Configure rolling calibration worker
+# TODO: we miss tjhis from worker.py vvvvv
+#  rechits production
+process.load('RecoPPS.Local.ctppsDiamondLocalReconstruction_cff')
+process.ctppsDiamondRecHits.timingCalibrationTag="GlobalTag:PPSTimingCalibrationbyPCL"
+process.ctppsDiamondRecHits.digiTag="ctppsDiamondRawToDigiAlCaRecoProducer:TimingDiamond"
+# ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 tagLocalTrack_ = cms.InputTag("ctppsDiamondLocalTracks","" ,"TIMINGSTUDY")
 tagRecHit_ =  cms.InputTag("ctppsDiamondRecHits","" ,"TIMINGSTUDY")
-
 from DQMServices.Core.DQMEDAnalyzer import DQMEDAnalyzer
 if(options.calibInput != ''):
     print('Using calib input')
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
         tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
-        tagRecHit = tagRecHit_, 
+        tagRecHit = tagRecHit_, # changed
         tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer", "", "RECO"),
-        tagLocalTrack = tagLocalTrack_, 
+        tagLocalTrack = tagLocalTrack_, #changed
         timingCalibrationTag=cms.string(":"),
-        tagValidOOT = cms.int32(options.validOOT), 
-        planesConfig = cms.string(options.planesConfig),
+        tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
+        planesConfig = cms.string("planes.json"),
         Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     ) 
 elif (use_sqlite_file):
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
-        tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
-        tagRecHit =tagRecHit_,
-        tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
-        timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
-        tagLocalTrack = tagLocalTrack_,
-        tagValidOOT = cms.int32(options.validOOT), 
-        planesConfig = cms.string(options.planesConfig), 
-        Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-        Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-    )
+            tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
+            tagRecHit =tagRecHit_,
+            tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
+            timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
+            tagLocalTrack = tagLocalTrack_,
+            tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
+            planesConfig = cms.string("planes.json"), #TODO: remove parameter from options or don't hardcode it. 
+            Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+            Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+        )
 else:
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
-        tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond",""),
-        tagRecHit = tagRecHit_,
-        tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
-        timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration"),
-        tagLocalTrack =tagLocalTrack_,
-        tagValidOOT = cms.int32(options.validOOT), 
-        planesConfig = cms.string(options.planesConfig),  
-        Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-        Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-    )
-
+                tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
+                tagRecHit = tagRecHit_,
+                tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
+                timingCalibrationTag=cms.string("GlobalTag:PPSTimingCalibrationbyPCL"),
+                tagLocalTrack =tagLocalTrack_,
+                tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
+                planesConfig = cms.string("planes.json"), #TODO: remove parameter from options or don't hardcode it. 
+                Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+                Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+            )
+# else: 
+    # assert "need to provide timing calibration tag from json, slq file or db"
+process.content = cms.EDAnalyzer("EventContentAnalyzer") 
 process.ALL = cms.Path(
-    process.ctppsDiamondRecHits *
-    process.ctppsDiamondLocalTracks *
-    process.diamondTimingWorker
-)
+    process.ctppsDiamondLocalReconstruction *
+    #process.content*
+    process.diamondTimingWorker    
+    ) 
+
 
 process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string(options.outputFileName))
 process.end_path = cms.EndPath(process.dqmOutput)
 
 process.schedule = cms.Schedule(process.ALL,   process.end_path)
+
+#print(process.dumpPython())
