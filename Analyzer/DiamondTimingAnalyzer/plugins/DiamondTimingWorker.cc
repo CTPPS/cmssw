@@ -274,7 +274,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         // edm::LogWarning("ActivePlaneNumber") << "Active Plane Number: " << active_num;
 
         //EDO suggestion
-        if(active_num < 4) continue;
+        if(active_num < 3) continue;
 
         //we don't check active planes here, because each channel might require different number of them
         // edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
