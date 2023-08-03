@@ -1,4 +1,5 @@
 #include "CondTools/RunInfo/interface/LHCInfoCombined.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 LHCInfoCombined::LHCInfoCombined(const LHCInfo& lhcInfo) { setFromLHCInfo(lhcInfo); }
 
@@ -10,7 +11,8 @@ LHCInfoCombined::LHCInfoCombined(const LHCInfoPerLS& infoPerLS, const LHCInfoPer
 LHCInfoCombined::LHCInfoCombined(const edm::EventSetup& iSetup,
                                  const edm::ESGetToken<LHCInfoPerLS, LHCInfoPerLSRcd>& tokenInfoPerLS,
                                  const edm::ESGetToken<LHCInfoPerFill, LHCInfoPerFillRcd>& tokenInfoPerFill,
-                                 const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo, bool useNewLHCInfo) {
+                                 const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo,
+                                 bool useNewLHCInfo) {
   if (useNewLHCInfo) {
     edm::ESHandle<LHCInfoPerLS> hLHCInfoPerLS = iSetup.getHandle(tokenInfoPerLS);
     edm::ESHandle<LHCInfoPerFill> hLHCInfoFill = iSetup.getHandle(tokenInfoPerFill);
@@ -36,6 +38,17 @@ void LHCInfoCombined::setFromPerLS(const LHCInfoPerLS& infoPerLS) {
   betaStarY = infoPerLS.betaStarY();
 }
 void LHCInfoCombined::setFromPerFill(const LHCInfoPerFill& infoPerFill) { energy = infoPerFill.energy(); }
+
+float LHCInfoCombined::crossingAngle() {
+  if (crossingAngleX == 0. && crossingAngleY == 0.) {
+    return -1.;
+  }
+  if (crossingAngleX != 0. && crossingAngleY != 0.) {
+    edm::LogWarning("LHCInfoCombined") << "crossingAngleX and crossingAngleY are both different from 0";
+    return -1.;
+  }
+  return crossingAngleX == 0. ? crossingAngleY : crossingAngleX;
+}
 
 void LHCInfoCombined::print(std::ostream& os) const {
   os << "Crossing angle x (urad): " << crossingAngleX << std::endl

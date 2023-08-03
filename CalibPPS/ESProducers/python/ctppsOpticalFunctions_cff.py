@@ -28,3 +28,6 @@ from CalibPPS.ESProducers.ctppsLHCInfo_cff import *
 # optics interpolation between crossing angles
 from CalibPPS.ESProducers.ctppsInterpolatedOpticalFunctionsESSource_cfi import *
 ctppsInterpolatedOpticalFunctionsESSource.lhcInfoLabel = ctppsLHCInfoLabel
+
+from Configuration.Eras.Modifier_run3_common_cff import run3_common
+run3_common.toModify(ctppsInterpolatedOpticalFunctionsESSource, useNewLHCInfo = cms.bool(True))

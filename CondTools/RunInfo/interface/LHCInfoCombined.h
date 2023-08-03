@@ -2,6 +2,7 @@
 #define CondTools_RunInfo_LHCInfoCombined_H
 
 #include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/Framework/interface/DependentRecordImplementation.h"
 
 #include "CondFormats/RunInfo/interface/LHCInfo.h"
 #include "CondFormats/RunInfo/interface/LHCInfoPerLS.h"
@@ -26,7 +27,18 @@ public:
   LHCInfoCombined(const edm::EventSetup& iSetup,
                   const edm::ESGetToken<LHCInfoPerLS, LHCInfoPerLSRcd>& tokenInfoPerLS,
                   const edm::ESGetToken<LHCInfoPerFill, LHCInfoPerFillRcd>& tokenInfoPerFill,
-                  const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo, bool useNewLHCInfo);
+                  const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo,
+                  bool useNewLHCInfo);
+
+  template <class RecordT, class ListT>
+  static LHCInfoCombined createLHCInfoCombined(
+      const edm::eventsetup::DependentRecordImplementation<RecordT, ListT>& iRecord,
+      const edm::ESGetToken<LHCInfoPerLS, LHCInfoPerLSRcd>& tokenInfoPerLS,
+      const edm::ESGetToken<LHCInfoPerFill, LHCInfoPerFillRcd>& tokenInfoPerFill,
+      const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo,
+      bool useNewLHCInfo);
+
+  float crossingAngle();
 
   void setFromLHCInfo(const LHCInfo& lhcInfo);
   void setFromPerLS(const LHCInfoPerLS& infoPerLS);
@@ -42,5 +54,25 @@ public:
 };
 
 std::ostream& operator<<(std::ostream& os, LHCInfoCombined beamInfo);
+
+template <class RecordT, class ListT>
+LHCInfoCombined LHCInfoCombined::createLHCInfoCombined(
+    const edm::eventsetup::DependentRecordImplementation<RecordT, ListT>& iRecord,
+    const edm::ESGetToken<LHCInfoPerLS, LHCInfoPerLSRcd>& tokenInfoPerLS,
+    const edm::ESGetToken<LHCInfoPerFill, LHCInfoPerFillRcd>& tokenInfoPerFill,
+    const edm::ESGetToken<LHCInfo, LHCInfoRcd>& tokenInfo,
+    bool useNewLHCInfo) {
+  LHCInfoCombined lhcInfoCombined;
+  if (useNewLHCInfo) {
+    LHCInfoPerLS const& lhcInfoPerLS = iRecord.get(tokenInfoPerLS);
+    LHCInfoPerFill const& lhcInfoPerFill = iRecord.get(tokenInfoPerFill);
+    lhcInfoCombined.setFromPerLS(lhcInfoPerLS);
+    lhcInfoCombined.setFromPerFill(lhcInfoPerFill);
+  } else {
+    LHCInfo const& lhcInfo = iRecord.get(tokenInfo);
+    lhcInfoCombined.setFromLHCInfo(lhcInfo);
+  }
+  return lhcInfoCombined;
+}
 
 #endif  // CondTools_RunInfo_LHCInfoCombined_H

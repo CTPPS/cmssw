@@ -20,8 +20,6 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
-process.load('Validation.CTPPS.ctppsLHCInfoPlotter_cfi')
-
 
 # raw data source
 process.source = cms.Source("PoolSource",
@@ -32,28 +30,25 @@ process.source = cms.Source("PoolSource",
 
 
 from Configuration.AlCa.GlobalTag import GlobalTag
-from Configuration.AlCa.autoCond import autoCond
-process.GlobalTag = GlobalTag(process.GlobalTag, autoCond['run3_data_prompt'], '')
+
+process.GlobalTag.globaltag = "130X_dataRun3_Prompt_forLHCInfo_Candidate_2023_07_28_12_53_55"
 
 # local RP reconstruction chain with standard settings
 process.load("RecoPPS.Configuration.recoCTPPS_cff")
 
 
 process.ctppsProtonReconstructionPlotter = cms.EDAnalyzer("CTPPSProtonReconstructionPlotter",
-  tagTracks = cms.InputTag("ctppsLocalTrackLiteProducer"),
-   tagRecoProtonsSingleRP = cms.InputTag("ctppsProtons", "singleRP"),
-   tagRecoProtonsMultiRP = cms.InputTag("ctppsProtons", "multiRP"),
+    tagTracks = cms.InputTag("ctppsLocalTrackLiteProducer"),
+    tagRecoProtonsSingleRP = cms.InputTag("ctppsProtons", "singleRP"),
+    tagRecoProtonsMultiRP = cms.InputTag("ctppsProtons", "multiRP"),
 
-  rpId_45_F = cms.uint32(23),
-  rpId_45_N = cms.uint32(3),
-  rpId_56_N = cms.uint32(103),
-  rpId_56_F = cms.uint32(123),
+    rpId_45_F = cms.uint32(23),
+    rpId_45_N = cms.uint32(3),
+    rpId_56_N = cms.uint32(103),
+    rpId_56_F = cms.uint32(123),
 
-  outputFile = cms.string("alcareco_protons_express.root"),
+    outputFile = cms.string("alcareco_protons_express.root"),
 )
-
-
-process.ctppsLHCInfoPlotter.outputFile = "out_lhcInfo.root"
 
 
 process.path = cms.Path(
@@ -62,18 +57,10 @@ process.path = cms.Path(
 )
 
 process.end_path = cms.EndPath(
-    process.ctppsLHCInfoPlotter
-    * process.ctppsProtonReconstructionPlotter
+    process.ctppsProtonReconstructionPlotter
 )
 
 process.schedule = cms.Schedule(
     process.path,
     process.end_path
 )
-
-
-process.GlobalTag.toGet = cms.VPSet()
-process.GlobalTag.toGet.append(cms.PSet(record = cms.string("CTPPSOpticsRcd"),tag =  cms.string("PPSOpticalFunctions_2023_v1_validation"), connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")))
-process.GlobalTag.toGet.append(cms.PSet(record = cms.string("LHCInfoRcd"),tag =  cms.string("LHCInfo_PopCon_test"), connect = cms.string("sqlite_file:/afs/cern.ch/user/a/akulczyc/public/DBsRecoTestFill9019/lhcinfo_pop_unit_test_old.db")))
-process.GlobalTag.toGet.append(cms.PSet(record = cms.string("LHCInfoPerLSRcd"),tag =  cms.string("ls_end_test"), connect = cms.string("sqlite_file:/afs/cern.ch/user/a/akulczyc/public/DBsRecoTestFill9019/lhcinfo_pop_unit_test_new.db")))
-process.GlobalTag.toGet.append(cms.PSet(record = cms.string("LHCInfoPerFillRcd"),tag =  cms.string("fill_end_test"), connect = cms.string("sqlite_file:/afs/cern.ch/user/a/akulczyc/public/DBsRecoTestFill9019/lhcinfo_pop_unit_test_new.db")))

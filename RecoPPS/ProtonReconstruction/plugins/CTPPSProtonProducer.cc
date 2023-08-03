@@ -148,8 +148,7 @@ void CTPPSProtonProducer::fillDescriptions(edm::ConfigurationDescriptions &descr
       ->setComment("whether to discard pixel tracks built from BX-shifted planes");
 
   desc.add<std::string>("lhcInfoPerFillLabel", "")->setComment("label of the LHCInfoPerFill record");
-  desc.add<bool>("useNewLHCInfo", false)
-      ->setComment("flag whether to use new LHCInfoPer* records or old LHCInfo");
+  desc.add<bool>("useNewLHCInfo", false)->setComment("flag whether to use new LHCInfoPer* records or old LHCInfo");
   desc.add<std::string>("lhcInfoLabel", "")->setComment("label of the LHCInfo record");
   desc.add<std::string>("opticsLabel", "")->setComment("label of the optics record");
   desc.add<std::string>("ppsAssociationCutsLabel", "")->setComment("label of the association cuts record");
