@@ -32,7 +32,7 @@ options.register ('calibInput',
 				  "Calibration input file for this iteration")
 
 options.register ('planesConfig',
-				  'planes.json',
+				  '',
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.string,
 				  "planes config file")
