@@ -163,7 +163,6 @@ elif options.calibInput != '':
 
 else: # default use db
     print('Using db')
-    print('IM IN THE FIRST DB') 
     # TODO: uncomment below when delete sqlite file dependency 
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
@@ -219,7 +218,6 @@ elif (use_sqlite_file):
             Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         )
 else:
-    print('IM IN THE SECOND DB') 
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
                 tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
                 tagRecHit = tagRecHit_,
