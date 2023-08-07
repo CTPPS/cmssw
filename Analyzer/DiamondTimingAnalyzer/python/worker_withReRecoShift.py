@@ -162,7 +162,8 @@ elif options.calibInput != '':
     )
 
 else: # default use db
-    print('Using db') 
+    print('Using db')
+    print('IM IN THE FIRST DB') 
     # TODO: uncomment below when delete sqlite file dependency 
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
@@ -201,7 +202,7 @@ if(options.calibInput != ''):
         tagLocalTrack = tagLocalTrack_, #changed
         timingCalibrationTag=cms.string(":"),
         tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-        planesConfig = cms.string("/afs/cern.ch/user/m/molkowsk/work/CMSSW_13_0_9/src/Analyzer/DiamondTimingAnalyzer/planes.json.json"),
+        planesConfig = cms.string("/afs/cern.ch/user/m/molkowsk/work/CMSSW_13_0_9/src/Analyzer/DiamondTimingAnalyzer/planes.json"),
         Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     ) 
@@ -218,6 +219,7 @@ elif (use_sqlite_file):
             Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         )
 else:
+    print('IM IN THE SECOND DB') 
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
                 tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
                 tagRecHit = tagRecHit_,
