@@ -105,7 +105,7 @@ else:
     gt = '130X_dataRun3_Prompt_v4'
 
 print('Using GT:',gt)
-print('PRINTOUT SO I KNOW THAT IM USING THE MOST RECENT DOCKER IMAGE')
+print('PRINTOUT SO I KNOW THAT IM USING THE MOST RECENT DOCKER IMAGE #2')
 
 process.GlobalTag = GlobalTag(process.GlobalTag, gt, '')
 
@@ -202,7 +202,7 @@ if(options.calibInput != ''):
         tagLocalTrack = tagLocalTrack_, #changed
         timingCalibrationTag=cms.string(":"),
         tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-        #planesConfig = cms.string("planes.json"),
+        planesConfig = cms.string(options.planesConfig),
         Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     ) 
@@ -214,7 +214,7 @@ elif (use_sqlite_file):
             timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
             tagLocalTrack = tagLocalTrack_,
             tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-            #planesConfig = cms.string("planes.json"), #TODO: remove parameter from options or don't hardcode it. 
+            planesConfig = cms.string(options.planesConfig), #TODO: remove parameter from options or don't hardcode it. 
             Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         )
@@ -226,7 +226,7 @@ else:
                 timingCalibrationTag=cms.string("GlobalTag:PPSTimingCalibrationbyPCL"),
                 tagLocalTrack =tagLocalTrack_,
                 tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-                #planesConfig = cms.string("planes.json"), #TODO: remove parameter from options or don't hardcode it. 
+                planesConfig = cms.string(options.planesConfig), #TODO: remove parameter from options or don't hardcode it. 
                 Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
                 Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             )
