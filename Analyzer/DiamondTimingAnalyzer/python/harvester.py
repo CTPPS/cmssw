@@ -16,6 +16,12 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 # process.MessageLogger.cerr.INFO.limit = -1
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
+options.register('globalTag',
+                '',
+                VarParsing.multiplicity.singleton,
+                VarParsing.varType.string,
+                "GT to use")
+
 options.register ('rootFiles',
 				  'file:run_output.root', 
                   VarParsing.multiplicity.list,
@@ -101,7 +107,13 @@ process.source = cms.Source("DQMRootSource",
 
 from DQMServices.Core.DQMEDHarvester import DQMEDHarvester
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag, '130X_dataRun3_Prompt_v4', '')
+
+if options.globalTag != '':
+    gt = options.globalTag
+else:
+    gt = '130X_dataRun3_Prompt_v4'
+
+process.GlobalTag = GlobalTag(process.GlobalTag, gt, '')
 
 ### SET TIME SHIFT SOURCE BEGIN
 if options.useDB=='True':
