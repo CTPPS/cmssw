@@ -65,7 +65,7 @@ options.register('maxEventsToProcess',
 			  				  
 options.parseArguments()
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(400000))
 
 if len(options.inputFiles) != 0:
     fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:')) else f for f in options.inputFiles]
