@@ -65,7 +65,7 @@ options.register('maxEventsToProcess',
 			  				  
 options.parseArguments()
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(400000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
 
 if len(options.inputFiles) != 0:
     fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:')) else f for f in options.inputFiles]
@@ -105,7 +105,6 @@ else:
     gt = '130X_dataRun3_Prompt_v4'
 
 print('Using GT:',gt)
-print('PRINTOUT SO I KNOW THAT IM USING THE MOST RECENT DOCKER IMAGE #2')
 
 process.GlobalTag = GlobalTag(process.GlobalTag, gt, '')
 
