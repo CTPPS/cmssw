@@ -124,7 +124,12 @@ DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
 
 void DiamondTimingHarvester::dqmEndJob(DQMStore::IBooker &iBooker, DQMStore::IGetter &iGetter) {
   std::cout << "LOOP INDEX! = " << loop_index << std::endl; 
-  std::cout << "CALIB FILES! = " << calib_files << std::endl; 
+  std::cout << "CALIB FILES! = ";
+  for (long unsigned int i = 0; i < calib_files.size(); i++)
+  {
+    std::cout << calib_files[i] << ",";
+  } 
+  std::cout << std::endl;
   std::cout<<"######## EndJob ########"<<std::endl;
 }
 
