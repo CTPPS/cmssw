@@ -65,7 +65,7 @@ options.register('maxEventsToProcess',
 			  				  
 options.parseArguments()
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
 
 if len(options.inputFiles) != 0:
     fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:')) else f for f in options.inputFiles]
@@ -154,7 +154,7 @@ if (use_sqlite_file):
 )
 
 elif options.calibInput != '':
-    print('Using CalibInput file ')
+    print('Using CalibInput file ' + options.calibInput)
     process.ppsTimingCalibrationESSource = cms.ESSource('PPSTimingCalibrationESSource',
         calibrationFile = cms.string(options.calibInput),
         subDetector = cms.uint32(2),
