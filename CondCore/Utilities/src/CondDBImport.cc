@@ -344,6 +344,8 @@ namespace cond {
         IMPORT_PAYLOAD_CASE(EcalCondObjectContainer<float>)
         IMPORT_PAYLOAD_CASE(L1TGlobalPrescalesVetos)
         IMPORT_PAYLOAD_CASE(L1TGlobalPrescalesVetosFract)
+        // IMPORT_PAYLOAD_CASE(TotemDAQMapping)
+
         if (inputTypeName == "PhysicsTools::Calibration::Histogram3D<double,double,double,double>") {
           match = true;
           const PhysicsTools::Calibration::Histogram3D<double, double, double, double>& obj =

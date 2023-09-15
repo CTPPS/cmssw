@@ -319,6 +319,7 @@ namespace cond {
       FETCH_PAYLOAD_CASE(MagFieldConfig)
       FETCH_PAYLOAD_CASE(L1TGlobalPrescalesVetos)
       FETCH_PAYLOAD_CASE(L1TGlobalPrescalesVetosFract)
+      // FETCH_PAYLOAD_CASE(TotemDAQMapping)
 
       //
       if (payloadTypeName == "PhysicsTools::Calibration::Histogram3D<double,double,double,double>") {

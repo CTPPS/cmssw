@@ -1,8 +1,9 @@
 /****************************************************************************
 *
-* Offline analyzer for writing CTPPS DAQ Mapping sqlite file 
-* H. Malbouisson
-* based on TOTEM code from  Jan Kašpar (jan.kaspar@gmail.com)
+* Offline analyzer for writing Totem T2 DAQ Mapping sqlite file 
+* Arkadiusz Cwikla
+* based on code from H. Malbouisson,
+* which was based on TOTEM code from  Jan Kašpar (jan.kaspar@gmail.com)
 *
 ****************************************************************************/
 
@@ -19,23 +20,21 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
 
-#include "CondFormats/DataRecord/interface/CTPPSPixelDAQMappingRcd.h"
-#include "CondFormats/DataRecord/interface/CTPPSPixelAnalysisMaskRcd.h"
-#include "CondFormats/PPSObjects/interface/CTPPSPixelDAQMapping.h"
-#include "CondFormats/PPSObjects/interface/CTPPSPixelAnalysisMask.h"
+#include "CondFormats/DataRecord/interface/TotemT2DAQMappingRcd.h"
+// #include "CondFormats/DataRecord/interface/CTPPSPixelAnalysisMaskRcd.h"
+#include "CondFormats/PPSObjects/interface/TotemDAQMapping.h"
+// #include "CondFormats/PPSObjects/interface/TotemAnalysisMask.h"
 #include "FWCore/Utilities/interface/ESInputTag.h"
+#include "CondFormats/DataRecord/interface/TotemReadoutRcd.h"
+#include "CondFormats/PPSObjects/interface/TotemDAQMapping.h"
 
 #include <cstdint>
 
 //----------------------------------------------------------------------------------------------------
-
-/**
- *\brief Prints the DAQ mapping loaded by TotemDAQMappingESSourceXML.
- **/
-class WriteCTPPSPixelDAQMapping : public edm::one::EDAnalyzer<> {
+class WriteTotemT2DAQMapping : public edm::one::EDAnalyzer<> {
 public:
-  WriteCTPPSPixelDAQMapping(const edm::ParameterSet &ps);
-  ~WriteCTPPSPixelDAQMapping() override {}
+  WriteTotemT2DAQMapping(const edm::ParameterSet &ps);
+  ~WriteTotemT2DAQMapping() override {}
 
 private:
   void analyze(const edm::Event &e, const edm::EventSetup &es) override;
@@ -43,7 +42,7 @@ private:
   std::string record_;
   std::string label_;
 
-  edm::ESGetToken<CTPPSPixelDAQMapping, CTPPSPixelDAQMappingRcd> tokenMapping_;
+  edm::ESGetToken<TotemDAQMapping, TotemReadoutRcd> tokenMapping_;
 };
 
 using namespace std;
@@ -51,24 +50,29 @@ using namespace edm;
 
 //----------------------------------------------------------------------------------------------------
 
-WriteCTPPSPixelDAQMapping::WriteCTPPSPixelDAQMapping(const edm::ParameterSet &ps)
+WriteTotemT2DAQMapping::WriteTotemT2DAQMapping(const edm::ParameterSet &ps)
     : daqmappingiov_(ps.getParameter<unsigned long long>("daqmappingiov")),
       record_(ps.getParameter<string>("record")),
       label_(ps.getParameter<string>("label")),
-      tokenMapping_(esConsumes<CTPPSPixelDAQMapping, CTPPSPixelDAQMappingRcd>(edm::ESInputTag("", label_))) {}
+      tokenMapping_(esConsumes<TotemDAQMapping, TotemReadoutRcd>(edm::ESInputTag("", label_))) {}
 
-void WriteCTPPSPixelDAQMapping::analyze(const edm::Event &, edm::EventSetup const &es) {
+void WriteTotemT2DAQMapping::analyze(const edm::Event &, edm::EventSetup const &es) {
+  // print mapping
+  
 
   // Write DAQ Mapping to sqlite file:
 
   const auto &mapping = es.getData(tokenMapping_);
 
-  // print mapping
-  printf("* DAQ mapping\n");
-  for (const auto &p : mapping.ROCMapping)
+  printf("* VFAT mapping\n");
+  for (const auto &p : mapping.VFATMapping)
     cout << "    " << p.first << " -> " << p.second << endl;
-  
+  printf("* Channel mapping\n");
+  for (const auto &p : mapping.totemTimingChannelMap)
+    cout << "    " << p.first << " plane " << p.second.plane << " channel " << p.second.channel << endl;
   edm::Service<cond::service::PoolDBOutputService> poolDbService;
+
+  cout << "is pool db service available: " << poolDbService.isAvailable() << endl;
   if (poolDbService.isAvailable()) {
     poolDbService->writeOneIOV(mapping, daqmappingiov_, record_);
   }
@@ -76,4 +80,4 @@ void WriteCTPPSPixelDAQMapping::analyze(const edm::Event &, edm::EventSetup cons
 
 //----------------------------------------------------------------------------------------------------
 
-DEFINE_FWK_MODULE(WriteCTPPSPixelDAQMapping);
+DEFINE_FWK_MODULE(WriteTotemT2DAQMapping);

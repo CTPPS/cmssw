@@ -27,6 +27,8 @@
 #include "CondFormats/DataRecord/interface/PPSAlignmentConfigurationRcd.h"
 #include "CondFormats/PPSObjects/interface/PPSAssociationCuts.h"
 #include "CondFormats/DataRecord/interface/PPSAssociationCutsRcd.h"
+// #include "CondFormats/DataRecord/interface/TotemReadoutRcd.h"
+// #include "CondFormats/PPSObjects/interface/TotemDAQMapping.h"
 
 namespace {
   struct InitAssociationCuts {
@@ -50,3 +52,5 @@ REGISTER_PLUGIN(PPSAlignmentConfigRcd, PPSAlignmentConfig);
 REGISTER_PLUGIN(PPSAlignmentConfigurationRcd, PPSAlignmentConfiguration);
 
 REGISTER_PLUGIN_INIT(PPSAssociationCutsRcd, PPSAssociationCuts, InitAssociationCuts);
+
+// REGISTER_PLUGIN(TotemReadoutRcd, TotemDAQMapping);
