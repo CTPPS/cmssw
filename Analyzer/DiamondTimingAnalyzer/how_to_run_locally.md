@@ -8,5 +8,5 @@
 #Next iterations:\
 #Rename the calibration file and the output file produced by the harvester after each iteration so they don't get overwritten in the next one\
 -cmsRun python/worker_withReRecoShift.py calibInput={previous calibration file name}.json\
--cmsRun python/harvester.py loopIndex={1 if it's the second iteration, then 2,3 etc.} calibFiles={name of the calibration file nr1}.json,{name of the calibration file nr2}.json,...\
+-cmsRun python/harvester.py loopIndex={1 if it's the second iteration, then 2,3 etc.} calibFiles={name of the calibration file nr1}.json,{name of the calibration file nr2}.json,...
 
