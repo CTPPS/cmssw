@@ -1,3 +1,6 @@
+HOW TO RUN THE CODE LOCALLY\
+-cmsrel CMSSW_13_0_9\
+-git cms-merge-topic Milosz-O:rolling_calib_hptdc_timing_13_0_9\
 -cd CMSSW_13_0_9/src/Analyzer/DiamondTimingAnalyzer\
 -cmsenv\
 -scram b -j8\
