@@ -3,9 +3,10 @@ HOW TO RUN THE CODE LOCALLY\
 -cd CMSSW_13_0_9/src\
 -cmsenv\
 -git cms-merge-topic Milosz-O:rolling_calib_hptdc_timing_13_0_9\
--cd Analyzer/DiamondTimingAnalyzer\
 -cmsenv\
--scram b -j8
+-scram b -j8\
+-cd Analyzer/DiamondTimingAnalyzer
+
 
 #1st iteration:\
 -cmsRun python/worker_withReRecoShift.py\
