@@ -4,7 +4,7 @@ HOW TO RUN THE CODE LOCALLY\
 -cmsenv\
 -git cms-merge-topic Milosz-O:rolling_calib_hptdc_timing_13_0_9\
 -cmsenv\
--scram b -j8\
+-scram b -j\
 -cd Analyzer/DiamondTimingAnalyzer
 
 
