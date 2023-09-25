@@ -219,6 +219,170 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "station": "2",
+                    "Planes": [
+                        {
+                            "plane": "0",
+                            "Channels": [
+                                {
+                                    "channel": "0",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "1",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "2",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "3",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "4",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "5",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "6",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "7",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "8",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "9",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "10",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "11",
+                                    "planes": "3"
+                                }
+                            ]
+                        },
+                        {
+                            "plane": "1",
+                            "Channels": [
+                                {
+                                    "channel": "0",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "1",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "2",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "3",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "4",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "5",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "6",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "7",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "8",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "9",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "10",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "11",
+                                    "planes": "3"
+                                }
+                            ]
+                        },
+                        {
+                            "plane": "2",
+                            "Channels": [
+                                {
+                                    "channel": "0",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "1",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "2",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "3",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "4",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "5",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "6",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "7",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "8",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "9",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "10",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "11",
+                                    "planes": "3"
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         },
@@ -437,6 +601,170 @@
                                 {
                                     "channel": "11",
                                     "planes": "4"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "station": "2",
+                    "Planes": [
+                        {
+                            "plane": "0",
+                            "Channels": [
+                                {
+                                    "channel": "0",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "1",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "2",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "3",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "4",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "5",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "6",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "7",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "8",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "9",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "10",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "11",
+                                    "planes": "3"
+                                }
+                            ]
+                        },
+                        {
+                            "plane": "1",
+                            "Channels": [
+                                {
+                                    "channel": "0",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "1",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "2",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "3",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "4",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "5",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "6",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "7",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "8",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "9",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "10",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "11",
+                                    "planes": "3"
+                                }
+                            ]
+                        },
+                        {
+                            "plane": "2",
+                            "Channels": [
+                                {
+                                    "channel": "0",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "1",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "2",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "3",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "4",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "5",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "6",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "7",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "8",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "9",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "10",
+                                    "planes": "3"
+                                },
+                                {
+                                    "channel": "11",
+                                    "planes": "3"
                                 }
                             ]
                         }
