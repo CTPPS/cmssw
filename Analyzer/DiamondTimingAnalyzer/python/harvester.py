@@ -157,9 +157,9 @@ else: #default use db
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
     cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
-            tag =  cms.string("PPSDiamondTimingCalibration_Run3_recovered_v1"),
-            label = cms.untracked.string('PPSTestCalibration'),
-            connect = cms.string("frontier://FrontierPrep/CMS_CONDITIONS")
+            tag =  cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v1_prompt"),
+            label = cms.untracked.string('PPSTimingCalibrationbyPCL'),
+            connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
         )
     )
     #TODO: uncomment below when delete sqlite file dependency 
@@ -201,7 +201,7 @@ elif (use_sqlite_file):
 )
 else: # defualt use db
     process.diamondTimingHarvester = DQMEDHarvester("DiamondTimingHarvester",
-    timingCalibrationTag=cms.string("GlobalTag:PPSTestCalibration"),
+    timingCalibrationTag=cms.string("GlobalTag:PPSTimingCalibrationbyPCL"),
 	calib_json_output = cms.string(options.calibOutput),
 	calibFiles = cms.vstring(options.calibFiles),
 	loopIndex = cms.int32(options.loopIndex),
