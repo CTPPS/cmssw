@@ -39,6 +39,9 @@ run3_GEM.toModify( rawDataCollector.RawCollectionList, func = lambda list: list.
 from Configuration.Eras.Modifier_ctpps_2022_cff import ctpps_2022
 ctpps_2022.toModify(rawDataCollector.RawCollectionList, func = lambda  list: list.extend([cms.InputTag("ctppsTotemRawData"),cms.InputTag("ctppsPixelRawData")]) )
 
+from Configuration.Eras.Modifier_ctpps_2021_cff import ctpps_2021
+ctpps_2021.toModify(rawDataCollector.RawCollectionList, func = lambda  list: list.extend([cms.InputTag("ctppsTotemRawData"),cms.InputTag("ctppsPixelRawData")]) )
+
 # Phase-2 Tracker
 from Configuration.Eras.Modifier_phase2_tracker_cff import phase2_tracker
 phase2_tracker.toModify( rawDataCollector.RawCollectionList, func = lambda list: list.remove(cms.InputTag("SiStripDigiToRaw")) )

@@ -18,3 +18,6 @@ ctppsRawData = cms.Task()
 
 from Configuration.Eras.Modifier_ctpps_2022_cff import ctpps_2022
 ctpps_2022.toReplaceWith(ctppsRawData, cms.Task(ctppsPixelRawData))
+
+from Configuration.Eras.Modifier_ctpps_2021_cff import ctpps_2021
+ctpps_2021.toReplaceWith(ctppsRawData, cms.Task(ctppsPixelRawData))

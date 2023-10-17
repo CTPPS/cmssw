@@ -29,6 +29,10 @@ from Configuration.Eras.Modifier_ctpps_2018_cff import ctpps_2018
 ctpps_2018.toReplaceWith(_LHCTransportPSet,_hector_2018)
 #ctpps_2018.toReplaceWith(_LHCTransportPSet,_opticalfunctionsTransportSetup_2018)
 
+from Configuration.Eras.Modifier_ctpps_2021_cff import ctpps_2021
+#ctpps_2021.toReplaceWith(_LHCTransportPSet, _hector_2021) # there is no LHCInfo tag for Run3 yet, force to use a nonDB propagation
+ctpps_2021.toReplaceWith(_LHCTransportPSet, _opticalfunctionsTransportSetup_2021) # there is no LHCInfo tag for Run3 yet, force to use a nonDB propagation
+
 from Configuration.Eras.Modifier_ctpps_2022_cff import ctpps_2022
 #ctpps_2021.toReplaceWith(_LHCTransportPSet, _hector_2021) # there is no LHCInfo tag for Run3 yet, force to use a nonDB propagation
 ctpps_2022.toReplaceWith(_LHCTransportPSet, _opticalfunctionsTransportSetup_2022) # there is no LHCInfo tag for Run3 yet, force to use a nonDB propagation

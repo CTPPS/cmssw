@@ -153,8 +153,8 @@ _config_2022 = cms.PSet(
           es_source = cms.PSet(
                   validityRange = cms.EventRange("0:min - 999999:max"),
                   opticalFunctions = cms.VPSet(
-                          cms.PSet( xangle = cms.double(144.974), fileName = cms.FileInPath("CalibPPS-ESProducers/tree/master/optical_functions/2022/version_pre1/144.974urad.root") ),
-                          cms.PSet( xangle = cms.double(160.000), fileName = cms.FileInPath("CalibPPS-ESProducers/tree/master/optical_functions/2022/version_pre1/160.000urad.root") )
+                          cms.PSet( xangle = cms.double(144.974), fileName = cms.FileInPath("CalibPPS/ESProducers/data/optical_functions/2022/version_pre1/144.974urad.root") ),
+                          cms.PSet( xangle = cms.double(160.000), fileName = cms.FileInPath("CalibPPS/ESProducers/data/optical_functions/2022/version_pre1/160.000urad.root") )
                   )
           ),
           defaultCrossingAngle = cms.double(0.0)
