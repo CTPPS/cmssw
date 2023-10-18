@@ -47,19 +47,9 @@ def _modify2022(process):
     if hasattr(process, 'ctppsGeometryESModule'):
         # replaced by the composite ESSource
         delattr(process, 'ctppsGeometryESModule')
-        
-def _modify2021(process):
-    print('Process customised for 2021 PPS era')
-    process.load('SimPPS.DirectSimProducer.simPPS2021_cfi')
-    if hasattr(process, 'generator'):
-        process.generator.energy = process.profile_2021_default.ctppsLHCInfo.beamEnergy
-    if hasattr(process, 'ctppsGeometryESModule'):
-        # replaced by the composite ESSource
-        delattr(process, 'ctppsGeometryESModule')
-
+       
 
 modifyConfigurationStandardSequencesFor2016_ = eras.ctpps_2016.makeProcessModifier(_modify2016)
 modifyConfigurationStandardSequencesFor2017_ = eras.ctpps_2017.makeProcessModifier(_modify2017)
 modifyConfigurationStandardSequencesFor2018_ = eras.ctpps_2018.makeProcessModifier(_modify2018)
-modifyConfigurationStandardSequencesFor2021_ = eras.ctpps_2021.makeProcessModifier(_modify2021)
 modifyConfigurationStandardSequencesFor2022_ = eras.ctpps_2022.makeProcessModifier(_modify2022)
