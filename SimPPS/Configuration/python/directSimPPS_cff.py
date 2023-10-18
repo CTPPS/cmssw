@@ -47,6 +47,7 @@ def _modify2022(process):
     if hasattr(process, 'ctppsGeometryESModule'):
         # replaced by the composite ESSource
         delattr(process, 'ctppsGeometryESModule')
+       
 
 modifyConfigurationStandardSequencesFor2016_ = eras.ctpps_2016.makeProcessModifier(_modify2016)
 modifyConfigurationStandardSequencesFor2017_ = eras.ctpps_2017.makeProcessModifier(_modify2017)
