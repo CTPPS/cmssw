@@ -147,6 +147,29 @@ _config_2021 = cms.PSet(
   )
 )
 
+_config_2022 = cms.PSet(
+  opticalFunctionConfig = cms.PSet(
+          es_source = cms.PSet(
+                  validityRange = cms.EventRange("0:min - 999999:max"),
+                  opticalFunctions = cms.VPSet(
+                          cms.PSet( xangle = cms.double(144.974), fileName = cms.FileInPath("CalibPPS/ESProducers/data/optical_functions/2022/version_pre1/144.974urad.root") ),
+                          cms.PSet( xangle = cms.double(160.000), fileName = cms.FileInPath("CalibPPS/ESProducers/data/optical_functions/2022/version_pre1/160.000urad.root") )
+                  )
+          ),
+          defaultCrossingAngle = cms.double(0.0)
+  ),
+  optics_parameters = cms.PSet(
+         empiricalAperture45_xi0_int = cms.double(0.079),
+          empiricalAperture45_xi0_slp = cms.double(4.211E-04),
+          empiricalAperture45_a_int = cms.double(42.8),
+          empiricalAperture45_a_slp = cms.double(0.669),
+          empiricalAperture56_xi0_int = cms.double(0.074),
+          empiricalAperture56_xi0_slp = cms.double(6.604E-04),
+          empiricalAperture56_a_int = cms.double(-22.7),
+          empiricalAperture56_a_slp = cms.double(1.600)
+  )
+)
+
 _opticalfunctionsTransportSetup_2016_preTS2 =cms.PSet(
                 BeamEnergy=cms.double(6500),
                 opticalFunctionConfig = _config_2016_preTS2.opticalFunctionConfig,
@@ -182,6 +205,13 @@ opticalfunctionsTransportSetup_2021 =cms.PSet(
                 _config_2021.opticalFunctionConfig,
                 _config_2021.optics_parameters,
                 BeamEnergy=cms.double(7000)
+)
+
+opticalfunctionsTransportSetup_2022 =cms.PSet(
+                _baseOpticalFunctionsParameters,
+                _config_2022.opticalFunctionConfig,
+                _config_2022.optics_parameters,
+                BeamEnergy=cms.double(6800)
 )
 
 # Default setup

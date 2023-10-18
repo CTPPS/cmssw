@@ -313,3 +313,12 @@ ctpps_2022.toModify( theMixObjects,
         crossingFrames = theMixObjects.mixSH.crossingFrames + [ 'TotemHitsRP' , 'CTPPSPixelHits']
     )
 )
+
+from Configuration.Eras.Modifier_ctpps_2021_cff import ctpps_2021
+ctpps_2021.toModify( theMixObjects,
+    mixSH = dict(
+        input = theMixObjects.mixSH.input + [ cms.InputTag("g4SimHits","TotemHitsRP"),cms.InputTag("g4SimHits","CTPPSPixelHits") ],
+        subdets = theMixObjects.mixSH.subdets + [ 'TotemHitsRP', 'CTPPSPixelHits' ],
+        crossingFrames = theMixObjects.mixSH.crossingFrames + [ 'TotemHitsRP' , 'CTPPSPixelHits']
+    )
+)

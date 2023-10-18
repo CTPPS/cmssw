@@ -168,3 +168,8 @@ hector_2021 = cms.PSet(
               baseHectorParameters,
               Nominal_RunIII
 )
+
+hector_2022 = cms.PSet(
+              baseHectorParameters,
+              Nominal_RunIII
+)

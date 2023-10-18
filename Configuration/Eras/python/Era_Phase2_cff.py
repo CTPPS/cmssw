@@ -15,6 +15,7 @@ from Configuration.Eras.Modifier_hcalHardcodeConditions_cff import hcalHardcodeC
 from Configuration.Eras.Modifier_phase2_timing_cff import phase2_timing
 from Configuration.Eras.Modifier_phase2_timing_layer_cff import phase2_timing_layer
 from Configuration.Eras.Modifier_phase2_trigger_cff import phase2_trigger
+from Configuration.Eras.Modifier_ctpps_2021_cff import ctpps_2021
 from Configuration.Eras.Modifier_ctpps_2022_cff import ctpps_2022
 from Configuration.ProcessModifiers.dd4hep_cff import dd4hep
 
