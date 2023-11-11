@@ -1,40 +1,29 @@
-import FWCore.ParameterSet.Config as cms
+import sys
 
+import FWCore.ParameterSet.Config as cms
 import FWCore.ParameterSet.VarParsing as VarParsing
 process = cms.Process('test')
 
 options = VarParsing.VarParsing()
-supported_timetypes = {"timestamp", "lumiid"}
-options.register( 'db'
-                , 'sqlite_file:lhcinfoperfill_pop_test.db' #default value
+options.register( 'source'
+                , 'sqlite_file:lhcinfo_pop_test.db' #default value
                 , VarParsing.VarParsing.multiplicity.singleton
                 , VarParsing.VarParsing.varType.string
                 , "Connection string to the DB where payloads are going to be read from"
                   )
 options.register( 'tag'
-                , 'LHCInfoPerFill_PopCon_test'
+                , 'LHCInfo_PopCon_test'
                 , VarParsing.VarParsing.multiplicity.singleton
                 , VarParsing.VarParsing.varType.string
-                , "Tag to read from in source db"
+                , "Tag to read from in source"
                   )
-options.register( 'iov'
-                , 1
+options.register( 'timestamp'
+                , 7133428598295232512
                 , VarParsing.VarParsing.multiplicity.singleton
                 , VarParsing.VarParsing.varType.int
-                , "IOV: specifies the point in time to read the payload at"
-                  )
-options.register( 'timetype'
-                , 'timestamp' #default
-                , VarParsing.VarParsing.multiplicity.singleton
-                , VarParsing.VarParsing.varType.string
-                , f"timetype of the provided IOV, accepted values: {supported_timetypes}"
+                , "Timestamp to which payload with relavant IOV will be read"
                   )
 options.parseArguments()
-
-# TODO check validity of the rest of the arguments
-if options.timetype not in supported_timetypes:
-  print(f"Provided timetype '{options.timetype}' is not supported (accepted values: {supported_timetypes})", file=sys.stderr)
-  exit(1)
 
 # minimum logging
 process.MessageLogger = cms.Service("MessageLogger",
@@ -48,28 +37,29 @@ process.MessageLogger = cms.Service("MessageLogger",
 )
 
 process.source = cms.Source('EmptyIOVSource',
-    timetype = cms.string(options.timetype),
-    firstValue = cms.uint64(options.iov),
-    lastValue = cms.uint64(options.iov),
+    timetype = cms.string('timestamp'),
+    firstValue = cms.uint64(options.timestamp),
+    lastValue = cms.uint64(options.timestamp),
     interval = cms.uint64(1)
 )
+
 # load info from database
 process.load('CondCore.CondDB.CondDB_cfi')
-process.CondDB.connect= options.db # SQLite input
+process.CondDB.connect= options.source # SQLite input
 
 process.PoolDBESSource = cms.ESSource('PoolDBESSource',
     process.CondDB,
     DumpStats = cms.untracked.bool(True),
     toGet = cms.VPSet(
         cms.PSet(
-            record = cms.string('LHCInfoPerFillRcd'),
+            record = cms.string('LHCInfoRcd'),
             tag = cms.string(options.tag)
         )
     )
 )
 
-process.LHCInfoPerFillAnalyzer = cms.EDAnalyzer('LHCInfoPerFillAnalyzer')
+process.LHCInfoAnalyzer = cms.EDAnalyzer('LHCInfoAnalyzer')
 
 process.path = cms.Path(
-    process.LHCInfoPerFillAnalyzer
+    process.LHCInfoAnalyzer
 )
