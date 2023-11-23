@@ -147,8 +147,7 @@ if (use_sqlite_file):
                 toGet = cms.VPSet(
                     cms.PSet(
                         record = cms.string('PPSTimingCalibrationRcd'),
-                        tag = cms.string('DiamondTimingCalibration'),
-                                label = cms.untracked.string('PPSTestCalibration'), 
+                        tag = cms.string('DiamondTimingCalibration') 
                     )
                 )
 )
@@ -185,7 +184,11 @@ else: # default use db
 # TODO: we miss tjhis from worker.py vvvvv
 #  rechits production
 process.load('RecoPPS.Local.ctppsDiamondLocalReconstruction_cff')
+
 process.ctppsDiamondRecHits.timingCalibrationTag="GlobalTag:PPSTimingCalibrationbyPCL"
+if (use_sqlite_file):
+    process.ctppsDiamondRecHits.timingCalibrationTag=""   
+                      
 process.ctppsDiamondRecHits.digiTag="ctppsDiamondRawToDigiAlCaRecoProducer:TimingDiamond"
 # ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -210,7 +213,7 @@ elif (use_sqlite_file):
             tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
             tagRecHit =tagRecHit_,
             tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
-            timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
+            timingCalibrationTag=cms.string(""),
             tagLocalTrack = tagLocalTrack_,
             tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
             planesConfig = cms.string(options.planesConfig), #TODO: remove parameter from options or don't hardcode it. 

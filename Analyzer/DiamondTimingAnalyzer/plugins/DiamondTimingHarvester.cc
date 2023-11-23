@@ -209,8 +209,9 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
         resHist->Fill(Resolution_L2_map_[histo_key]);
 
         //res vs step
-        auto* resStepHist = iBooker.book2D("res_vs_step_" + ch_name, "Resolution vs Step;Step;Resolution (ns)", 1200, -1, loop_index+2, 1200, 0, 1);
-        resStepHist->getTH2F()->SetMarkerStyle(20);
+        //auto* resStepHist = iBooker.book2D("res_vs_step_" + ch_name, "Resolution vs Step;Step;Resolution (ns)", 1200, -1, loop_index+2, 1200, 0, 1);
+        auto* resStepHist = iBooker.book1D("res_vs_step_" + ch_name, "Resolution vs Step;Step;Resolution (ns)", 1200, -1, loop_index+2);
+        resStepHist->getTH1F()->SetMarkerStyle(20);
         
         
         
