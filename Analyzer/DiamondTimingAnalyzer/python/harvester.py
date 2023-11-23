@@ -140,8 +140,7 @@ if (use_sqlite_file):
                 toGet = cms.VPSet(
                     cms.PSet(
                         record = cms.string('PPSTimingCalibrationRcd'),
-                        tag = cms.string('DiamondTimingCalibration'),
-                                label = cms.untracked.string('PPSTestCalibration'), 
+                        tag = cms.string('DiamondTimingCalibration') 
                     )
                 )
 )
@@ -192,7 +191,7 @@ if(options.calibInput != ''):
 	)
 elif (use_sqlite_file):
 	process.diamondTimingHarvester = DQMEDHarvester("DiamondTimingHarvester",
-	timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
+	timingCalibrationTag=cms.string(""),
    calib_json_output = cms.string(options.calibOutput),
    calibFiles = cms.vstring(options.calibFiles),
    loopIndex = cms.int32(options.loopIndex),
