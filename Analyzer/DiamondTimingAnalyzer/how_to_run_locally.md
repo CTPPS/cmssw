@@ -9,12 +9,12 @@ HOW TO RUN THE CODE LOCALLY\
 
 
 #1st iteration:\
-#IF WE WANT TO USE THE DATABASE FOR CALIBRATION:
+#IF WE WANT TO USE THE DATABASE FOR CALIBRATION:\
 -cmsRun python/worker_withReRecoShift.py\
 #By default number of events for the worker is set to all the events, we can specify the number of events we want with, for example maxEventsToProcess=10000\
--cmsRun python/harvester.py
-#IF WE WANT TO USE THE SQLITE FILE FOR CALIBRATION:
--cmsRun python/worker_withReRecoShift.py sqlFileName=sqlite_file:ppsDiamondTiming_calibration369956.sqlite
+-cmsRun python/harvester.py\
+#IF WE WANT TO USE THE SQLITE FILE FOR CALIBRATION:\
+-cmsRun python/worker_withReRecoShift.py sqlFileName=sqlite_file:ppsDiamondTiming_calibration369956.sqlite\
 -cmsRun python/harvester.py sqlFileName=sqlite_file:ppsDiamondTiming_calibration369956.sqlite
 
 #Next iterations:\
