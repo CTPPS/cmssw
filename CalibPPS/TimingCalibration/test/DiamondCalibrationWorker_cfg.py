@@ -20,7 +20,7 @@ options.parseArguments()
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.load('RecoPPS.Local.totemTimingLocalReconstruction_cff')
 process.source = cms.Source("EmptySource")
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 process.a1 = cms.EDAnalyzer("StreamThingAnalyzer",
     product_to_get = cms.string('m1')
