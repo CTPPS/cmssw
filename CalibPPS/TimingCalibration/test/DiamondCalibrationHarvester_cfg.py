@@ -28,8 +28,10 @@ from Configuration.AlCa.autoCond import autoCond
 process.GlobalTag = GlobalTag(process.GlobalTag, options.globalTag,'')
 
 # Source (histograms)
+fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:') or f.startswith('root:')) else f for f in options.inputFiles]
+  
 process.source = cms.Source("PoolSource",
-    fileNames = cms.untracked.vstring (options.inputFiles))
+    fileNames = cms.untracked.vstring(fileList))
 
 # output service for database
 process.load('CondCore.CondDB.CondDB_cfi')
