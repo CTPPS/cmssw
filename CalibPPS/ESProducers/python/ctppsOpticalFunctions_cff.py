@@ -1,5 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
+from CalibPPS.ESProducers.ctppsLHCInfo_cff import *
 
 # by default, (raw) optical functions are now loaded from CondDB using a GT
 
@@ -25,4 +26,5 @@ import FWCore.ParameterSet.Config as cms
 #ctppsOpticalFunctionsESSource.configuration.append(config_2016_preTS2)
 
 # optics interpolation between crossing angles
-from CalibPPS.ESProducers.ctppsInterpolatedOpticalFunctionsESSource_cff import *
+from CalibPPS.ESProducers.ctppsInterpolatedOpticalFunctionsESSource_cfi import *
+ctppsInterpolatedOpticalFunctionsESSource.lhcInfoLabel = ctppsLHCInfoLabel

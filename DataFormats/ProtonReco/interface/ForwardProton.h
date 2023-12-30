@@ -70,6 +70,7 @@ namespace reco {
 
     /// chi-squared of the fit
     float chi2() const { return chi2_; }
+    void setChi2(double chi2) { chi2_ = chi2; }
     /// number of degrees of freedom for the track fit
     unsigned int ndof() const { return ndof_; }
     /// chi-squared divided by ndof (or chi-squared * 1e6 if ndof is zero)

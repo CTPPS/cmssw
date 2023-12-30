@@ -169,14 +169,21 @@ double ProtonReconstructionAlgorithm::newtonGoalFcn(double xi,
 //----------------------------------------------------------------------------------------------------
 
 reco::ForwardProton ProtonReconstructionAlgorithm::reconstructFromMultiRP(const CTPPSLocalTrackLiteRefVector &tracks,
-                                                                          const float energy,
+                                                                          const LHCInfo &lhcInfo,
                                                                           std::ostream &os) const {
   // make sure optics is available for all tracks
   for (const auto &it : tracks) {
     auto oit = m_rp_optics_.find(it->rpId());
-    if (oit == m_rp_optics_.end())
-      throw cms::Exception("ProtonReconstructionAlgorithm")
+    //if chi2 is negative and `valid` is false it means the optics are missing or xangle is invalid
+    if (oit == m_rp_optics_.end()) {
+      edm::LogWarning("ProtonReconstructionAlgorithm")
           << "Optics data not available for RP " << it->rpId() << ", i.e. " << CTPPSDetId(it->rpId()) << ".";
+      reco::ForwardProton invalidProton;
+      invalidProton.setChi2(-std::numeric_limits<float>::max());
+      invalidProton.setMethod(reco::ForwardProton::ReconstructionMethod::multiRP);
+      invalidProton.setContributingLocalTracks(tracks);
+      return invalidProton;
+    }
   }
 
   // initial estimate of xi and th_x
@@ -391,7 +398,7 @@ reco::ForwardProton ProtonReconstructionAlgorithm::reconstructFromMultiRP(const 
   const FP::Point vertex(0., vtx_y, 0.);
   const double cos_th_sq = 1. - th_x * th_x - th_y * th_y;
   const double cos_th = (cos_th_sq > 0.) ? sqrt(cos_th_sq) : 1.;
-  const double p = energy * (1. - xi);
+  const double p = lhcInfo.energy() * (1. - xi);
   const FP::Vector momentum(-p * th_x,  // the signs reflect change LHC --> CMS convention
                             +p * th_y,
                             sign_z * p * cos_th);
@@ -403,7 +410,7 @@ reco::ForwardProton ProtonReconstructionAlgorithm::reconstructFromMultiRP(const 
 //----------------------------------------------------------------------------------------------------
 
 reco::ForwardProton ProtonReconstructionAlgorithm::reconstructFromSingleRP(const CTPPSLocalTrackLiteRef &track,
-                                                                           const float energy,
+                                                                           const LHCInfo &lhcInfo,
                                                                            std::ostream &os) const {
   CTPPSDetId rpId(track->rpId());
 
@@ -412,9 +419,18 @@ reco::ForwardProton ProtonReconstructionAlgorithm::reconstructFromSingleRP(const
 
   // make sure optics is available for the track
   auto oit = m_rp_optics_.find(track->rpId());
-  if (oit == m_rp_optics_.end())
-    throw cms::Exception("ProtonReconstructionAlgorithm")
+  if (oit == m_rp_optics_.end()) {
+    //if chi2 is negative and `valid` is false it means the optics are missing or xangle is invalid
+    edm::LogWarning("ProtonReconstructionAlgorithm")
         << "Optics data not available for RP " << track->rpId() << ", i.e. " << rpId << ".";
+    reco::ForwardProton invalidProton;
+    invalidProton.setChi2(-std::numeric_limits<float>::max());
+    invalidProton.setMethod(reco::ForwardProton::ReconstructionMethod::singleRP);
+    CTPPSLocalTrackLiteRefVector trk;
+    trk.push_back(track);
+    invalidProton.setContributingLocalTracks(trk);
+    return invalidProton;
+  }
 
   // rough estimate of xi and th_y from each track
   const double x_full = track->x() * 1E-1 + oit->second.x0;  // conversion mm --> cm
@@ -441,7 +457,7 @@ reco::ForwardProton ProtonReconstructionAlgorithm::reconstructFromSingleRP(const
   const FP::Point vertex(0., 0., 0.);
   const double cos_th_sq = 1. - th_y * th_y;
   const double cos_th = (cos_th_sq > 0.) ? sqrt(cos_th_sq) : 1.;
-  const double p = energy * (1. - xi);
+  const double p = lhcInfo.energy() * (1. - xi);
   const FP::Vector momentum(0., p * th_y, sign_z * p * cos_th);
 
   FP::CovarianceMatrix cm;

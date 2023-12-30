@@ -1,5 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
+from CalibPPS.ESProducers.ctppsLHCInfo_cff import *
+
 # (source) optical functions sampled at few xangles
 from CalibPPS.ESProducers.ctppsOpticalFunctionsESSource_cfi import *
 
@@ -136,4 +138,5 @@ optics_2022 = cms.PSet(
 ctppsOpticalFunctionsESSource.configuration.append(optics_2022)
 
 # optics interpolation between crossing angles
-from CalibPPS.ESProducers.ctppsInterpolatedOpticalFunctionsESSource_cff import *
+from CalibPPS.ESProducers.ctppsInterpolatedOpticalFunctionsESSource_cfi import *
+ctppsInterpolatedOpticalFunctionsESSource.lhcInfoLabel = ctppsLHCInfoLabel

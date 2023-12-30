@@ -8,8 +8,7 @@
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
-#include "CondTools/RunInfo/interface/LHCInfoCombined.h"
-
+#include "CondFormats/DataRecord/interface/LHCInfoRcd.h"
 #include "CondFormats/DataRecord/interface/CTPPSOpticsRcd.h"
 #include "CondFormats/DataRecord/interface/CTPPSInterpolatedOpticsRcd.h"
 
@@ -29,26 +28,19 @@ public:
 private:
   edm::ESGetToken<LHCOpticalFunctionsSetCollection, CTPPSOpticsRcd> opticsToken_;
   edm::ESGetToken<LHCInfo, LHCInfoRcd> lhcInfoToken_;
-  edm::ESGetToken<LHCInfoPerLS, LHCInfoPerLSRcd> lhcInfoPerLSToken_;
-  edm::ESGetToken<LHCInfoPerFill, LHCInfoPerFillRcd> lhcInfoPerFillToken_;
   std::shared_ptr<LHCInterpolatedOpticalFunctionsSetCollection> currentData_;
   float currentCrossingAngle_;
   bool currentDataValid_;
-  const bool useNewLHCInfo_;
 };
 
 //----------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------
 
 CTPPSInterpolatedOpticalFunctionsESSource::CTPPSInterpolatedOpticalFunctionsESSource(const edm::ParameterSet &iConfig)
-    : currentCrossingAngle_(LHCInfoCombined::crossingAngleInvalid),
-      currentDataValid_(false),
-      useNewLHCInfo_(iConfig.getParameter<bool>("useNewLHCInfo")) {
+    : currentCrossingAngle_(-1.), currentDataValid_(false) {
   auto cc = setWhatProduced(this, iConfig.getParameter<std::string>("opticsLabel"));
   opticsToken_ = cc.consumes(edm::ESInputTag("", iConfig.getParameter<std::string>("opticsLabel")));
   lhcInfoToken_ = cc.consumes(edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoLabel")));
-  lhcInfoPerLSToken_ = cc.consumes(edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoPerLSLabel")));
-  lhcInfoPerFillToken_ = cc.consumes(edm::ESInputTag("", iConfig.getParameter<std::string>("lhcInfoPerFillLabel")));
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -57,10 +49,7 @@ void CTPPSInterpolatedOpticalFunctionsESSource::fillDescriptions(edm::Configurat
   edm::ParameterSetDescription desc;
 
   desc.add<std::string>("lhcInfoLabel", "")->setComment("label of the LHCInfo record");
-  desc.add<std::string>("lhcInfoPerFillLabel", "")->setComment("label of the LHCInfoPerFill record");
-  desc.add<std::string>("lhcInfoPerLSLabel", "")->setComment("label of the LHCInfoPerLS record");
   desc.add<std::string>("opticsLabel", "")->setComment("label of the optics records");
-  desc.add<bool>("useNewLHCInfo", false)->setComment("flag whether to use new LHCInfoPer* records or old LHCInfo");
 
   descriptions.add("ctppsInterpolatedOpticalFunctionsESSource", desc);
 }
@@ -72,29 +61,26 @@ std::shared_ptr<LHCInterpolatedOpticalFunctionsSetCollection> CTPPSInterpolatedO
   // get the input data
   LHCOpticalFunctionsSetCollection const &ofColl = iRecord.get(opticsToken_);
 
-  auto lhcInfoCombined = LHCInfoCombined::createLHCInfoCombined<
-      CTPPSInterpolatedOpticsRcd,
-      edm::mpl::Vector<CTPPSOpticsRcd, LHCInfoRcd, LHCInfoPerFillRcd, LHCInfoPerLSRcd>>(
-      iRecord, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_, useNewLHCInfo_);
+  LHCInfo const &lhcInfo = iRecord.get(lhcInfoToken_);
 
   // is there anything to do?
-  if (currentDataValid_ && lhcInfoCombined.crossingAngle() == currentCrossingAngle_)
+  if (currentDataValid_ && lhcInfo.crossingAngle() == currentCrossingAngle_)
     return currentData_;
 
   // is crossing angle reasonable (LHCInfo is correctly filled in DB)?
-  if (lhcInfoCombined.isCrossingAngleInvalid()) {
+  if (lhcInfo.crossingAngle() == 0.) {
     edm::LogInfo("CTPPSInterpolatedOpticalFunctionsESSource")
         << "Invalid crossing angle, no optical functions produced.";
 
     currentDataValid_ = false;
-    currentCrossingAngle_ = LHCInfoCombined::crossingAngleInvalid;
+    currentCrossingAngle_ = -1;
     currentData_ = std::make_shared<LHCInterpolatedOpticalFunctionsSetCollection>();
 
     return currentData_;
   }
 
   // set new crossing angle
-  currentCrossingAngle_ = lhcInfoCombined.crossingAngle();
+  currentCrossingAngle_ = lhcInfo.crossingAngle();
   edm::LogInfo("CTPPSInterpolatedOpticalFunctionsESSource")
       << "Crossing angle has changed to " << currentCrossingAngle_ << ".";
 
@@ -114,10 +100,16 @@ std::shared_ptr<LHCInterpolatedOpticalFunctionsSetCollection> CTPPSInterpolatedO
     const auto &it = ofColl.begin();
 
     // does the input xangle correspond to the actual one?
-    if (fabs(currentCrossingAngle_ - it->first) > 1e-6)
-      throw cms::Exception("CTPPSInterpolatedOpticalFunctionsESSource")
+    if (fabs(currentCrossingAngle_ - it->first) > 1e-6) {
+      edm::LogWarning("CTPPSInterpolatedOpticalFunctionsESSource")
           << "Cannot interpolate: input given only for xangle " << it->first << " while interpolation requested for "
           << currentCrossingAngle_ << ".";
+
+      currentDataValid_ = false;
+      currentData_ = std::make_shared<LHCInterpolatedOpticalFunctionsSetCollection>();
+
+      return currentData_;
+    }
 
     currentData_ = std::make_shared<LHCInterpolatedOpticalFunctionsSetCollection>();
     for (const auto &rp_p : it->second) {
