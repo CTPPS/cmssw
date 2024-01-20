@@ -131,24 +131,24 @@ void PPSTimingCalibrationPCLHarvester::dqmEndJob(DQMStore::IBooker& iBooker, DQM
     int max_bin_pos=1;
     for (int i = 0; i<hists.toT[chid]->getNbinsX(); i++) {
       double bin_value = hists.toT[chid]->getBinContent(i);
-      int bin_x_pos = hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(bin_value);
+      int bin_x_pos = hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(i);
       if(bin_x_pos > 20)
         break;
-      if(bin_value > hists.toT[chid]->getBinContent(i))
+      if(bin_value > hists.toT[chid]->getBinContent(max_bin_pos))
         max_bin_pos=i;
     }
     //find ranges
     int upper_limit_pos = max_bin_pos;
     int lower_limit_pos = max_bin_pos;
     double threshold = threshold_percent_of_max_ * hists.toT[chid]->getBinContent(max_bin_pos);
-    while(upper_limit_pos < hists.toT[chid]->getNbinsX()){
+    while(hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(upper_limit_pos) < 18){
       upper_limit_pos++;
       if(hists.toT[chid]->getBinContent(upper_limit_pos)<threshold)
         break;
     }
-    while(lower_limit_pos > 0){
+    while(hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(lower_limit_pos) > 8){
       lower_limit_pos--;
-      if(hists.toT[chid]->getBinContent(upper_limit_pos)<threshold)
+      if(hists.toT[chid]->getBinContent(lower_limit_pos)<threshold)
         break;
     }
     double upper_tot_range = hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(upper_limit_pos);
