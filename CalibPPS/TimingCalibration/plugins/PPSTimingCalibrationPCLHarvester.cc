@@ -42,7 +42,10 @@ private:
   const std::string dqmDir_;
   const std::string formula_;
   const unsigned int min_entries_;
-  const double threshold_percent_of_max_;
+  const double threshold_fraction_of_max_;
+  static constexpr double upper_limit_max_search_ = 20;
+  static constexpr double upper_limit_range_search_ = 20;
+  static constexpr double lower_limit_range_search_ = 8;
   static constexpr double resolution_ = 0.1;
   static constexpr double offset_ = 0.;
   TF1 interp_;
@@ -55,9 +58,8 @@ PPSTimingCalibrationPCLHarvester::PPSTimingCalibrationPCLHarvester(const edm::Pa
       dqmDir_(iConfig.getParameter<std::string>("dqmDir")),
       formula_(iConfig.getParameter<std::string>("formula")),
       min_entries_(iConfig.getParameter<unsigned int>("minEntries")),
-      threshold_percent_of_max_(iConfig.getParameter<double>("thresholdPercentOfMax")),
-      interp_("interp", formula_.c_str(), 10.5, 25.){
-
+      threshold_fraction_of_max_(iConfig.getParameter<double>("thresholdFractionOfMax")),
+      interp_("interp", formula_.c_str(), 10.5, 25.) {
   // first ensure DB output service is available
   edm::Service<cond::service::PoolDBOutputService> poolDbService;
   if (!poolDbService.isAvailable())
@@ -128,33 +130,32 @@ void PPSTimingCalibrationPCLHarvester::dqmEndJob(DQMStore::IBooker& iBooker, DQM
     }
 
     //find max
-    int max_bin_pos=1;
-    for (int i = 0; i<hists.toT[chid]->getNbinsX(); i++) {
+    int max_bin_pos = 1;
+    for (int i = 0; i < hists.toT[chid]->getNbinsX(); i++) {
       double bin_value = hists.toT[chid]->getBinContent(i);
       int bin_x_pos = hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(i);
-      if(bin_x_pos > 20)
+      if (bin_x_pos > upper_limit_max_search_)
         break;
-      if(bin_value > hists.toT[chid]->getBinContent(max_bin_pos))
-        max_bin_pos=i;
+      if (bin_value > hists.toT[chid]->getBinContent(max_bin_pos))
+        max_bin_pos = i;
     }
     //find ranges
     int upper_limit_pos = max_bin_pos;
     int lower_limit_pos = max_bin_pos;
-    double threshold = threshold_percent_of_max_ * hists.toT[chid]->getBinContent(max_bin_pos);
-    while(hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(upper_limit_pos) < 18){
+    double threshold = threshold_fraction_of_max_ * hists.toT[chid]->getBinContent(max_bin_pos);
+    while (hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(upper_limit_pos) < upper_limit_range_search_) {
       upper_limit_pos++;
-      if(hists.toT[chid]->getBinContent(upper_limit_pos)<threshold)
+      if (hists.toT[chid]->getBinContent(upper_limit_pos) < threshold)
         break;
     }
-    while(hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(lower_limit_pos) > 8){
+    while (hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(lower_limit_pos) > lower_limit_range_search_) {
       lower_limit_pos--;
-      if(hists.toT[chid]->getBinContent(lower_limit_pos)<threshold)
+      if (hists.toT[chid]->getBinContent(lower_limit_pos) < threshold)
         break;
     }
     double upper_tot_range = hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(upper_limit_pos);
     double lower_tot_range = hists.toT[chid]->getTH1()->GetXaxis()->GetBinCenter(lower_limit_pos);
 
-    //const double upper_tot_range = hists.toT[chid]->getMean() + 2.5;
     {  // scope for x-profile
 
       std::string ch_name;
@@ -201,7 +202,8 @@ void PPSTimingCalibrationPCLHarvester::fillDescriptions(edm::ConfigurationDescri
   desc.add<std::string>("formula", "[0]/(exp((x-[1])/[2])+1)+[3]")
       ->setComment("interpolation formula for the time walk component");
   desc.add<unsigned int>("minEntries", 100)->setComment("minimal number of hits to extract calibration");
-  desc.add<double>("thresholdPercentOfMax", 0.1)->setComment("threshold for TOT fit, defined as percent of max count in 1D TOT");
+  desc.add<double>("thresholdFractionOfMax", 0.05)
+      ->setComment("threshold for TOT fit, defined as percent of max count in 1D TOT");
   descriptions.addWithDefaultLabel(desc);
 }
 
