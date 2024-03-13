@@ -14,6 +14,12 @@ options.register('inputFiles',
                  '',
                  VarParsing.VarParsing.multiplicity.list,
                  VarParsing.VarParsing.varType.string)
+                 
+options.register('thresholdFractionOfMax',
+                 '',
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.float)
+                                  
 options.parseArguments()
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
@@ -50,6 +56,7 @@ process.PoolDBOutputService = cms.Service('PoolDBOutputService',
 
 process.load("CalibPPS.TimingCalibration.ppsTimingCalibrationPCLHarvester_cfi")
 #process.PPSDiamondSampicTimingCalibrationPCLHarvester.jsonCalibFile="initial.cal.json"
+process.ppsTimingCalibrationPCLHarvester.thresholdFractionOfMax = options.thresholdFractionOfMax
 
 # load DQM framework
 process.load("DQMServices.Core.DQMStore_cfi")
