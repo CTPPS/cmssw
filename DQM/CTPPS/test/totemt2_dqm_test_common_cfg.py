@@ -53,6 +53,8 @@ process.load("RecoPPS.Configuration.recoCTPPS_cff")
 # CTPPS DQM modules
 process.load("DQM.CTPPS.ctppsDQM_cff")
 
+process.totemT2DQMSource.specialRunT2 = True
+
 process.path = cms.Path(
   process.ctppsRawToDigi *
   process.recoCTPPS *
