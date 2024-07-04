@@ -156,9 +156,9 @@ else: #default use db
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
     cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
-            tag =  cms.string("PPSDiamondTimingCalibration_Run3_recovered_v1"),
+            tag =  cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v1_prompt"),
             label = cms.untracked.string('PPSTestCalibration'),
-            connect = cms.string("frontier://FrontierPrep/CMS_CONDITIONS")
+            connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
         )
     )
     #TODO: uncomment below when delete sqlite file dependency 
