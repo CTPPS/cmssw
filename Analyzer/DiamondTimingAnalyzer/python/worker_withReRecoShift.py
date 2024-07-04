@@ -109,13 +109,13 @@ print('Using GT:',gt)
 process.GlobalTag = GlobalTag(process.GlobalTag, gt, '')
 
 # WHEN CHANGING THIS CHANGE ALSO THE LINES AT ELSE STATEMENT AROUND 153-156
-process.GlobalTag.toGet.append(
-  cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
-           tag =  cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v1_prompt"),
-           label = cms.untracked.string('PPSTimingCalibrationbyPCL'),
-           connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-	)
-)
+# process.GlobalTag.toGet.append(
+#   cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
+#            tag =  cms.string("CTPPPSTimingCalibration_HPTDC_byPCL_v1_prompt"),
+#            label = cms.untracked.string('PPSTimingCalibrationbyPCL'),
+#            connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+# 	)
+# )
 
 
 
