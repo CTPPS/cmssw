@@ -185,7 +185,11 @@ else: # default use db
 #  rechits production
 process.load('RecoPPS.Local.ctppsDiamondLocalReconstruction_cff')
 
+# For running w/o `use_sqlite_file` hardcoded use PPSDiamondTimingCalibration instead, otherwise it's going to fail
 process.ctppsDiamondRecHits.timingCalibrationTag="GlobalTag:PPSTimingCalibrationbyPCL"
+
+# Hardcoding `use_sqlite_file` for ReReco
+use_sqlite_file = True
 if (use_sqlite_file):
     process.ctppsDiamondRecHits.timingCalibrationTag=""   
                       
