@@ -93,6 +93,7 @@ private:
     int validOOT;
     std::map<std::pair<int, int>, std::pair<int, int>> Ntracks_cuts_map_;  //arm, station ,, Lcut,Ucut
     std::map<ChannelKey, int> planes_config;
+    int tmpLogCnt_{0};
 };
 
 //
@@ -278,6 +279,17 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
         //we don't check active planes here, because each channel might require different number of them
         // edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
+
+        if (tmpLogCnt_ < 1000)
+        {
+            edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 0 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 0));
+            edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 1 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 1));
+            edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 2 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 2));
+            edm::LogWarning("GetMuxInTrackVal") <<"sector:" << sector << "station: " << station << "plane: " << 3 << "Get Mux In Track value:" << DiamondDet.GetMuxInTrack(PlaneKey(sector, station, 3));
+            edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
+            ++tmpLogCnt_;
+        }
+
         bool mark_tag = DiamondDet.GetTrackMuxInSector(sector) == 1;
 
         std::vector<ChannelKey> hit_selected(PLANES_X_DETECTOR);
