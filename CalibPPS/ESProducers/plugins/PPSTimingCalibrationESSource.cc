@@ -58,7 +58,7 @@ private:
 //------------------------------------------------------------------------------
 
 PPSTimingCalibrationESSource::PPSTimingCalibrationESSource(const edm::ParameterSet& iConfig)
-    : filename_(iConfig.getParameter<edm::FileInPath>("calibrationFile").fullPath()),
+    : filename_(iConfig.getParameter<std::string>("calibrationFile")),
       subdetector_((DetectorType)iConfig.getParameter<unsigned int>("subDetector")) {
   setWhatProduced(this);
   findingRecord<PPSTimingCalibrationRcd>();
@@ -160,7 +160,7 @@ std::unique_ptr<PPSTimingCalibration> PPSTimingCalibrationESSource::parsePPSDiam
 
 void PPSTimingCalibrationESSource::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
-  desc.add<edm::FileInPath>("calibrationFile", edm::FileInPath())
+  desc.add<std::string>("calibrationFile", "")
       ->setComment("file with SAMPIC calibrations, ADC and INL; if empty or corrupted, no calibration will be applied");
   desc.add<unsigned int>("subDetector", (unsigned int)PPSTimingCalibrationESSource::DetectorType::INVALID)
       ->setComment("type of sub-detector for which the calibrations are provided");
