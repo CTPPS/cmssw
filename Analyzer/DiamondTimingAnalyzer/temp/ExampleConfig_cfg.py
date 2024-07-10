@@ -5,7 +5,7 @@ from Geometry.VeryForwardGeometry.geometryRPFromDB_cfi import * # TODO it looks 
 
 
 # TEMP config:
-apply_shift = True                                        
+apply_shift = True
 saveToDQM = False
 
 
@@ -31,7 +31,7 @@ options.register ('calibInput',
 				  "Calibration input file for this iteration")
 
 options.register ('planesConfig',
-				  'planes.json',
+				  'planes2024.json',
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.string,
 				  "planes config file")
@@ -40,22 +40,22 @@ options.register ('validOOT',
 				  -1,
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.int,
-				  "valid OOT slice")	
-options.register('useSQLFile', 
+				  "valid OOT slice")
+options.register('useSQLFile',
                     '',
 				  VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   'useSQLFileAsACalibration'
 )
 
-options.register('sqlFileName', 
+options.register('sqlFileName',
                     '',
 				  VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   'sqlFileNameForCalib'
 )
 
-options.register('maxEventsToProcess', 
+options.register('maxEventsToProcess',
                     -1,
 				  VarParsing.multiplicity.singleton,
                   VarParsing.varType.int,
@@ -63,7 +63,7 @@ options.register('maxEventsToProcess',
 )
 
 
-			  				  
+
 options.parseArguments()
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
@@ -74,12 +74,12 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEv
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
+process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file
 # process.load('Geometry.VeryForwardGeometry.geometryRPFromDD_2022_cfi')
 
 process.source = cms.Source ("PoolSource",
                              fileNames = cms.untracked.vstring(
-    # "file:/eos/home-m/mobrzut/357/734/00000/73c5eeec-578d-438f-92f1-3e1fff2ed390.root",   
+    # "file:/eos/home-m/mobrzut/357/734/00000/73c5eeec-578d-438f-92f1-3e1fff2ed390.root",
     # "file:/eos/home-m/mobrzut/357/734/00000/08e5ee70-ebff-4571-b14c-806961a3d9dd.root",
     # "file:/eos/home-m/mobrzut/357/734/00000/d42eaf2c-57bb-48fe-9a22-317053f89115.root"
 # "file:/eos/home-m/mobrzut/357/479/00000/68a5a64a-b756-4cf5-9a2a-00181e34f501.root"
@@ -107,7 +107,7 @@ process.source = cms.Source ("PoolSource",
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
 # 2022 prompt: to be updated
-process.GlobalTag = GlobalTag(process.GlobalTag, "124X_dataRun3_v9") 
+process.GlobalTag = GlobalTag(process.GlobalTag, "124X_dataRun3_v9")
 
 
 #JH - use new tag for timing calibrations
@@ -119,7 +119,7 @@ else:
     print('Provide true or false for useSQLLiteFile')
     exit()
 
-if (use_sqlite_file):                                        
+if (use_sqlite_file):
         process.load('CondCore.CondDB.CondDB_cfi')
         process.CondDB.connect = options.sqlFileName # SQLite input TODO: migrate to using tag
         process.PoolDBESSource = cms.ESSource('PoolDBESSource',
@@ -129,14 +129,14 @@ if (use_sqlite_file):
                     cms.PSet(
                         record = cms.string('PPSTimingCalibrationRcd'),
                         tag = cms.string('DiamondTimingCalibration'),
-                                label = cms.untracked.string('PPSTestCalibration'), 
+                                label = cms.untracked.string('PPSTestCalibration'),
                     )
                 )
 )
 
 if options.calibInput == '':
-    print('') 
-    #TODO: uncomment below when delete sqlite file dependency 
+    print('')
+    #TODO: uncomment below when delete sqlite file dependency
     # process.GlobalTag.toGet = cms.VPSet(
     #     cms.PSet(record = cms.string('PPSTimingCalibrationRcd'),
     #                 tag = cms.string('PPSDiamondTimingCalibration_Run3_v1_hlt'), # working tag: PPSDiamondTimingCalibration_Run3_v1_hlt
@@ -175,8 +175,8 @@ if(apply_shift):
         tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
         timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
         tagLocalTrack = cms.InputTag("ctppsDiamondLocalTracks","","PPSTiming2"),
-        tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-        planesConfig = cms.string("planes.json"), #TODO: remove parameter from options or don't hardcode it. 
+        tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it.
+        planesConfig = cms.string("planes2024.json"), #TODO: remove parameter from options or don't hardcode it.
         Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     )
@@ -187,11 +187,11 @@ else:
     tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
     tagLocalTrack = cms.InputTag("ctppsDiamondLocalTracksAlCaRecoProducer"),
     timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration"),
-    tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-    planesConfig = cms.string("planes.json"),
+    tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it.
+    planesConfig = cms.string("planes2024.json"),
     Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
     Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-) 
+)
 
 if(apply_shift):
     process.ALL = cms.Path(
@@ -200,7 +200,7 @@ if(apply_shift):
         process.ctppsDiamondLocalTracks *
         process.diamondTimingWorker
                         )
-else: 
+else:
     process.ALL = cms.Path(process.diamondTimingWorker)
 
 if(saveToDQM):

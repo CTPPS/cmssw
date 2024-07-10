@@ -89,7 +89,7 @@ private:
     Histograms_DiamondTiming histos;
 
     edm::ESHandle<CTPPSGeometry> geom;
-    
+
     int validOOT;
     std::map<std::pair<int, int>, std::pair<int, int>> Ntracks_cuts_map_;  //arm, station ,, Lcut,Ucut
     std::map<ChannelKey, int> planes_config;
@@ -108,7 +108,7 @@ const int PLANES_X_DETECTOR = 4;
 // constructors and destructor
 //
 DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
-    : 
+    :
     tokenDigi_(
         consumes<edm::DetSetVector<CTPPSDiamondDigi>>(iConfig.getParameter<edm::InputTag>("tagDigi"))),
     tokenRecHit_(
@@ -290,7 +290,8 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             ++tmpLogCnt_;
         }
 
-        bool mark_tag = DiamondDet.GetTrackMuxInSector(sector) == 1;
+        // bool mark_tag = DiamondDet.GetTrackMuxInSector(sector) == 1;
+        bool mark_tag = DiamondDet.GetTrackMuxInStation(stationKey) == 1;
 
         std::vector<ChannelKey> hit_selected(PLANES_X_DETECTOR);
         std::vector<std::pair<ChannelKey, CTPPSDiamondRecHit>>::const_iterator hit_iter;
@@ -350,7 +351,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
 
                 // // edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: get item hit_selected for pl_mark: " << pl_mark  << " value " << hit_selected[pl_mark];
-                    
+
                 // edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: recHit vector size " << DiamondDet.getRecHitVector(hit_selected[pl_mark]).size();
                 // for(const CTPPSDiamondRecHit& item: DiamondDet.getRecHitVector(hit_selected[pl_mark])) {
                 //     // edm::LogWarning("MyLogInfoGetTimeDebug") << "Analyze method: recHit vector element: " << item.tPrecision();
@@ -448,7 +449,7 @@ void DiamondTimingWorker::bookHistograms(DQMStore::IBooker& iBooker,
         iBooker.setCurrentFolder(ch_path);
 
         std::string name;
-        
+
         // Booking histograms for channels
         name = "Time distribution " + ch_name;
         histos.t[key] = iBooker.book1D(name.c_str(), (name + ";t (ns);Entries").c_str(), 1200, -60., 60.);
