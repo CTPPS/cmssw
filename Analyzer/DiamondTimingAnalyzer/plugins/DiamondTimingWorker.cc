@@ -290,7 +290,8 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
             ++tmpLogCnt_;
         }
 
-        bool mark_tag = DiamondDet.GetTrackMuxInSector(sector) == 1;
+        // bool mark_tag = DiamondDet.GetTrackMuxInSector(sector) == 1;
+        bool mark_tag = DiamondDet.GetTrackMuxInStation(stationKey) == 1;
 
         std::vector<ChannelKey> hit_selected(PLANES_X_DETECTOR);
         std::vector<std::pair<ChannelKey, CTPPSDiamondRecHit>>::const_iterator hit_iter;
