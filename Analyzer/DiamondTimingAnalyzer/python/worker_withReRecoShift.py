@@ -32,7 +32,7 @@ options.register ('calibInput',
 				  "Calibration input file for this iteration")
 
 options.register ('planesConfig',
-				  'planes.json',
+				  'planes2024.json',
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.string,
 				  "planes config file")
@@ -41,7 +41,7 @@ options.register ('validOOT',
 				  -1,
 				  VarParsing.multiplicity.singleton,
 				  VarParsing.varType.int,
-				  "valid OOT slice")	
+				  "valid OOT slice")
 options.register('useDB',  # default source of time shift tag
                     '',
 				  VarParsing.multiplicity.singleton,
@@ -49,20 +49,20 @@ options.register('useDB',  # default source of time shift tag
                   'useDB'
 )
 
-options.register('sqlFileName', 
+options.register('sqlFileName',
                     '',
 				  VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   'sqlFileNameForCalib'
 )
 
-options.register('maxEventsToProcess', 
+options.register('maxEventsToProcess',
                     -1,
 				  VarParsing.multiplicity.singleton,
                   VarParsing.varType.int,
                   'maxEvents to process'
 )
-			  				  
+
 options.parseArguments()
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
@@ -87,7 +87,7 @@ else:
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
+process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file
 
 print("Input files:", inputFiles)
 
@@ -129,7 +129,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, gt, '')
 #     use_db=False
 # elif options.useDB!='':
 #     assert 'UseDB paramter is not valid. It should be True or False (case sensitive)'
-# else: 
+# else:
 #     use_db=False
 
 
@@ -138,7 +138,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, gt, '')
 
 use_sqlite_file = options.sqlFileName != ''
 if (use_sqlite_file):
-        print('Using SQL file')                                        
+        print('Using SQL file')
         process.load('CondCore.CondDB.CondDB_cfi')
         process.CondDB.connect = options.sqlFileName # SQLite input TODO: migrate to using tag
         process.PoolDBESSource = cms.ESSource('PoolDBESSource',
@@ -147,7 +147,7 @@ if (use_sqlite_file):
                 toGet = cms.VPSet(
                     cms.PSet(
                         record = cms.string('PPSTimingCalibrationRcd'),
-                        tag = cms.string('DiamondTimingCalibration') 
+                        tag = cms.string('DiamondTimingCalibration')
                     )
                 )
 )
@@ -162,7 +162,7 @@ elif options.calibInput != '':
 
 else: # default use db
     print('Using db')
-    # TODO: uncomment below when delete sqlite file dependency 
+    # TODO: uncomment below when delete sqlite file dependency
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
     cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
@@ -191,8 +191,8 @@ process.ctppsDiamondRecHits.timingCalibrationTag="GlobalTag:PPSTimingCalibration
 # Hardcoding `use_sqlite_file` for ReReco
 use_sqlite_file = True
 if (use_sqlite_file):
-    process.ctppsDiamondRecHits.timingCalibrationTag=""   
-                      
+    process.ctppsDiamondRecHits.timingCalibrationTag=""
+
 process.ctppsDiamondRecHits.digiTag="ctppsDiamondRawToDigiAlCaRecoProducer:TimingDiamond"
 # ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -207,11 +207,11 @@ if(options.calibInput != ''):
         tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer", "", "RECO"),
         tagLocalTrack = tagLocalTrack_, #changed
         timingCalibrationTag=cms.string(":"),
-        tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
+        tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it.
         planesConfig = cms.string(options.planesConfig),
         Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
-    ) 
+    )
 elif (use_sqlite_file):
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
             tagDigi = cms.InputTag("ctppsDiamondRawToDigiAlCaRecoProducer", "TimingDiamond"),
@@ -219,8 +219,8 @@ elif (use_sqlite_file):
             tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
             timingCalibrationTag=cms.string(""),
             tagLocalTrack = tagLocalTrack_,
-            tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-            planesConfig = cms.string(options.planesConfig), #TODO: remove parameter from options or don't hardcode it. 
+            tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it.
+            planesConfig = cms.string(options.planesConfig), #TODO: remove parameter from options or don't hardcode it.
             Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         )
@@ -231,19 +231,19 @@ else:
                 tagPixelLocalTrack = cms.InputTag("ctppsPixelLocalTracksAlCaRecoProducer"),
                 timingCalibrationTag=cms.string("GlobalTag:PPSTimingCalibrationbyPCL"),
                 tagLocalTrack =tagLocalTrack_,
-                tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it. 
-                planesConfig = cms.string(options.planesConfig), #TODO: remove parameter from options or don't hardcode it. 
+                tagValidOOT = cms.int32(-1), #TODO: remove parameter from options or don't hardcode it.
+                planesConfig = cms.string(options.planesConfig), #TODO: remove parameter from options or don't hardcode it.
                 Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
                 Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             )
-# else: 
+# else:
     # assert "need to provide timing calibration tag from json, slq file or db"
-process.content = cms.EDAnalyzer("EventContentAnalyzer") 
+process.content = cms.EDAnalyzer("EventContentAnalyzer")
 process.ALL = cms.Path(
     process.ctppsDiamondLocalReconstruction *
     #process.content*
-    process.diamondTimingWorker    
-    ) 
+    process.diamondTimingWorker
+    )
 
 
 process.dqmOutput = cms.OutputModule("DQMRootOutputModule", fileName=cms.untracked.string(options.outputFileName))
