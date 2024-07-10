@@ -3,7 +3,7 @@
 
 
 // system include files
-#include <memory> 
+#include <memory>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -28,34 +28,35 @@
 #include "DataFormats/CTPPSReco/interface/CTPPSDiamondLocalTrack.h"
 
 #include "TF1.h"
- 
+
 #include <map>
 #include <math.h>
 
 #include "Analyzer/DiamondTimingAnalyzer/interface/DiamondTimingCalibration.h"
 
 typedef std::map<CTPPSDiamondLocalTrack, std::vector<std::pair<ChannelKey, CTPPSDiamondRecHit>>> LocalTrack_map_type;
-		
+
 class DiamondDetectorClass{
 public:
     explicit DiamondDetectorClass(int,
-		const CTPPSGeometry&, 
+		const CTPPSGeometry&,
 		const edm::DetSetVector<CTPPSDiamondRecHit>&,
 		const edm::DetSetVector<CTPPSDiamondLocalTrack>&,
 		const DiamondTimingCalibration&);
-	
+
     ~ DiamondDetectorClass();
-	
+
 	void ExtractData();
-	
+
 	inline int GetMux(const PlaneKey& planeKey) 			{return Mux_map_[planeKey];}
 	inline int GetMuxValidT(const PlaneKey& planeKey) 	{return Mux_validT_map_[planeKey];}
 	inline int GetMuxInTrack(const PlaneKey& planeKey) 	{return Mux_inTrack_map_[planeKey];}
 	inline std::map<PlaneKey, int> GetMuxInTrackMap() 	{return Mux_inTrack_map_;}
-	
-	inline bool PadActive(const ChannelKey& key)   			
+	inline int GetTrackMuxInStation(std::pair<int, int> stationKey) {return TrackMuxInStation_map_[stationKey];}
+
+	inline bool PadActive(const ChannelKey& key)
 	{ return (RecHit_map_.find(key) != RecHit_map_.end());}
-	
+
 	inline double GetTime(const ChannelKey& key)
 	{return RecHit_map_[key].at(0).time();}
 
@@ -67,19 +68,19 @@ public:
 
 	inline bool isRecHitEmpty(const ChannelKey& key)
 	{return RecHit_map_[key].size() == 0;}
-	
+
 	inline double GetPadPrecision(const ChannelKey& key)
 	{return SPC_map_[key].precision;}
-	
+
 	inline double GetPadWeight(const ChannelKey& key)
 	{return (pow(SPC_map_[key].precision, -2));}
-	
+
 	inline double GetToT(const ChannelKey& key)
-	{return RecHit_map_[key].at(0).toT();}	
-	
+	{return RecHit_map_[key].at(0).toT();}
+
 	inline LocalTrack_map_type GetDiamondTrack_map()
-	{return LocalTrack_map_;}	  
-	
+	{return LocalTrack_map_;}
+
 	int GetTrackMuxInSector(int sector);
 
 private:
@@ -93,13 +94,14 @@ private:
 
 	std::map<ChannelKey, std::vector<CTPPSDiamondRecHit>> RecHit_map_;
 	LocalTrack_map_type LocalTrack_map_;
-	
-	
+
+
 	// ---------- mux map ---------------------------
 	std::map<PlaneKey, int> Mux_map_;   //arm, station. plane
 	std::map<PlaneKey, int> Mux_validT_map_;  //arm, station, plane
 	std::map<PlaneKey, int> Mux_inTrack_map_;  //arm, station, plane
-	
+	std::map<std::pair<int,int>,int> TrackMuxInStation_map_; //arm, station
+
 	int valid_OOT_;
 };
 #endif
