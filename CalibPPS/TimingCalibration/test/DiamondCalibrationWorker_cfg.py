@@ -5,15 +5,22 @@ process = cms.Process("worker")
 
 options = VarParsing.VarParsing ()
 options.register('globalTag',
-                     '', 
+                     '',
                       VarParsing.VarParsing.multiplicity.singleton,
                       VarParsing.VarParsing.varType.string,
                       "Global Tag")
-                      
+
 options.register('inputFiles',
                  '',
                  VarParsing.VarParsing.multiplicity.list,
                  VarParsing.VarParsing.varType.string)
+
+options.register('jsonFileName',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.string,
+                "JSON file list name")
+
 options.parseArguments()
 
 
@@ -52,6 +59,11 @@ process.load("RecoPPS.Configuration.recoCTPPS_cff")
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring (options.inputFiles))
 
+if options.jsonFileName != '':
+    import FWCore.PythonUtilities.LumiList as LumiList
+    print(f"Using JSON file: {options.jsonFileName}")
+    process.source.lumisToProcess = LumiList.LumiList(filename=options.jsonFileName).getVLuminosityBlockRange()
+
 process.load("CalibPPS.TimingCalibration.ppsTimingCalibrationPCLWorker_cfi")
 process.DQMStore = cms.Service("DQMStore")
 
@@ -70,7 +82,7 @@ process.load("CalibPPS.TimingCalibration.ALCARECOPromptCalibProdPPSTimingCalib_c
 #process.totemTimingRawToDigi.rawDataTag = "hltPPSCalibrationRaw"
 
 process.path = cms.Path(
-    #process.a1* 
+    #process.a1*
     #process.ctppsRawToDigi *
     #process.recoCTPPS *
     process.ppsTimingCalibrationPCLWorker *
