@@ -63,6 +63,12 @@ options.register('maxEventsToProcess',
                   'maxEvents to process'
 )
 
+options.register('jsonFileName',
+                '',
+                VarParsing.multiplicity.singleton,
+                VarParsing.varType.string,
+                "JSON file list name")
+
 options.parseArguments()
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
@@ -94,6 +100,11 @@ print("Input files:", inputFiles)
 process.source = cms.Source ("PoolSource",
                              fileNames = inputFiles
                              )
+
+if options.jsonFileName != '':
+    import FWCore.PythonUtilities.LumiList as LumiList
+    print(f"Using JSON file: {options.jsonFileName}")
+    process.source.lumisToProcess = LumiList.LumiList(filename=options.jsonFileName).getVLuminosityBlockRange()
 
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag
