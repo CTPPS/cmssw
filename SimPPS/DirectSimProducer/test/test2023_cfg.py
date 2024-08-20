@@ -31,7 +31,7 @@ process.source = cms.Source("PoolSource",
 )
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(100)
+    input = cms.untracked.int32(1000)
 )
 
 process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService",
@@ -42,12 +42,23 @@ process.RandomNumberGeneratorService = cms.Service("RandomNumberGeneratorService
 from SimPPS.DirectSimProducer.matching_cff import matchDirectSimOutputsAOD
 matchDirectSimOutputsAOD(process)
 
-process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetX45 = -0.1078 * 1E-1
-process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetY45 = -0.4189 * 1E-1
-process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetZ45 = -0.2488 * 1E-1
-process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetX56 = -0.1078 * 1E-1
-process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetY56 = -0.4189 * 1E-1
-process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetZ56 = -0.2488 * 1E-1
+#https://github.com/cms-sw/cmssw/blob/1d7ff6911034faa4b6c394e5752484ebd17be3fe/IOMC/EventVertexGenerators/python/VtxSmearedParameters_cfi.py#L67
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetX45 = 0.0859918
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetY45 = -0.104172
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetZ45 = -0.327748
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetX56 = 0.0859918
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetY56 = -0.104172
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetZ56 = -0.327748
+
+#https://cms-conddb.cern.ch/cmsDbBrowser/payload_inspector/Prod/CMSSW_14_1_0_pre6/eyJwbG90cyI6MSwicGxvdDEiOnsidGFnIjoiQmVhbVNwb3RPYmplY3RzX1JlYWxpc3RpYzI1bnNfMTNwNlRlVkNvbGxpc2lvbnNfUmVSZWNvMjAyM19tY192MSIsInBsb3QiOiJwbG90X0JlYW1TcG90UGFyYW1ldGVycyIsInBsdWdpbiI6InBsdWdpbkJlYW1TcG90X1BheWxvYWRJbnNwZWN0b3IiLCJ0eXBlIjoiSW1hZ2UiLCJpbnB1dF9wYXJhbXMiOnt9LCJpb3ZzIjp7InN0YXJ0X2lvdiI6IjEiLCJlbmRfaW92IjoiMSJ9fX0=
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetX45 = 0.0459693
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetY45 = -0.0169734
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetZ45 = -0.0854137
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetX56 = 0.0459693
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetY56 = -0.0169734
+#process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetZ56 = -0.0854137
+
+#print(process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetX45)
 
 process.p = cms.Path(
     process.directSimPPS
