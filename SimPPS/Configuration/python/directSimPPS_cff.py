@@ -61,5 +61,5 @@ modifyConfigurationStandardSequencesFor2016_ = eras.ctpps_2016.makeProcessModifi
 modifyConfigurationStandardSequencesFor2017_ = eras.ctpps_2017.makeProcessModifier(_modify2017)
 modifyConfigurationStandardSequencesFor2018_ = eras.ctpps_2018.makeProcessModifier(_modify2018)
 modifyConfigurationStandardSequencesFor2022_ = eras.ctpps_2022.makeProcessModifier(_modify2022)
-modifyConfigurationStandardSequencesFor2022_ = eras.ctpps_2022.makeProcessModifier(_modify2023)
+modifyConfigurationStandardSequencesFor2023_ = eras.ctpps_2023.makeProcessModifier(_modify2023)
 
