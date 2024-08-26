@@ -388,6 +388,12 @@ void PPSDirectProtonSimulation::processProton(
     empiricalAperture = &empiricalAperture56_;
   }
 
+  ssLog << "\n" << std::endl;
+  ssLog << ">>>" << std::endl;
+  ssLog << "beam Momentum from DirectSimProducer == " << beamMomentum << std::endl;
+  ssLog << ">>>" << std::endl;
+  ssLog << "\n" << std::endl;
+
   // calculate effective RP arrival time
   // effective time mimics the timing calibration -> effective times are distributed about 0
   // units:
