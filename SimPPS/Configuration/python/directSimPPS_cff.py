@@ -51,6 +51,7 @@ def _modify2022(process):
 def _modify2023(process):
     print('Process customised for 2023 PPS era')
     process.load('SimPPS.DirectSimProducer.simPPS2023_cfi')
+    unshiftVertex(process, 'Realistic25ns13p6TeVEarly2023CollisionVtxSmearingParameters')
     if hasattr(process, 'generator'):
         process.generator.energy = process.profile_2023_default.ctppsLHCInfo.beamEnergy
     if hasattr(process, 'ctppsGeometryESModule'):
