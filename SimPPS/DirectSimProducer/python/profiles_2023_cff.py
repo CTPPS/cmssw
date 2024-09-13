@@ -14,18 +14,51 @@ _base_2023 = _base.clone(
     )
 )
 
-profile_2023_default = _base_2023.clone(
+profile_2023_PreTS1A = _base_2023.clone(
     L_int = 1.,
     ctppsLHCInfo = _base_2023.ctppsLHCInfo.clone(
         # NB: until a dedicated 2022 distributions are issued, it is OK to use 2021 ones here
         xangleBetaStarHistogramObject = "2021/h2_betaStar_vs_xangle"
     ),
     ctppsRPAlignmentCorrectionsDataXML = _base_2023.ctppsRPAlignmentCorrectionsDataXML.clone(
-        MisalignedFiles = ["SimPPS/DirectSimProducer/data/alignment_2023_PostTS1.xml"],
-        RealFiles = ["SimPPS/DirectSimProducer/data/alignment_2023_PostTS1.xml"]
+        MisalignedFiles = ["Validation/CTPPS/alignment/alignment_2023_PreTS1_366403_367840.xml"],
+        RealFiles = ["Validation/CTPPS/alignment/alignment_2023_PreTS1_366403_367840.xml"]
     ),
     ctppsDirectSimuData = _base_2023.ctppsDirectSimuData.clone(
         timeResolutionDiamonds45 = "0.200",
         timeResolutionDiamonds56 = "0.200"
-        )
+    )
 )
+
+profile_2023_PreTS1B = _base_2023.clone(
+    L_int = 1.,
+    ctppsLHCInfo = _base_2023.ctppsLHCInfo.clone(
+        # NB: until a dedicated 2022 distributions are issued, it is OK to use 2021 ones here
+        xangleBetaStarHistogramObject = "2021/h2_betaStar_vs_xangle"
+    ),
+    ctppsRPAlignmentCorrectionsDataXML = _base_2023.ctppsRPAlignmentCorrectionsDataXML.clone(
+        MisalignedFiles = ["Validation/CTPPS/alignment/alignment_2023_PreTS1_367881_368765.xml"],
+        RealFiles = ["Validation/CTPPS/alignment/alignment_2023_PreTS1_367881_368765.xml"]
+    ),
+    ctppsDirectSimuData = _base_2023.ctppsDirectSimuData.clone(
+        timeResolutionDiamonds45 = "0.200",
+        timeResolutionDiamonds56 = "0.200"
+    )
+)
+
+profile_2023_PostTS1 = _base_2023.clone(
+    L_int = 1.,
+    ctppsLHCInfo = _base_2023.ctppsLHCInfo.clone(
+        # NB: until a dedicated 2022 distributions are issued, it is OK to use 2021 ones here
+        xangleBetaStarHistogramObject = "2021/h2_betaStar_vs_xangle"
+    ),
+    ctppsRPAlignmentCorrectionsDataXML = _base_2023.ctppsRPAlignmentCorrectionsDataXML.clone(
+        MisalignedFiles = ["Validation/CTPPS/alignment/alignment_2023_PostTS1.xml"],
+        RealFiles = ["Validation/CTPPS/alignment/alignment_2023_PostTS1.xml"]
+    ),
+    ctppsDirectSimuData = _base_2023.ctppsDirectSimuData.clone(
+        timeResolutionDiamonds45 = "0.200",
+        timeResolutionDiamonds56 = "0.200"
+    )
+)
+
