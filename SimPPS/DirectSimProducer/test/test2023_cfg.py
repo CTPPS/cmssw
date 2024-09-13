@@ -27,6 +27,9 @@ process.MessageLogger = cms.Service("MessageLogger",
     )
 )
 
+# period
+process.ctppsCompositeESSource.periods = [process.profile_2023_PreTS1B]
+
 # global tag
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, '140X_mcRun3_2024_realistic_v20', '')
@@ -34,7 +37,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '140X_mcRun3_2024_realistic_v20
 # raw data source
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-    "/store/mc/Run3Summer22DRPremix/GGToMuMu_PT-25_El-El_13p6TeV_lpair/AODSIM/124X_mcRun3_2022_realistic_v12-v2/80000/4b641be6-f3ca-4a8c-9425-c73c7f97675f.root"
+        "/store/mc/Run3Summer23DRPremix/GGToMuMu_PT-25_El-El_13p6TeV_lpair/AODSIM/130X_mcRun3_2023_realistic_v14-v2/2560000/94caefe9-1efd-4c9e-99ca-9861a85c11ea.root"
         ),
 )
 
@@ -69,7 +72,7 @@ process.ppsDirectProtonSimulation.verbosity = cms.untracked.uint32(1)
 #process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetY56 = -0.0169734
 #process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetZ56 = -0.0854137
 
-print('beamEnergy from profile = '+str(process.profile_2023_default.ctppsLHCInfo.beamEnergy))
+print('beamEnergy from profile = '+str(process.profile_2023_PostTS1.ctppsLHCInfo.beamEnergy))
 #print('beamEnergy from LHCInfo = '+str(process.ctppsLHCInfo.beamEnergy))
 
 process.p = cms.Path(
@@ -86,7 +89,7 @@ RecoCTPPSAOD.outputCommands.extend(cms.untracked.vstring(
 )
 
 process.output = cms.OutputModule('PoolOutputModule',
-    fileName = cms.untracked.string('file:output.root'),
+    fileName = cms.untracked.string('file:output_separateProfiles.root'),
     outputCommands = RecoCTPPSAOD.outputCommands
 )
 
