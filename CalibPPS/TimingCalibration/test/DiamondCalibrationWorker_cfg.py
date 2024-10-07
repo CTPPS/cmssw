@@ -25,6 +25,7 @@ options.parseArguments()
 
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
+process.MessageLogger.cerr.FwkReport.reportEvery = 1_000_000
 process.load('RecoPPS.Local.totemTimingLocalReconstruction_cff')
 process.source = cms.Source("EmptySource")
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )

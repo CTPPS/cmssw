@@ -5,24 +5,20 @@ process = cms.Process("harvester", eras.Run3)
 
 options = VarParsing.VarParsing ()
 options.register('globalTag',
-                     '', 
+                     '',
                       VarParsing.VarParsing.multiplicity.singleton,
                       VarParsing.VarParsing.varType.string,
                       "Global Tag")
-                      
+
 options.register('inputFiles',
                  '',
                  VarParsing.VarParsing.multiplicity.list,
                  VarParsing.VarParsing.varType.string)
-                 
-options.register('thresholdFractionOfMax',
-                 '',
-                 VarParsing.VarParsing.multiplicity.singleton,
-                 VarParsing.VarParsing.varType.float)
-                                  
+
 options.parseArguments()
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
+process.MessageLogger.cerr.FwkReport.reportEvery = 1_000_000
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
@@ -35,7 +31,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, options.globalTag,'')
 
 # Source (histograms)
 fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:') or f.startswith('root:')) else f for f in options.inputFiles]
-  
+
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(fileList))
 
@@ -56,7 +52,6 @@ process.PoolDBOutputService = cms.Service('PoolDBOutputService',
 
 process.load("CalibPPS.TimingCalibration.ppsTimingCalibrationPCLHarvester_cfi")
 #process.PPSDiamondSampicTimingCalibrationPCLHarvester.jsonCalibFile="initial.cal.json"
-process.ppsTimingCalibrationPCLHarvester.thresholdFractionOfMax = options.thresholdFractionOfMax
 
 # load DQM framework
 process.load("DQMServices.Core.DQMStore_cfi")
@@ -79,7 +74,7 @@ process.EDMtoMEConverter.lumiInputTag = "MEtoEDMConvertPPSTimingCalib:MEtoEDMCon
 process.EDMtoMEConverter.runInputTag = "MEtoEDMConvertPPSTimingCalib:MEtoEDMConverterRun"
 
 #import FWCore.PythonUtilities.LumiList as LumiList
-#process.source.lumisToProcess = LumiList.LumiList(filename = 'allrunsSB-PPS-forCalib.json').getVLuminosityBlockRange() 
+#process.source.lumisToProcess = LumiList.LumiList(filename = 'allrunsSB-PPS-forCalib.json').getVLuminosityBlockRange()
 
 process.p = cms.Path(
     process.EDMtoMEConverter*
