@@ -72,7 +72,9 @@ void PPSTimingCalibrationPCLWorker::bookHistograms(DQMStore::IBooker& iBooker,
                                                    TimingCalibrationHistograms& iHists) const {
   iBooker.cd();
   iBooker.setCurrentFolder(dqmDir_);
+  std::string plane_name;
   std::string ch_name;
+  std::string leadingTimeVsLsName;
 
   const auto& geom = iSetup.getData(geomEsToken_);
   for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
@@ -85,6 +87,12 @@ void PPSTimingCalibrationPCLWorker::bookHistograms(DQMStore::IBooker& iBooker,
     iHists.toT[detid.rawId()] = iBooker.book1D("tot_" + ch_name, ch_name + ";ToT (ns);Entries", 160, -20., 20.);
     iHists.leadingTimeVsToT[detid.rawId()] =
         iBooker.book2D("tvstot_" + ch_name, ch_name + ";ToT (ns);t (ns)", 240, 0., 60., 450, -20., 25.);
+
+    if (iHists.leadingTimeVsLs.count({detid.arm(), detid.station(), detid.plane()}) == 0) {
+      detid.planeName(plane_name);
+      leadingTimeVsLsName = "tvsls_" + plane_name;
+      iHists.leadingTimeVsLs[std::tuple{detid.arm(), detid.station(), detid.plane()}] = iBooker.book2D(leadingTimeVsLsName.c_str(), (leadingTimeVsLsName + ";LS;t (ns)").c_str(), 2000, 0, 2000, 500, 0, 20);
+    }
   }
 }
 
@@ -116,6 +124,7 @@ void PPSTimingCalibrationPCLWorker::dqmAnalyze(const edm::Event& iEvent,
       iHists.leadingTime.at(detid.rawId())->Fill(rechit.time());
       iHists.toT.at(detid.rawId())->Fill(rechit.toT());
       iHists.leadingTimeVsToT.at(detid.rawId())->Fill(rechit.toT(), rechit.time());
+      iHists.leadingTimeVsLs.at({detid.arm(), detid.station(), detid.plane()})->Fill(iEvent.luminosityBlock(), rechit.time());
     }
   }
 }
