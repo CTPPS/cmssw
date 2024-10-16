@@ -91,7 +91,7 @@ void PPSTimingCalibrationPCLWorker::bookHistograms(DQMStore::IBooker& iBooker,
     if (iHists.leadingTimeVsLs.count({detid.arm(), detid.station(), detid.plane()}) == 0) {
       detid.planeName(plane_name);
       leadingTimeVsLsName = "tvsls_" + plane_name;
-      iHists.leadingTimeVsLs[std::tuple{detid.arm(), detid.station(), detid.plane()}] = iBooker.book2D(leadingTimeVsLsName.c_str(), (leadingTimeVsLsName + ";LS;t (ns)").c_str(), 2000, 0, 2000, 500, 0, 20);
+      iHists.leadingTimeVsLs[std::tuple{detid.arm(), detid.station(), detid.plane()}] = iBooker.book2D(leadingTimeVsLsName.c_str(), (leadingTimeVsLsName + ";LS;t (ns)").c_str(), 3000, 0, 3000, 500, 0, 20);
     }
   }
 }
