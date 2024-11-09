@@ -20,10 +20,17 @@ options.register("inputFiles",
     VarParsing.VarParsing.multiplicity.list,
     VarParsing.VarParsing.varType.string
 )
+options.register("tVsLsFilename",
+    "",
+    VarParsing.VarParsing.multiplicity.singleton,
+    VarParsing.VarParsing.varType.string,
+    "ROOT filename with t vs LS histogram for double peak correction"
+)
 
 options.parseArguments()
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
+process.MessageLogger.cerr.FwkReport.reportEvery = 1_000_000
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 
@@ -59,6 +66,7 @@ process.PoolDBOutputService = cms.Service("PoolDBOutputService",
 )
 
 process.load("CalibPPS.TimingCalibration.ppsTimingCalibrationPCLHarvester_cfi")
+process.ppsTimingCalibrationPCLHarvester.tVsLsFilename = options.tVsLsFilename
 
 # load DQM framework
 process.load("DQMServices.Core.DQMStore_cfi")
