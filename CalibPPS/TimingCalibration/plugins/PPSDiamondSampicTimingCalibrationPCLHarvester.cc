@@ -33,7 +33,6 @@
 #include "Geometry/VeryForwardGeometryBuilder/interface/CTPPSGeometry.h"
 #include "Geometry/Records/interface/VeryForwardRealGeometryRecord.h"
 
-#include "CalibPPS/TimingCalibration/interface/TimingCalibrationStruct.h"
 #include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
 
 #include "DataFormats/CTPPSDetId/interface/CTPPSDiamondDetId.h"
