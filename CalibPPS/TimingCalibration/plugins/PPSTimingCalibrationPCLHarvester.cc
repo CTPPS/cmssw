@@ -9,12 +9,9 @@
  *
  ****************************************************************************/
 
-// #include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
-#include "../interface/DoublePeakCorrection.h"
-// #include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
-#include "../interface/PlaneMap.h"
-// #include "CalibPPS/TimingCalibration/interface/TimingCalibrationHistograms.h"
-#include "../interface/TimingCalibrationHistograms.h"
+#include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
+#include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
+#include "CalibPPS/TimingCalibration/interface/TimingCalibrationHistograms.h"
 
 #include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
 
@@ -136,7 +133,8 @@ void PPSTimingCalibrationPCLHarvester::dqmEndJob(DQMStore::IBooker& iBooker, DQM
     calibParams[channelKey] = {0.0, 0.0, 0.0, 0.0};
     calibTime[channelKey] = {defaultOffset, defaultResolution};
     if (fetchWorkerHistograms(iGetter, histograms, detId, planeKey, channelId, channelName)) {
-      if (tVsLsFilename_.empty() && doublePeakCorrection_.isCorrectionNeeded(histograms.leadingTimeVsLs[planeKey]->getTH2F(), planeKey)) {
+      doublePeakCorrection_.fillLsAndTimeOffset(histograms.leadingTimeVsLs[planeKey]->getTH2F(), planeKey);
+      if (tVsLsFilename_.empty() && doublePeakCorrection_.isCorrectionNeeded(planeKey)) {
         calibTime[channelKey] = {0.0, 0.0};
       } else {
         TProfile* const tVsTotProfile{
