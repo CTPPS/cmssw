@@ -1,5 +1,4 @@
-// #include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
-#include "../interface/DoublePeakCorrection.h"
+#include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
 
 #include "FWCore/Utilities/interface/EDMException.h"
 
@@ -15,9 +14,7 @@ void DoublePeakCorrection::extractLsAndTimeOffset(const std::string& tVsLsFilena
       const std::string runNumber{std::to_string(run)};
       for (const auto& detId : detIds) {
         const PlaneKey planeKey{detId.arm(), detId.station(), detId.plane()};
-        if (!lsAndTimeOffsets_.contains(planeKey)) {
-          fillLsAndTimeOffset(getTVsLs(tVsLsFile, runNumber, detId), planeKey);
-        }
+        fillLsAndTimeOffset(getTVsLs(tVsLsFile, runNumber, detId), planeKey);
       }
     } else {
       throw edm::Exception{edm::errors::FileOpenError} << "Can't open the file with t vs LS: " << tVsLsFilename << '.';
@@ -40,11 +37,12 @@ const TH2F* DoublePeakCorrection::getTVsLs(TFile& tVsLsFile,
 }
 
 void DoublePeakCorrection::fillLsAndTimeOffset(const TH2F* tVsLs, const PlaneKey& planeKey) {
-  const auto [doublePeakLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount] = findLsAndTimePeaks(tVsLs, planeKey);
-
-  if (doublePeakLs != 1) {
-    lsAndTimeOffsets_[planeKey] = {doublePeakLs,
-                                   findTimeOffset(tVsLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount)};
+  if (!lsAndTimeOffsets_.contains(planeKey)) {
+    const auto [doublePeakLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount] = findLsAndTimePeaks(tVsLs, planeKey);
+    if (doublePeakLs != 1) {
+      lsAndTimeOffsets_[planeKey] = {doublePeakLs,
+                                    findTimeOffset(tVsLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount)};
+    }
   }
 }
 
@@ -54,7 +52,6 @@ std::tuple<unsigned int, double, double> DoublePeakCorrection::findLsAndTimePeak
   auto numOfTBins = static_cast<unsigned int>(tVsLs->GetNbinsY());
   double firstPeakTWithMaxCount{0.0};
   double secondPeakTWithMaxCount{0.0};
-  double prevTWithMaxCount{0.0};
   for (unsigned int lsBin{1}; lsBin <= numOfLsBins; ++lsBin) {
     double tMaxCount{0};
     for (unsigned int tBin{1}; tBin <= numOfTBins; ++tBin) {
@@ -67,12 +64,11 @@ std::tuple<unsigned int, double, double> DoublePeakCorrection::findLsAndTimePeak
       }
     }
 
-    if (prevTWithMaxCount != 0.0 && secondPeakTWithMaxCount - prevTWithMaxCount > TMaxDiff_) {
+    if (firstPeakTWithMaxCount != 0.0 && std::abs(secondPeakTWithMaxCount - firstPeakTWithMaxCount) > TMaxDiff_) {
       return {lsBin, firstPeakTWithMaxCount, secondPeakTWithMaxCount};
     }
 
-    firstPeakTWithMaxCount = prevTWithMaxCount;
-    prevTWithMaxCount = secondPeakTWithMaxCount;
+    firstPeakTWithMaxCount = secondPeakTWithMaxCount;
   }
 
   return {1, firstPeakTWithMaxCount, secondPeakTWithMaxCount};
@@ -100,9 +96,8 @@ double DoublePeakCorrection::findGaussianMean(const std::unique_ptr<TH1D>& tProj
   throw edm::Exception{edm::errors::FatalRootError} << "Double peak Gaussian fit not valid.";
 }
 
-bool DoublePeakCorrection::isCorrectionNeeded(const TH2F* tVsLs, const PlaneKey& planeKey) const {
-  const auto [doublePeakLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount] = findLsAndTimePeaks(tVsLs, planeKey);
-  return doublePeakLs != 1;
+bool DoublePeakCorrection::isCorrectionNeeded(const PlaneKey& planeKey) const {
+  return lsAndTimeOffsets_.contains(planeKey);
 }
 
 double DoublePeakCorrection::getCorrectedLeadingTime(const double leadingTime,

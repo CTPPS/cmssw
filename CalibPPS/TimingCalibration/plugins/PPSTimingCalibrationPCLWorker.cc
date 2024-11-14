@@ -9,12 +9,9 @@
  *
  ****************************************************************************/
 
-// #include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
-#include "../interface/DoublePeakCorrection.h"
-// #include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
-#include "../interface/PlaneMap.h"
-// #include "CalibPPS/TimingCalibration/interface/TimingCalibrationData.h"
-#include "../interface/TimingCalibrationData.h"
+#include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
+#include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
+#include "CalibPPS/TimingCalibration/interface/TimingCalibrationData.h"
 
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/CTPPSDetId/interface/CTPPSDiamondDetId.h"
@@ -117,7 +114,7 @@ void PPSTimingCalibrationPCLWorker::bookHistograms(DQMStore::IBooker& iBooker,
       if (!tcData.leadingTimeVsLs.contains(planeKey)) {
         detId.planeName(planeName);
         tcData.leadingTimeVsLs[planeKey] =
-            iBooker.book2D("tvsls_" + planeName, planeName + ";LS;t (ns)", 3000, 0.0, 3000.0, 500, 0.0, 20.0);
+            iBooker.book2D("tvsls_" + planeName, planeName + ";LS;t (ns)", 3000, 1.0, 3001.0, 500, 0.0, 20.0);
       }
     }
   }
