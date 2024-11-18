@@ -9,12 +9,9 @@
  *
  ****************************************************************************/
 
-// #include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
-// #include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
-// #include "CalibPPS/TimingCalibration/interface/TimingCalibrationData.h"
-#include "../interface/DoublePeakCorrection.h"
-#include "../interface/PlaneMap.h"
-#include "../interface/TimingCalibrationData.h"
+#include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
+#include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
+#include "CalibPPS/TimingCalibration/interface/TimingCalibrationData.h"
 
 #include "CondCore/DBOutputService/interface/PoolDBOutputService.h"
 
