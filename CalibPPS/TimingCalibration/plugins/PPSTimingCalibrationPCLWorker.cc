@@ -9,12 +9,9 @@
  *
  ****************************************************************************/
 
-// #include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
-// #include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
-// #include "CalibPPS/TimingCalibration/interface/TimingCalibrationData.h"
-#include "../interface/DoublePeakCorrection.h"
-#include "../interface/PlaneMap.h"
-#include "../interface/TimingCalibrationData.h"
+#include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
+#include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
+#include "CalibPPS/TimingCalibration/interface/TimingCalibrationData.h"
 
 #include "DataFormats/Common/interface/DetSetVector.h"
 #include "DataFormats/CTPPSDetId/interface/CTPPSDiamondDetId.h"
@@ -78,7 +75,7 @@ PPSTimingCalibrationPCLWorker::PPSTimingCalibrationPCLWorker(const edm::Paramete
 
 void PPSTimingCalibrationPCLWorker::dqmBeginRun(const edm::Run& iRun,
                                                 const edm::EventSetup& iSetup,
-                                                TimingCalibrationData& tcData) const {
+                                                TimingCalibrationData& timingCalibrationData) const {
   std::vector<CTPPSDiamondDetId> detIds;
   const auto& geom = iSetup.getData(geomEsToken_);
   for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
@@ -87,7 +84,7 @@ void PPSTimingCalibrationPCLWorker::dqmBeginRun(const edm::Run& iRun,
       detIds.push_back(detId);
     }
   }
-  tcData.doublePeakCorrection.extractLsAndTimeOffset(tVsLsFilename_, iRun.run(), detIds);
+  timingCalibrationData.doublePeakCorrection.extractLsAndTimeOffset(tVsLsFilename_, iRun.run(), detIds);
 }
 
 //------------------------------------------------------------------------------
@@ -95,7 +92,7 @@ void PPSTimingCalibrationPCLWorker::dqmBeginRun(const edm::Run& iRun,
 void PPSTimingCalibrationPCLWorker::bookHistograms(DQMStore::IBooker& iBooker,
                                                    const edm::Run& iRun,
                                                    const edm::EventSetup& iSetup,
-                                                   TimingCalibrationData& tcData) const {
+                                                   TimingCalibrationData& timingCalibrationData) const {
   iBooker.cd();
   iBooker.setCurrentFolder(dqmDir_);
 
@@ -109,14 +106,15 @@ void PPSTimingCalibrationPCLWorker::bookHistograms(DQMStore::IBooker& iBooker,
       detId.channelName(channelName);
       const PlaneKey planeKey{detId.arm(), detId.station(), detId.plane()};
 
-      tcData.leadingTime[channelId] =
+      timingCalibrationData.leadingTime[channelId] =
           iBooker.book1D("t_" + channelName, channelName + ";t (ns);Entries", 1200, -60.0, 60.0);
-      tcData.toT[channelId] = iBooker.book1D("tot_" + channelName, channelName + ";ToT (ns);Entries", 160, -20.0, 20.0);
-      tcData.leadingTimeVsToT[channelId] =
+      timingCalibrationData.toT[channelId] =
+          iBooker.book1D("tot_" + channelName, channelName + ";ToT (ns);Entries", 160, -20.0, 20.0);
+      timingCalibrationData.leadingTimeVsToT[channelId] =
           iBooker.book2D("tvstot_" + channelName, channelName + ";ToT (ns);t (ns)", 240, 0.0, 60.0, 450, -20.0, 25.0);
-      if (!tcData.leadingTimeVsLs.contains(planeKey)) {
+      if (!timingCalibrationData.leadingTimeVsLs.contains(planeKey)) {
         detId.planeName(planeName);
-        tcData.leadingTimeVsLs[planeKey] =
+        timingCalibrationData.leadingTimeVsLs[planeKey] =
             iBooker.book2D("tvsls_" + planeName, planeName + ";LS;t (ns)", 3000, 1.0, 3001.0, 500, 0.0, 20.0);
       }
     }
@@ -127,7 +125,7 @@ void PPSTimingCalibrationPCLWorker::bookHistograms(DQMStore::IBooker& iBooker,
 
 void PPSTimingCalibrationPCLWorker::dqmAnalyze(const edm::Event& iEvent,
                                                const edm::EventSetup& iSetup,
-                                               const TimingCalibrationData& tcData) const {
+                                               const TimingCalibrationData& timingCalibrationData) const {
   edm::Handle<DiamondRecHitVector> dsvRechits;
   // then extract the rechits information for later processing
   searchForProduct(iEvent, diamondRecHitTokens_, recHitTags_, dsvRechits);
@@ -144,7 +142,7 @@ void PPSTimingCalibrationPCLWorker::dqmAnalyze(const edm::Event& iEvent,
   for (const auto& dsRechits : *dsvRechits) {
     const CTPPSDiamondDetId detId{dsRechits.detId()};
     const uint32_t channelId{detId.rawId()};
-    if (!tcData.leadingTimeVsToT.contains(channelId)) {
+    if (!timingCalibrationData.leadingTimeVsToT.contains(channelId)) {
       edm::LogWarning{"PPSTimingCalibrationPCLWorker:dqmAnalyze"} << "Pad with Detector ID =" << detId
                                                                   << " is not set to be monitored.";
       continue;
@@ -156,11 +154,11 @@ void PPSTimingCalibrationPCLWorker::dqmAnalyze(const edm::Event& iEvent,
       // skip invalid rechits
       if (rechit.time() != 0.0 && rechit.toT() >= 0.0) {
         const double correctedLeadingTime{
-            tcData.doublePeakCorrection.getCorrectedLeadingTime(rechit.time(), ls, planeKey)};
-        tcData.leadingTime.at(channelId)->Fill(correctedLeadingTime);
-        tcData.toT.at(channelId)->Fill(rechit.toT());
-        tcData.leadingTimeVsToT.at(channelId)->Fill(rechit.toT(), correctedLeadingTime);
-        tcData.leadingTimeVsLs.at(planeKey)->Fill(ls, correctedLeadingTime);
+            timingCalibrationData.doublePeakCorrection.getCorrectedLeadingTime(rechit.time(), ls, planeKey)};
+        timingCalibrationData.leadingTime.at(channelId)->Fill(correctedLeadingTime);
+        timingCalibrationData.toT.at(channelId)->Fill(rechit.toT());
+        timingCalibrationData.leadingTimeVsToT.at(channelId)->Fill(rechit.toT(), correctedLeadingTime);
+        timingCalibrationData.leadingTimeVsLs.at(planeKey)->Fill(ls, correctedLeadingTime);
       }
     }
   }
