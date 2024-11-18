@@ -1,5 +1,4 @@
-// #include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
-#include "../interface/DoublePeakCorrection.h"
+#include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
 
 #include "FWCore/Utilities/interface/EDMException.h"
 
@@ -41,8 +40,8 @@ void DoublePeakCorrection::fillLsAndTimeOffset(const TH2F* tVsLs, const PlaneKey
   if (!lsAndTimeOffsets_.contains(planeKey)) {
     const auto [doublePeakLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount] = findLsAndTimePeaks(tVsLs, planeKey);
     if (doublePeakLs != 1) {
-      lsAndTimeOffsets_[planeKey] = {doublePeakLs,
-                                     findTimeOffset(tVsLs, doublePeakLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount)};
+      lsAndTimeOffsets_[planeKey] = {
+          doublePeakLs, findTimeOffset(tVsLs, doublePeakLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount)};
     }
   }
 }
@@ -85,8 +84,7 @@ double DoublePeakCorrection::findTimeOffset(const TH2F* tVsLs,
   return findGaussianMean(secondPeak, secondPeakEstimatedMean) - findGaussianMean(firstPeak, firstPeakEstimatedMean);
 }
 
-double DoublePeakCorrection::findGaussianMean(const std::unique_ptr<TH1D>& peak,
-                                              const double estimatedMean) const {
+double DoublePeakCorrection::findGaussianMean(const std::unique_ptr<TH1D>& peak, const double estimatedMean) const {
   constexpr unsigned int meanParamIndex{1};
   constexpr double fitSigma{2.5};
   const double fitLeftBound{estimatedMean - fitSigma};

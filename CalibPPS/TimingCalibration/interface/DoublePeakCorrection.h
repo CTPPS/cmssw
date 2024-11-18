@@ -1,8 +1,7 @@
 #ifndef CalibPPS_TimingCalibration_DoublePeakCorrection_h
 #define CalibPPS_TimingCalibration_DoublePeakCorrection_h
 
-// #include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
-#include "../interface/PlaneMap.h"
+#include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
 
 #include "DataFormats/CTPPSDetId/interface/CTPPSDiamondDetId.h"
 

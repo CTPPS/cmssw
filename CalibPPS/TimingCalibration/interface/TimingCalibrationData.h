@@ -1,11 +1,8 @@
 #ifndef CalibPPS_TimingCalibration_TimingCalibrationData_h
 #define CalibPPS_TimingCalibration_TimingCalibrationData_h
 
-#include "DoublePeakCorrection.h"
-
-// #include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
-#include "PlaneMap.h"
-
+#include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
+#include "CalibPPS/TimingCalibration/interface/PlaneMap.h"
 
 #include "DQMServices/Core/interface/MonitorElement.h"
 
