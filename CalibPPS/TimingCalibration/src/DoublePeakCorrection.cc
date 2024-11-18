@@ -1,4 +1,5 @@
-#include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
+// #include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
+#include "../interface/DoublePeakCorrection.h"
 
 #include "FWCore/Utilities/interface/EDMException.h"
 
@@ -41,7 +42,7 @@ void DoublePeakCorrection::fillLsAndTimeOffset(const TH2F* tVsLs, const PlaneKey
     const auto [doublePeakLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount] = findLsAndTimePeaks(tVsLs, planeKey);
     if (doublePeakLs != 1) {
       lsAndTimeOffsets_[planeKey] = {doublePeakLs,
-                                    findTimeOffset(tVsLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount)};
+                                     findTimeOffset(tVsLs, doublePeakLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount)};
     }
   }
 }
@@ -64,7 +65,8 @@ std::tuple<unsigned int, double, double> DoublePeakCorrection::findLsAndTimePeak
       }
     }
 
-    if (firstPeakTWithMaxCount != 0.0 && std::abs(secondPeakTWithMaxCount - firstPeakTWithMaxCount) > TMaxDiff_) {
+    constexpr double tMinDiff{1.0};
+    if (firstPeakTWithMaxCount != 0.0 && std::abs(secondPeakTWithMaxCount - firstPeakTWithMaxCount) > tMinDiff) {
       return {lsBin, firstPeakTWithMaxCount, secondPeakTWithMaxCount};
     }
 
@@ -75,21 +77,24 @@ std::tuple<unsigned int, double, double> DoublePeakCorrection::findLsAndTimePeak
 }
 
 double DoublePeakCorrection::findTimeOffset(const TH2F* tVsLs,
+                                            const unsigned int doublePeakLs,
                                             const double firstPeakEstimatedMean,
                                             const double secondPeakEstimatedMean) const {
-  const std::unique_ptr<TH1D> tProjection{tVsLs->ProjectionY()};
-  return findGaussianMean(tProjection, secondPeakEstimatedMean) - findGaussianMean(tProjection, firstPeakEstimatedMean);
+  const std::unique_ptr<TH1D> firstPeak{tVsLs->ProjectionY("_py", 1, doublePeakLs - 1)};
+  const std::unique_ptr<TH1D> secondPeak{tVsLs->ProjectionY("_py", doublePeakLs, -1)};
+  return findGaussianMean(secondPeak, secondPeakEstimatedMean) - findGaussianMean(firstPeak, firstPeakEstimatedMean);
 }
 
-double DoublePeakCorrection::findGaussianMean(const std::unique_ptr<TH1D>& tProjection,
+double DoublePeakCorrection::findGaussianMean(const std::unique_ptr<TH1D>& peak,
                                               const double estimatedMean) const {
   constexpr unsigned int meanParamIndex{1};
-  const double fitLeftBound{estimatedMean - TMaxDiff_};
-  const double fitRightBound{estimatedMean + TMaxDiff_};
+  constexpr double fitSigma{2.5};
+  const double fitLeftBound{estimatedMean - fitSigma};
+  const double fitRightBound{estimatedMean + fitSigma};
   TF1 fitFunction{"peak", "gaus"};
   fitFunction.SetParLimits(meanParamIndex, fitLeftBound, fitRightBound);
   fitFunction.SetParameter(meanParamIndex, estimatedMean);
-  const TFitResultPtr& peakFit{tProjection->Fit(&fitFunction, "NS", "", fitLeftBound, fitRightBound)};
+  const TFitResultPtr& peakFit{peak->Fit(&fitFunction, "NS", "", fitLeftBound, fitRightBound)};
   if (peakFit->IsValid()) {
     return peakFit->Parameter(meanParamIndex);
   }
