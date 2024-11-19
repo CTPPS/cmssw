@@ -52,6 +52,8 @@ std::tuple<unsigned int, double, double> DoublePeakCorrection::findLsAndTimePeak
   auto numOfTBins = static_cast<unsigned int>(tVsLs->GetNbinsY());
   double firstPeakTWithMaxCount{0.0};
   double secondPeakTWithMaxCount{0.0};
+  unsigned int tDiffCount{0};
+  unsigned int doublePeakLs{1};
   for (unsigned int lsBin{1}; lsBin <= numOfLsBins; ++lsBin) {
     double tMaxCount{0};
     for (unsigned int tBin{1}; tBin <= numOfTBins; ++tBin) {
@@ -66,10 +68,17 @@ std::tuple<unsigned int, double, double> DoublePeakCorrection::findLsAndTimePeak
 
     constexpr double tMinDiff{1.0};
     if (firstPeakTWithMaxCount != 0.0 && std::abs(secondPeakTWithMaxCount - firstPeakTWithMaxCount) > tMinDiff) {
-      return {lsBin, firstPeakTWithMaxCount, secondPeakTWithMaxCount};
+      constexpr unsigned int minTDiffCount{3};
+      ++tDiffCount;
+      if (tDiffCount == 1) {
+        doublePeakLs = lsBin;
+      } else if (tDiffCount == minTDiffCount) {
+        return {doublePeakLs, firstPeakTWithMaxCount, secondPeakTWithMaxCount};
+      }
+    } else {
+      tDiffCount = 0;
+      firstPeakTWithMaxCount = secondPeakTWithMaxCount;
     }
-
-    firstPeakTWithMaxCount = secondPeakTWithMaxCount;
   }
 
   return {1, firstPeakTWithMaxCount, secondPeakTWithMaxCount};
