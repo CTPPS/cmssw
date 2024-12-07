@@ -49,7 +49,7 @@ private:
   bool fetchWorkerHistograms(
       DQMStore::IGetter&, const CTPPSDiamondDetId&, const PlaneKey&, const uint32_t, const std::string&);
   TProfile* createTVsTotProfile(DQMStore::IBooker&, dqm::reco::MonitorElement*, const std::string&) const;
-  std::pair<double, double> findFitRange(dqm::reco::MonitorElement*, const double, const double) const;
+  std::pair<double, double> findFitRange(const TH1F*, const int, const double, const double) const;
 
   TimingCalibrationData timingCalibartionData_;
   const std::string dqmDir_;
@@ -109,7 +109,6 @@ void PPSTimingCalibrationPCLHarvester::dqmEndJob(DQMStore::IBooker& iBooker, DQM
   iGetter.cd();
   iGetter.setCurrentFolder(dqmDir_);
 
-  constexpr double defaultFitSlope{0.8};
   constexpr double defaultOffset{0.0};
   constexpr double defaultResolution{0.1};
   constexpr std::array<double, 13> thresholds{
@@ -136,20 +135,23 @@ void PPSTimingCalibrationPCLHarvester::dqmEndJob(DQMStore::IBooker& iBooker, DQM
         TProfile* const tVsTotProfile{
             createTVsTotProfile(iBooker, timingCalibartionData_.leadingTimeVsToT.at(channelId), channelName)};
 
-        const double defaultUpperLowerAsymptotesDiff = timingCalibartionData_.leadingTime.at(channelId)->getRMS();
-        const double defaultCenterOfDistribution = timingCalibartionData_.toT.at(channelId)->getMean();
-        const double defaultLowerAsymptote =
-            timingCalibartionData_.leadingTime.at(channelId)->getMean() - defaultUpperLowerAsymptotesDiff;
+        const TH1F* tot{timingCalibartionData_.toT.at(channelId)->getTH1F()};
+        const int maxTotBin{tot->GetMaximumBin()};
+
+        const double defaultUpperLowerAsymptotesDiff{timingCalibartionData_.leadingTime.at(channelId)->getRMS()};
+        const double defaultCenterOfDistribution{tot->GetMean()};
+        const double defaultLowerAsymptote{timingCalibartionData_.leadingTime.at(channelId)->getMean() - defaultUpperLowerAsymptotesDiff};
 
         double bestChiSqDivNdf{std::numeric_limits<double>::max()};
         double bestLowerTotRange{0.0};
         double bestUpperTotRange{0.0};
         for (const double upperThresholdFractionOfMax : thresholds) {
           for (const double lowerThresholdFractionOfMax : thresholds) {
+            constexpr double defaultFitSlope{0.8};
             interp.SetParameters(
                 defaultUpperLowerAsymptotesDiff, defaultCenterOfDistribution, defaultFitSlope, defaultLowerAsymptote);
-            const auto [lowerTotRange, upperTotRange] = findFitRange(
-                timingCalibartionData_.toT.at(channelId), lowerThresholdFractionOfMax, upperThresholdFractionOfMax);
+            const auto [lowerTotRange, upperTotRange] =
+                findFitRange(tot, maxTotBin, lowerThresholdFractionOfMax, upperThresholdFractionOfMax);
 
             const TFitResultPtr& tVsTotProfileFitResult{
                 tVsTotProfile->Fit(&interp, "BNS", "", lowerTotRange, upperTotRange)};
@@ -258,28 +260,20 @@ TProfile* PPSTimingCalibrationPCLHarvester::createTVsTotProfile(DQMStore::IBooke
   return monitorTProfile;
 }
 
-//------------------------------------------------------------------------------
-
 std::pair<double, double> PPSTimingCalibrationPCLHarvester::findFitRange(
-    dqm::reco::MonitorElement* tot,
+    const TH1F* tot,
+    const int maxTotBin,
     const double lowerThresholdFractionOfMax,
     const double upperThresholdFractionOfMax) const {
-  constexpr double totUpperLimitMaxSearch{20.0};
-  int maxTotBin{1};
-  const int numOfToTBins{tot->getNbinsX()};
-  const TAxis* const totXAxis{tot->getTH1()->GetXaxis()};
-  for (int i{2}; i <= numOfToTBins || totXAxis->GetBinCenter(i) <= totUpperLimitMaxSearch; ++i) {
-    if (tot->getBinContent(i) > tot->getBinContent(maxTotBin)) {
-      maxTotBin = i;
-    }
-  }
-
   constexpr double totLowerLimitRangeSearch{8.0};
+  const TAxis* const totXAxis{tot->GetXaxis()};
+  const double maxTotCount{tot->GetBinContent(maxTotBin)};
+
   double lowerTotRange{8};
   if (lowerThresholdFractionOfMax != FixedFitBoundIndication_) {
     int lowerLimitPos{maxTotBin};
-    const double lowerThreshold{lowerThresholdFractionOfMax * tot->getBinContent(maxTotBin)};
-    while (tot->getBinContent(lowerLimitPos) >= lowerThreshold &&
+    const double lowerThreshold{lowerThresholdFractionOfMax * maxTotCount};
+    while (tot->GetBinContent(lowerLimitPos) >= lowerThreshold &&
            totXAxis->GetBinCenter(lowerLimitPos) > totLowerLimitRangeSearch) {
       --lowerLimitPos;
     }
@@ -290,8 +284,8 @@ std::pair<double, double> PPSTimingCalibrationPCLHarvester::findFitRange(
   double upperTotRange{15};
   if (upperThresholdFractionOfMax != FixedFitBoundIndication_) {
     int upperLimitPos{maxTotBin};
-    const double upperThreshold{upperThresholdFractionOfMax * tot->getBinContent(maxTotBin)};
-    while (tot->getBinContent(upperLimitPos) >= upperThreshold &&
+    const double upperThreshold{upperThresholdFractionOfMax * maxTotCount};
+    while (tot->GetBinContent(upperLimitPos) >= upperThreshold &&
            totXAxis->GetBinCenter(upperLimitPos) < totUpperLimitRangeSearch) {
       ++upperLimitPos;
     }
