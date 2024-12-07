@@ -68,7 +68,7 @@ std::tuple<unsigned int, double, double> DoublePeakCorrection::findLsAndTimePeak
 
     constexpr double tMinDiff{1.0};
     if (firstPeakTWithMaxCount != 0.0 && std::abs(secondPeakTWithMaxCount - firstPeakTWithMaxCount) > tMinDiff) {
-      constexpr unsigned int minTDiffCount{3};
+      constexpr unsigned int minTDiffCount{5};
       ++tDiffCount;
       if (tDiffCount == 1) {
         doublePeakLs = lsBin;
