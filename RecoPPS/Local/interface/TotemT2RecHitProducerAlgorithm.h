@@ -24,7 +24,9 @@ public:
   using TimingRecHitProducerAlgorithm::TimingRecHitProducerAlgorithm;
   void build(const TotemGeometry&,
              const edmNew::DetSetVector<TotemT2Digi>&,
-             edmNew::DetSetVector<TotemT2RecHit>&) override;
+             edmNew::DetSetVector<TotemT2RecHit>&,
+             const unsigned int,
+             const bool) override;
 };
 
 #endif

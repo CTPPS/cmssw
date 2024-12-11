@@ -6,16 +6,21 @@
 *
 ****************************************************************************/
 
+#include "CalibPPS/TimingCalibration/interface/DoublePeakCorrection.h"
+
+#include "DataFormats/CTPPSDetId/interface/CTPPSDiamondDetId.h"
+
 #include "FWCore/Utilities/interface/isFinite.h"
 
 #include "RecoPPS/Local/interface/CTPPSDiamondRecHitProducerAlgorithm.h"
-#include "DataFormats/CTPPSDetId/interface/CTPPSDiamondDetId.h"
 
 //----------------------------------------------------------------------------------------------------
 
 void CTPPSDiamondRecHitProducerAlgorithm::build(const CTPPSGeometry& geom,
                                                 const edm::DetSetVector<CTPPSDiamondDigi>& input,
-                                                edm::DetSetVector<CTPPSDiamondRecHit>& output) {
+                                                edm::DetSetVector<CTPPSDiamondRecHit>& output,
+                                                const unsigned int ls,
+                                                const bool is_run_2) {
   for (const auto& vec : input) {
     const CTPPSDiamondDetId detid(vec.detId());
 
@@ -69,11 +74,15 @@ void CTPPSDiamondRecHitProducerAlgorithm::build(const CTPPSGeometry& geom,
         }
       }
 
-      const int time_slice =
-          (t_lead != 0) ? (t_lead - ch_t_offset / ts_to_ns_) / 1024 : CTPPSDiamondRecHit::TIMESLICE_WITHOUT_LEADING;
+      // In Run2 time_offset was used for the time window. From Run 3 it's used for correcting the leading edge double peak.
+      const int time_slice = is_run_2 ? (t_lead != 0) ? (t_lead - ch_t_offset / ts_to_ns_) / 1024
+                                                      : CTPPSDiamondRecHit::TIMESLICE_WITHOUT_LEADING
+                                      : 0;
 
       // calibrated time of arrival
       const double t0 = (t_lead % 1024) * ts_to_ns_ + lut[t_lead % 1024] * ts_to_ns_ - ch_t_twc;
+      // DP-corrected time of arrival if needed
+      const double toa{DoublePeakCorrection::getCorrectedLeadingTime(t0, ls, ch_t_offset)};
       rec_hits.emplace_back(
           // spatial information
           x_pos,
@@ -83,7 +92,7 @@ void CTPPSDiamondRecHitProducerAlgorithm::build(const CTPPSGeometry& geom,
           z_pos,
           z_width,
           // timing information
-          t0,
+          toa,
           tot,
           ch_t_precis,
           time_slice,

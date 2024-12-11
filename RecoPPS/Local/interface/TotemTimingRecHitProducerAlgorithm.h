@@ -31,7 +31,9 @@ public:
   void setCalibration(const PPSTimingCalibration&);
   void build(const CTPPSGeometry&,
              const edm::DetSetVector<TotemTimingDigi>&,
-             edm::DetSetVector<TotemTimingRecHit>&) override;
+             edm::DetSetVector<TotemTimingRecHit>&,
+             const unsigned int,
+             const bool) override;
 
 private:
   struct RegressionResults {

@@ -39,7 +39,9 @@ void TotemTimingRecHitProducerAlgorithm::setCalibration(const PPSTimingCalibrati
 
 void TotemTimingRecHitProducerAlgorithm::build(const CTPPSGeometry& geom,
                                                const edm::DetSetVector<TotemTimingDigi>& input,
-                                               edm::DetSetVector<TotemTimingRecHit>& output) {
+                                               edm::DetSetVector<TotemTimingRecHit>& output,
+                                               const unsigned int,
+                                               const bool) {
   for (const auto& vec : input) {
     const CTPPSDetId detid(vec.detId());
 

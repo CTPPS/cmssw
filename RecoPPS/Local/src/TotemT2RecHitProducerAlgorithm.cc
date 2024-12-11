@@ -13,7 +13,9 @@
 
 void TotemT2RecHitProducerAlgorithm::build(const TotemGeometry& geom,
                                            const edmNew::DetSetVector<TotemT2Digi>& input,
-                                           edmNew::DetSetVector<TotemT2RecHit>& output) {
+                                           edmNew::DetSetVector<TotemT2RecHit>& output,
+                                           const unsigned int,
+                                           const bool) {
   for (const auto& vec : input) {
     const TotemT2DetId detid(vec.detId());
 
