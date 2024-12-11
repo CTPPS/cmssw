@@ -78,7 +78,7 @@ void TotemTimingRecHitProducer::produce(edm::Event& iEvent, const edm::EventSetu
       algo_.setCalibration(iSetup.getData(timingCalibrationToken_));
 
     // produce the rechits collection
-    algo_.build(iSetup.getData(geometryToken_), digis, *pOut);
+    algo_.build(iSetup.getData(geometryToken_), digis, *pOut, 0.0, false);
   }
 
   iEvent.put(std::move(pOut));

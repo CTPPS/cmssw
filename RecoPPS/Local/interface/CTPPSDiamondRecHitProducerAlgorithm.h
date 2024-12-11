@@ -25,7 +25,9 @@ public:
   using TimingRecHitProducerAlgorithm::TimingRecHitProducerAlgorithm;
   void build(const CTPPSGeometry&,
              const edm::DetSetVector<CTPPSDiamondDigi>&,
-             edm::DetSetVector<CTPPSDiamondRecHit>&) override;
+             edm::DetSetVector<CTPPSDiamondRecHit>&,
+             const unsigned int,
+             const bool) override;
 
 private:
   static constexpr unsigned short MAX_CHANNEL = 20;
