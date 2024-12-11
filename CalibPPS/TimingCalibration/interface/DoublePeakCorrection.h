@@ -18,6 +18,8 @@ public:
   double getCorrectedLeadingTime(const double, const unsigned int, const PlaneKey&) const;
   double getEncodedLsAndTimeOffset(const PlaneKey&) const;
 
+  static double getCorrectedLeadingTime(const double, const unsigned int, const double);
+
 private:
   const TH2F* getTVsLs(TFile&, const std::string&, const CTPPSDiamondDetId&);
   std::tuple<unsigned int, double, double> findLsAndTimePeaks(const TH2F*, const PlaneKey&) const;
@@ -25,6 +27,8 @@ private:
   double findGaussianMean(const std::unique_ptr<TH1D>&, const double) const;
 
   std::unordered_map<PlaneKey, std::pair<unsigned int, double>, PlaneKeyHash> lsAndTimeOffsets_;
+
+  constexpr static unsigned int LsEncodingMultiple_{100};
 };
 
 #endif

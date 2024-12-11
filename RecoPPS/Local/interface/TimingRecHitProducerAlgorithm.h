@@ -31,7 +31,7 @@ public:
     calibLUT_ = &calibLUT;
     calib_fct_ = std::make_unique<reco::FormulaEvaluator>(calib_->formula());
   }
-  virtual void build(const G&, const D&, R&) = 0;
+  virtual void build(const G&, const D&, R&, const unsigned int, const bool) = 0;
 
 protected:
   /// Conversion constant between time slice and absolute time (in ns)

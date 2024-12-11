@@ -61,7 +61,7 @@ void TotemT2RecHitProducer::produce(edm::Event& iEvent, const edm::EventSetup& i
 
   if (!digis.empty()) {
     // produce the rechits collection
-    algo_.build(iSetup.getData(geometryToken_), digis, *pOut);
+    algo_.build(iSetup.getData(geometryToken_), digis, *pOut, 0.0, false);
   }
 
   iEvent.put(std::move(pOut));

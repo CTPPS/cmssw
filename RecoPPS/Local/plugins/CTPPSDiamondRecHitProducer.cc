@@ -40,6 +40,7 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions&);
 
 private:
+  void beginRun(edm::Run const&, edm::EventSetup const&) override;
   void produce(edm::Event&, const edm::EventSetup&) override;
 
   edm::EDGetTokenT<edm::DetSetVector<CTPPSDiamondDigi> > digiToken_;
@@ -51,21 +52,28 @@ private:
   edm::ESWatcher<PPSTimingCalibrationRcd> calibWatcher_;
   edm::ESWatcher<PPSTimingCalibrationLUTRcd> lutWatcher_;
 
-  bool applyCalib_;
   CTPPSDiamondRecHitProducerAlgorithm algo_;
+  bool applyCalib_;
+  bool isRun2_;
 };
 
 CTPPSDiamondRecHitProducer::CTPPSDiamondRecHitProducer(const edm::ParameterSet& iConfig)
-    : digiToken_(consumes<edm::DetSetVector<CTPPSDiamondDigi> >(iConfig.getParameter<edm::InputTag>("digiTag"))),
-      geometryToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord>()),
-      applyCalib_(iConfig.getParameter<bool>("applyCalibration")),
-      algo_(iConfig) {
+    : digiToken_{consumes<edm::DetSetVector<CTPPSDiamondDigi> >(iConfig.getParameter<edm::InputTag>("digiTag"))},
+      geometryToken_{esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord>()},
+      algo_{iConfig},
+      applyCalib_{iConfig.getParameter<bool>("applyCalibration")},
+      isRun2_{false} {
   if (applyCalib_) {
     timingCalibrationToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>(
         edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
     timingCalibrationLUTToken_ = esConsumes<PPSTimingCalibrationLUT, PPSTimingCalibrationLUTRcd>();
   }
   produces<edm::DetSetVector<CTPPSDiamondRecHit> >();
+}
+
+void CTPPSDiamondRecHitProducer::beginRun(const edm::Run& iRun, const edm::EventSetup&) {
+  const unsigned int run{iRun.run()};
+  isRun2_ = run <= 299'999 && run >= 200'000;
 }
 
 void CTPPSDiamondRecHitProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
@@ -75,11 +83,11 @@ void CTPPSDiamondRecHitProducer::produce(edm::Event& iEvent, const edm::EventSet
   const auto& digis = iEvent.get(digiToken_);
 
   if (!digis.empty()) {
-    if (applyCalib_ && (calibWatcher_.check(iSetup) or lutWatcher_.check(iSetup)))
+    if (applyCalib_ && (calibWatcher_.check(iSetup) || lutWatcher_.check(iSetup)))
       algo_.setCalibration(iSetup.getData(timingCalibrationToken_), iSetup.getData(timingCalibrationLUTToken_));
 
     // produce the rechits collection
-    algo_.build(iSetup.getData(geometryToken_), digis, *pOut);
+    algo_.build(iSetup.getData(geometryToken_), digis, *pOut, iEvent.run(), iEvent.luminosityBlock());
   }
 
   iEvent.put(std::move(pOut));
