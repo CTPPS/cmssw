@@ -139,12 +139,14 @@ double DoublePeakCorrection::getEncodedLsAndTimeOffset(const PlaneKey& planeKey)
 double DoublePeakCorrection::getCorrectedLeadingTime(const double leadingTime,
                                                      const unsigned int ls,
                                                      const double encodedLsAndTimeOffset) {
-  const unsigned int doublePeakLs = std::abs(encodedLsAndTimeOffset) / LsEncodingMultiple_;
-  if (ls >= doublePeakLs) {
-    const double doublePeakTimeOffset = encodedLsAndTimeOffset >= 0
-                                            ? encodedLsAndTimeOffset - doublePeakLs * LsEncodingMultiple_
-                                            : encodedLsAndTimeOffset + doublePeakLs * LsEncodingMultiple_;
-    return leadingTime - doublePeakTimeOffset;
+  if (encodedLsAndTimeOffset >= 0.0) {
+    const unsigned int doublePeakLs = std::abs(encodedLsAndTimeOffset) / LsEncodingMultiple_;
+    if (ls >= doublePeakLs) {
+      const double doublePeakTimeOffset = encodedLsAndTimeOffset >= 0
+                                              ? encodedLsAndTimeOffset - doublePeakLs * LsEncodingMultiple_
+                                              : encodedLsAndTimeOffset + doublePeakLs * LsEncodingMultiple_;
+      return leadingTime - doublePeakTimeOffset;
+    }
   }
   return leadingTime;
 }
