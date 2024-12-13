@@ -87,7 +87,7 @@ void CTPPSDiamondRecHitProducer::produce(edm::Event& iEvent, const edm::EventSet
       algo_.setCalibration(iSetup.getData(timingCalibrationToken_), iSetup.getData(timingCalibrationLUTToken_));
 
     // produce the rechits collection
-    algo_.build(iSetup.getData(geometryToken_), digis, *pOut, iEvent.run(), iEvent.luminosityBlock());
+    algo_.build(iSetup.getData(geometryToken_), digis, *pOut, iEvent.luminosityBlock(), isRun2_);
   }
 
   iEvent.put(std::move(pOut));
