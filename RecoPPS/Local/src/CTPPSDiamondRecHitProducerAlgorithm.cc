@@ -82,7 +82,7 @@ void CTPPSDiamondRecHitProducerAlgorithm::build(const CTPPSGeometry& geom,
       // calibrated time of arrival
       const double t0 = (t_lead % 1024) * ts_to_ns_ + lut[t_lead % 1024] * ts_to_ns_ - ch_t_twc;
       // DP-corrected time of arrival if needed (no DPs in Run 2)
-      const double toa = is_run_2 ? t0 : DoublePeakCorrection::getCorrectedLeadingTime(t0, ls, ch_t_offset);
+      const double toa = is_run_2 ? t0 : DoublePeakCorrection::GetCorrectedLeadingTime(t0, ls, ch_t_offset);
       rec_hits.emplace_back(
           // spatial information
           x_pos,
