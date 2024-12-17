@@ -18,7 +18,7 @@ public:
   double getCorrectedLeadingTime(const double, const unsigned int, const PlaneKey&) const;
   double getEncodedLsAndTimeOffset(const PlaneKey&) const;
 
-  static double getCorrectedLeadingTime(const double, const unsigned int, const double);
+  static double GetCorrectedLeadingTime(const double, const unsigned int, const double);
 
 private:
   const TH2F* getTVsLs(TFile&, const std::string&, const CTPPSDiamondDetId&);

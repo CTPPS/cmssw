@@ -127,19 +127,18 @@ double DoublePeakCorrection::getCorrectedLeadingTime(const double leadingTime,
 double DoublePeakCorrection::getEncodedLsAndTimeOffset(const PlaneKey& planeKey) const {
   if (auto it = lsAndTimeOffsets_.find(planeKey); it != std::end(lsAndTimeOffsets_)) {
     const auto [doublePeakLs, doublePeakTimeOffset] = it->second;
-    constexpr unsigned int lsEncodingMultiple{100};
-    if (doublePeakTimeOffset >= 0.0) {
-      return doublePeakLs * lsEncodingMultiple + doublePeakTimeOffset;
+    if (doublePeakTimeOffset > 0.0) {
+      return doublePeakLs * LsEncodingMultiple_ + doublePeakTimeOffset;
     }
-    return -(doublePeakLs * lsEncodingMultiple - doublePeakTimeOffset);
+    return -(doublePeakLs * LsEncodingMultiple_ - doublePeakTimeOffset);
   }
   return 0.0;
 }
 
-double DoublePeakCorrection::getCorrectedLeadingTime(const double leadingTime,
+double DoublePeakCorrection::GetCorrectedLeadingTime(const double leadingTime,
                                                      const unsigned int ls,
                                                      const double encodedLsAndTimeOffset) {
-  if (encodedLsAndTimeOffset >= 0.0) {
+  if (encodedLsAndTimeOffset != 0.0) {
     const unsigned int doublePeakLs = std::abs(encodedLsAndTimeOffset) / LsEncodingMultiple_;
     if (ls >= doublePeakLs) {
       const double doublePeakTimeOffset = encodedLsAndTimeOffset >= 0
