@@ -247,7 +247,8 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
     for (const auto& LocalTrack_mapIter : DiamondDet.GetDiamondTrack_map()) {  // loop on predigested tracks
         // edm::LogWarning("DiamondTrackMapAKALocal") << "DiamondTrackMapSector:  z (sector): " << LocalTrack_mapIter.first.z0();
 
-        int sector = LocalTrack_mapIter.first.z0() > 0.0 ? SECTOR::_45_ID : SECTOR::_56_ID; //TODO
+        // TOTEM z convention
+        int sector = LocalTrack_mapIter.first.z0() < 0.0 ? SECTOR::_45_ID : SECTOR::_56_ID; //TODO
 
         // if (!(Sector_TBA[sector]))
         //     continue;
@@ -279,7 +280,6 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         //we don't check active planes here, because each channel might require different number of them
         // edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
 
-        // bool mark_tag = DiamondDet.GetTrackMuxInSector(sector) == 1;
         bool mark_tag = DiamondDet.GetTrackMuxInStation(stationKey) == 1;
 
         std::vector<ChannelKey> hit_selected(PLANES_X_DETECTOR);
