@@ -97,14 +97,3 @@ void DiamondDetectorClass::ExtractData(){
         }
     }
 }
-
-int DiamondDetectorClass::GetTrackMuxInSector(int sector){
-    int mux=0;
-    for (const auto& locTrack_mapIter : LocalTrack_map_){ //loop on track
-        if (((locTrack_mapIter.first.z0() > 0.0 ) && sector == SECTOR::_45_ID) ||
-            ((locTrack_mapIter.first.z0() < 0.0 ) && sector == SECTOR::_56_ID))
-            mux++;
-    }
-
-    return mux;
-}

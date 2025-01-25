@@ -81,8 +81,6 @@ public:
 	inline LocalTrack_map_type GetDiamondTrack_map()
 	{return LocalTrack_map_;}
 
-	int GetTrackMuxInSector(int sector);
-
 private:
 	std::map<ChannelKey, Calib_par> SPC_map_;
 
