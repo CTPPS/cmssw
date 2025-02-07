@@ -47,7 +47,11 @@
         <Tube rMin="[RP_Device:RP_Device_Beam_Hole_Diam]/2" rMax="[RP_Device:RP_Device_Beam_Hole_Diam]/2+[RP_Device:RP_Device_Wall_Thickness]" dz="([RP_220_Right_Station_Length]-[RP_220_Right_Sec_Vert_z]-[RP_Device:RP_Device_Length_z]/2)/2" name="RP_220_Right_Station_Tube_5"/>
         <Tube rMin="0*mm" rMax="[RP_Device:RP_Device_Beam_Hole_Diam]/2" dz="[RP_220_Right_Station_Length]/2" name="RP_220_Right_Station_Vacuum_1"/>
         <Tube rMin="0*mm" rMax="[RP_Device:RP_Device_RP_Hole_Diam]/2" dz="[RP_Device:RP_Device_Envelope_Radius]" name="RP_220_Right_Station_Vert_Vacuum"/>
-        <Tube name="CTPPS_Timing_Negative_Station_Hor_Vacuum" rMin="0*mm" rMax="[CTPPS_Timing_Station_Parameters:Timing_Hole_Diam]/2" dz="[CTPPS_Timing_Station_Parameters:Hor_Vac_Length]/2"/>
+        <!--        <Tube name="CTPPS_Timing_Negative_Station_Hor_Vacuum" rMin="0*mm" rMax="[CTPPS_Timing_Station_Parameters:Timing_Hole_Diam]/2" dz="[CTPPS_Timing_Station_Parameters:Hor_Vac_Length]/2"/> -->
+        <Polycone name="CTPPS_Timing_Negative_Station_Hor_Vacuum" startPhi="0*deg" deltaPhi="360*deg" >
+            <ZSection z="-[RP_Device:RP_Device_Length_y]/2+[RP_Horizontal_Device:RP_Device_Hor_Closed_Wall_Thick_Int]" rMin="0*mm" rMax="[RP_Device:RP_Device_RP_Hole_Diam]/2"/>
+            <ZSection z="-[RP_Device:RP_Device_Length_y]/2+[RP_Horizontal_Device:RP_Device_Hor_Closed_Wall_Thick_Int] + [CTPPS_Timing_Station_Parameters:Hor_Vac_Length]" rMin="0*mm" rMax="[RP_Device:RP_Device_RP_Hole_Diam]/2"/>
+        </Polycone>
         <UnionSolid name="RP_220_Right_Station_Vacuum_2">
             <rSolid name="RP_220_Right_Station_Vacuum_1"/>
             <rSolid name="RP_220_Right_Station_Vert_Vacuum"/>
@@ -63,27 +67,39 @@
        <UnionSolid name="CTPPS_Timing_Negative_Station_Vacuum_3a">
           <rSolid name="RP_220_Right_Station_Vacuum_3"/>
           <rSolid name="CTPPS_Timing_Negative_Station_Hor_Vacuum"/>
-          <rRotation name="CTPPS_Diamond_Transformations:y_90_rot"/>
-          <!-- <rRotation name="RP_220_Right_90_y_Sec_Rotation_tilt27"/> -->
+           <!-- <rRotation name="CTPPS_Diamond_Transformations:y_90_rot"/> -->
+          <rRotation name="RP_220_Right_90_y_Sec_Rotation_tilt27"/>
 <!--      <rRotation name="rotations:90YX"/>-->
 <!--      <rRotation name="CTPPS_Diamond_Transformations:y90D"/>-->
-          <Translation x="[CTPPS_Timing_Station_Parameters:Hor_Vac_Length]/2-[CTPPS_Timing_Station_Parameters:Device_Length_y]/2+[CTPPS_Timing_Station_Parameters:Hor_Closed_Wall_Thick_Int]" y="0*mm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Timing_z])"/>
+           <!-- <Translation x="[CTPPS_Timing_Station_Parameters:Hor_Vac_Length]/2-[CTPPS_Timing_Station_Parameters:Device_Length_y]/2+[CTPPS_Timing_Station_Parameters:Hor_Closed_Wall_Thick_Int]" y="0*mm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Timing_z])"/> -->
+           <Translation x="0*mm" y="0*mm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Timing_z])"/>
         </UnionSolid>
         
-        <Tube rMin="0*mm" rMax="[RP_Device:RP_Device_RP_Hole_Diam]/2" dz="[RP_220_Right_Hor_Vac_Length]/2" name="RP_220_Right_Station_Hor_Vacuum"/>
+        <!-- <Tube rMin="0*mm" rMax="[RP_Device:RP_Device_RP_Hole_Diam]/2" dz="[RP_220_Right_Hor_Vac_Length]/2" name="RP_220_Right_Station_Hor_Vacuum"/> -->
+        <!-- <Tube name="RP_220_Right_Station_Hor_Vacuum"
+            rMin="0*mm" rMax="[RP_Device:RP_Device_RP_Hole_Diam]/2"
+        dz="-[RP_Device:RP_Device_Length_y]/2+[RP_Horizontal_Device:RP_Device_Hor_Closed_Wall_Thick_Int] + [RP_220_Right_Hor_Vac_Length]"/> -->
+        <Polycone name="RP_220_Right_Station_Hor_Vacuum" startPhi="0*deg" deltaPhi="360*deg" >
+            <ZSection z="-[RP_Device:RP_Device_Length_y]/2+[RP_Horizontal_Device:RP_Device_Hor_Closed_Wall_Thick_Int]" rMin="0*mm" rMax="[RP_Device:RP_Device_RP_Hole_Diam]/2"/>
+            <ZSection z="-[RP_Device:RP_Device_Length_y]/2+[RP_Horizontal_Device:RP_Device_Hor_Closed_Wall_Thick_Int] + [RP_220_Right_Hor_Vac_Length]" rMin="0*mm" rMax="[RP_Device:RP_Device_RP_Hole_Diam]/2"/>
+        </Polycone>
         <UnionSolid name="RP_220_Right_Station_Vacuum_4">
             <rSolid name="CTPPS_Timing_Negative_Station_Vacuum_3a"/>
             <rSolid name="RP_220_Right_Station_Hor_Vacuum"/>
             <!-- <rRotation name="CTPPS_Diamond_Transformations:y_90_rot"/> -->
             <rRotation name="RP_220_Right_90_y_Sec_Rotation_tilt27"/>
-            <Translation x="-(-[RP_220_Right_Hor_Vac_Length]/2+[RP_Device:RP_Device_Length_y]/2-[RP_Horizontal_Device:RP_Device_Hor_Closed_Wall_Thick_Int])" y="0*mm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Prim_Hor_z])"/>
+            <!-- FOR TUBE -->
+            <!-- <Translation x="-(-[RP_220_Right_Hor_Vac_Length]/2+[RP_Device:RP_Device_Length_y]/2-[RP_Horizontal_Device:RP_Device_Hor_Closed_Wall_Thick_Int])" y="0*mm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Prim_Hor_z])"/> -->
+            <!-- FOR POLY -->
+            <Translation x="0*mm" y="0*mm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Prim_Hor_z])"/>
         </UnionSolid>
         <UnionSolid name="RP_220_Right_Station_Vacuum_5">
             <rSolid name="RP_220_Right_Station_Vacuum_4"/>
             <rSolid name="RP_220_Right_Station_Hor_Vacuum"/>
             <!-- <rRotation name="CTPPS_Diamond_Transformations:y_90_rot"/> -->
             <rRotation name="RP_220_Right_90_y_Sec_Rotation_tilt27"/>
-            <Translation x="-(-[RP_220_Right_Hor_Vac_Length]/2+[RP_Device:RP_Device_Length_y]/2-[RP_Horizontal_Device:RP_Device_Hor_Closed_Wall_Thick_Int])" y="0*mm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Sec_Hor_z])"/>
+            <!--            <Translation x="-(-[RP_220_Right_Hor_Vac_Length]/2+[RP_Device:RP_Device_Length_y]/2-[RP_Horizontal_Device:RP_Device_Hor_Closed_Wall_Thick_Int])" y="0*mm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Sec_Hor_z])"/> -->
+            <Translation x="0*mm" y="0*mm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Sec_Hor_z])"/>
         </UnionSolid>
     </SolidSection>
     
@@ -229,7 +245,8 @@
         <PosPart copyNumber="116">
             <rParent name="RP_220_Right_Station_Vacuum_5"/>
             <rChild name="CTPPS_Timing_Horizontal_Pot:Primary_Vacuum"/>
-            <rRotation name="rotations:90YX"/>
+            <!--            <rRotation name="rotations:90YX"/> -->
+            <rRotation name="RP_220_Right_90_y_Sec_Rotation_tilt27"/>
             <Translation x="-(-([RP_Dist_Beam_Cent:CTPPS_56_Det_Dist]+[CTPPS_Timing_Horizontal_Pot:plane_length]+[CTPPS_Timing_Horizontal_Pot:cut_depth]+[CTPPS_Timing_Horizontal_Pot:thin_window_thickness])/2)" y="0*cm" z="-(-[RP_220_Right_Station_Length]/2+[RP_220_Right_Timing_z])"/>
         </PosPart>
     </PosPartSection>
