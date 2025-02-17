@@ -115,7 +115,7 @@ void PPSTimingCalibrationPCLWorker::bookHistograms(DQMStore::IBooker& iBooker,
       if (!timingCalibrationData.leadingTimeVsLs.contains(planeKey)) {
         detId.planeName(planeName);
         timingCalibrationData.leadingTimeVsLs[planeKey] =
-            iBooker.book2D("tvsls_" + planeName, planeName + ";LS;t (ns)", 3000, 1.0, 3001.0, 500, 0.0, 20.0);
+            iBooker.book2D("tvsls_" + planeName, planeName + ";LS;t (ns)", 3000, 1.0, 3001.0, 500, 0.0, 25.0);
       }
     }
   }
