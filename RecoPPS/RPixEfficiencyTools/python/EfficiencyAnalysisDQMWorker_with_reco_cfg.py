@@ -328,8 +328,8 @@ process.load("Calibration.PPSAlCaRecoProducer.ALCARECOPPSCalMaxTracks_cff")
 process.recoPPSSequenceAlCaRecoProducer.remove(process.diamondSampicLocalReconstructionTaskAlCaRecoProducer)
 
 #ENABLE IF RUNNING ON NON-ALCARECO DATASET
-process.ctppsPixelClustersAlCaRecoProducer.tag='ctppsPixelDigis'
-process.ctppsDiamondRecHitsAlCaRecoProducer.digiTag='ctppsDiamondRawToDigi:TimingDiamond'
+# process.ctppsPixelClustersAlCaRecoProducer.tag='ctppsPixelDigis'
+# process.ctppsDiamondRecHitsAlCaRecoProducer.digiTag='ctppsDiamondRawToDigi:TimingDiamond'
 
 # Filter only ZB events to be sure that we're getting the right prescale
 from HLTrigger.HLTfilters.triggerResultsFilter_cfi import triggerResultsFilter
