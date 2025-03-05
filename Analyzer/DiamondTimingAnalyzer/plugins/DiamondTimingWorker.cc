@@ -85,6 +85,10 @@ private:
         std::map<std::pair<int, int>, MonitorElement*> trk_res;
         std::map<std::pair<int, int>, MonitorElement*> trk_time_SPC_vs_BX;
         std::map<std::pair<int, int>, MonitorElement*> trk_time_SPC_vs_LS;
+
+        std::map<int, MonitorElement*> track_x_box_vs_cyl;
+        std::map<int, MonitorElement*> track_time_box_vs_cyl;
+        std::map<int, MonitorElement*> track_dt_vs_dx;
     };
     Histograms_DiamondTiming histos;
 
@@ -275,7 +279,34 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         // edm::LogWarning("ActivePlaneNumber") << "Active Plane Number: " << active_num;
 
         //EDO suggestion
-        if(active_num < 3) continue;
+        if(active_num < 2) continue;
+
+        for (const auto& LocalTrackOther_mapIter : DiamondDet.GetDiamondTrack_map()) {
+            int sector_other = LocalTrackOther_mapIter.first.z0() < 0.0 ? SECTOR::_45_ID : SECTOR::_56_ID;
+            if (LocalTrackOther_mapIter.second.size() == 0) {
+                continue;
+            }
+
+            int station_other = LocalTrackOther_mapIter.second.at(0).first.planeKey.station;
+            if (sector == sector_other && station == 1 && station_other == 2) {
+                std::array<bool, 4> active_plane_other{ {false, false, false, false} };
+                active_plane_other[0] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 0)) == 1;
+                active_plane_other[1] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 1)) == 1;
+                active_plane_other[2] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 2)) == 1;
+                active_plane_other[3] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 3)) == 1;
+
+                int active_num_other = std::count_if(active_plane_other.begin(), active_plane_other.end(), [](bool it) -> bool{return it;});
+                if (active_num_other >= 2) {
+                    const auto track_x_cyl = LocalTrack_mapIter.first.x0();
+                    const auto track_x_box = LocalTrackOther_mapIter.first.x0();
+                    const auto track_time_cyl = LocalTrack_mapIter.first.time();
+                    const auto track_time_box = LocalTrackOther_mapIter.first.time();
+                    histos.track_x_box_vs_cyl[sector]->Fill(track_x_cyl, track_x_box);
+                    histos.track_time_box_vs_cyl[sector]->Fill(track_time_cyl, track_time_box);
+                    histos.track_dt_vs_dx[sector]->Fill(track_x_cyl - track_x_box, track_time_cyl - track_time_box);
+                }
+            }
+        }
 
         //we don't check active planes here, because each channel might require different number of them
         // edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
@@ -407,6 +438,27 @@ void DiamondTimingWorker::bookHistograms(DQMStore::IBooker& iBooker,
 
         const CTPPSDiamondDetId detid(it->first);
         ChannelKey key(detid);
+
+        // Booking summary histograms for sector
+        if (histos.track_x_box_vs_cyl.count(detid.arm()) == 0) {
+            std::string sector_path;
+
+            detid.armName(sector_path, CTPPSDiamondDetId::nPath);
+
+            iBooker.setCurrentFolder(sector_path);
+
+            const auto sector = detid.arm();
+            const auto arm_name = std::to_string(detid.arm());
+
+            std::string name = "Track x box vs cyl sector " + arm_name;
+            histos.track_x_box_vs_cyl[sector] = iBooker.book2D(name.c_str(), name + ";x cyl (mm);x box (mm)", 25, 0, 25, 25, 0, 25);
+
+            name = "Track time box vs cyl sector " + arm_name;
+            histos.track_time_box_vs_cyl[sector] = iBooker.book2D(name.c_str(), name + ";t cyl (ns);t box (ns)", 2000, -10, 10, 2000, -10, 10);
+
+            name = "Track dt vs dx cyl - box sector " + arm_name;
+            histos.track_dt_vs_dx[sector] = iBooker.book2D(name.c_str(), name + ";dx (mm);dt (ns)", 100, -50, 50, 2000, -20, 20);
+        }
 
         // Booking summary histograms for station
         if (histos.trk_time_SPC.count({detid.arm(), detid.station()}) == 0) {
