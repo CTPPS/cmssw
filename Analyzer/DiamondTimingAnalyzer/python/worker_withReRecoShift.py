@@ -69,6 +69,13 @@ options.register('jsonFileName',
                 VarParsing.varType.string,
                 "JSON file list name")
 
+options.register('requiredActivePlanes',
+                 3,
+				 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.int,
+                 'Number of required active planes when computing the track resolution'
+)
+
 options.parseArguments()
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
@@ -222,6 +229,7 @@ if(options.calibInput != ''):
         planesConfig = cms.string(options.planesConfig),
         Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+        requiredActivePlanes = cms.int32(options.requiredActivePlanes),
     )
 elif (use_sqlite_file):
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
@@ -234,6 +242,7 @@ elif (use_sqlite_file):
             planesConfig = cms.string(options.planesConfig), #TODO: remove parameter from options or don't hardcode it.
             Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+            requiredActivePlanes = cms.int32(options.requiredActivePlanes),
         )
 else:
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
@@ -246,6 +255,7 @@ else:
                 planesConfig = cms.string(options.planesConfig), #TODO: remove parameter from options or don't hardcode it.
                 Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
                 Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
+                requiredActivePlanes = cms.int32(options.requiredActivePlanes),
             )
 # else:
     # assert "need to provide timing calibration tag from json, slq file or db"

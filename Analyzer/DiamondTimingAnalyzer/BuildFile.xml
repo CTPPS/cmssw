@@ -1,6 +1,6 @@
 <use name="Geometry/VeryForwardGeometryBuilder"/>
 <use name="Geometry/Records"/>
-<use name="DataFormats/CTPPSDetId"/> 
+<use name="DataFormats/CTPPSDetId"/>
 <use name="DataFormats/CTPPSDigi"/>
 <use name="DataFormats/CTPPSReco"/>
 <use name="CondFormats/PPSObjects"/>
@@ -9,7 +9,6 @@
 <use name="FWCore/PluginManager"/>
 <use name="FWCore/ParameterSet"/>
 <use name="DQMServices/Core"/>
-<flags CXXFLAGS="-O0 -g -DDEBUG"/>
 <export>
   <lib name="1"/>
 </export>
