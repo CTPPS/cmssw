@@ -97,6 +97,7 @@ private:
     int validOOT;
     std::map<std::pair<int, int>, std::pair<int, int>> Ntracks_cuts_map_;  //arm, station ,, Lcut,Ucut
     std::map<ChannelKey, int> planes_config;
+    int required_active_planes;
 };
 
 //
@@ -122,7 +123,8 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
         consumes<edm::DetSetVector<CTPPSPixelLocalTrack>>(iConfig.getParameter<edm::InputTag>("tagPixelLocalTrack"))),
     geomEsToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord, edm::Transition::BeginRun>()),
     // calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>()),
-    validOOT(iConfig.getParameter<int>("tagValidOOT")) {
+    validOOT(iConfig.getParameter<int>("tagValidOOT")),
+    required_active_planes(iConfig.getParameter<int>("requiredActivePlanes")) {
         //TODO check if this tag is provde or no
     calibEsToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>(
         edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
@@ -144,6 +146,7 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
 
     //read planes config
     planes_config = JSON::read_planes_config(iConfig.getParameter<std::string>("planesConfig"));
+    std::cout << required_active_planes << std::endl;
 }
 
 //
@@ -279,7 +282,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         // edm::LogWarning("ActivePlaneNumber") << "Active Plane Number: " << active_num;
 
         //EDO suggestion
-        if(active_num < 2) continue;
+        if(active_num < required_active_planes) continue;
 
         for (const auto& LocalTrackOther_mapIter : DiamondDet.GetDiamondTrack_map()) {
             int sector_other = LocalTrackOther_mapIter.first.z0() < 0.0 ? SECTOR::_45_ID : SECTOR::_56_ID;
@@ -296,7 +299,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
                 active_plane_other[3] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 3)) == 1;
 
                 int active_num_other = std::count_if(active_plane_other.begin(), active_plane_other.end(), [](bool it) -> bool{return it;});
-                if (active_num_other >= 2) {
+                if (active_num_other >= required_active_planes) {
                     const auto track_x_cyl = LocalTrack_mapIter.first.x0();
                     const auto track_x_box = LocalTrackOther_mapIter.first.x0();
                     const auto track_time_cyl = LocalTrack_mapIter.first.time();
