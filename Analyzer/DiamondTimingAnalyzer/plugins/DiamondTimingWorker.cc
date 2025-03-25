@@ -46,6 +46,8 @@
 #include "Analyzer/DiamondTimingAnalyzer/interface/DiamondDetectorClass.h"
 #include "Analyzer/DiamondTimingAnalyzer/interface/JSON.h"
 
+#include "TFitResult.h"
+
 //
 // class declaration
 //
@@ -58,6 +60,7 @@ public:
 
 private:
     void bookHistograms(DQMStore::IBooker& iBooker, edm::Run const&, edm::EventSetup const& iSetup) override;
+    void dqmBeginRun(edm::Run const&, edm::EventSetup const&) override;
     void analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) override;
 
     // ---------- objects to retrieve ---------------------------
@@ -89,6 +92,9 @@ private:
         std::map<int, MonitorElement*> track_x_box_vs_cyl;
         std::map<int, MonitorElement*> track_time_box_vs_cyl;
         std::map<int, MonitorElement*> track_dt_vs_dx;
+        std::map<int, MonitorElement*> track_time;
+        std::map<int, MonitorElement*> track_resolution;
+        std::map<int, MonitorElement*> timing_tracks_population;
     };
     Histograms_DiamondTiming histos;
 
@@ -98,6 +104,9 @@ private:
     std::map<std::pair<int, int>, std::pair<int, int>> Ntracks_cuts_map_;  //arm, station ,, Lcut,Ucut
     std::map<ChannelKey, int> planes_config;
     int required_active_planes;
+    std::string track_plots_filename;
+    std::array<double, 2> track_x_max_dev{{-50, -50}};
+    std::array<double, 2> track_time_max_dev{{-20, -20}};
 };
 
 //
@@ -124,7 +133,8 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
     geomEsToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord, edm::Transition::BeginRun>()),
     // calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>()),
     validOOT(iConfig.getParameter<int>("tagValidOOT")),
-    required_active_planes(iConfig.getParameter<int>("requiredActivePlanes")) {
+    required_active_planes(iConfig.getParameter<int>("requiredActivePlanes")),
+    track_plots_filename(iConfig.getParameter<std::string>("trackPlotsFilename")) {
         //TODO check if this tag is provde or no
     calibEsToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>(
         edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
@@ -152,6 +162,33 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
 //
 // member functions
 //
+
+void DiamondTimingWorker::dqmBeginRun(const edm::Run& iRun, const edm::EventSetup& iSetup) {
+    if (!track_plots_filename.empty()) {
+        TFile tracks_plot_file{track_plots_filename.c_str()};
+        if (tracks_plot_file.IsOpen()) {
+            const std::string runNumber{std::to_string(iRun.run())};
+            const std::array<std::pair<int, std::string>, 2> sectors{{{0, "45"}, {1, "56"}}};
+            constexpr unsigned int std_dev_param_index{2};
+            for (const auto& [sector_one_digit, sector_two_digits] : sectors) {
+                std::string track_dt_vs_dx_plot_path{"DQMData/Run " + runNumber + "/CTPPS/Run summary/TimingDiamond/sector " + sector_two_digits + "/Track dt vs dx cyl - box sector " + std::to_string(sector_one_digit)};
+                const auto* track_dt_vs_dx_plot = tracks_plot_file.Get<TH2F>(track_dt_vs_dx_plot_path.c_str());
+                if (track_dt_vs_dx_plot) {
+                    const std::unique_ptr<TH1D> track_x{track_dt_vs_dx_plot->ProjectionX("_py1")};
+                    const TFitResultPtr& track_x_fit{track_x->Fit("gaus", "SN", "", -3, 3)};
+                    const std::unique_ptr<TH1D> track_time{track_dt_vs_dx_plot->ProjectionY("_py2")};
+                    const TFitResultPtr& track_time_fit{track_time->Fit("gaus", "SN")};
+                    if (track_x_fit->IsValid() && track_time_fit->IsValid()) {
+                        track_x_max_dev[sector_one_digit] = 3 * track_x_fit->Parameter(std_dev_param_index);
+                        track_time_max_dev[sector_one_digit] = 3 * track_time_fit->Parameter(std_dev_param_index);
+                    } else {
+                        throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track dt vs dx projections.";
+                    }
+                }
+            }
+        }
+    }
+}
 
 // ------------ method called for each event  ------------
 
@@ -284,33 +321,6 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         //EDO suggestion
         if(active_num < required_active_planes) continue;
 
-        for (const auto& LocalTrackOther_mapIter : DiamondDet.GetDiamondTrack_map()) {
-            int sector_other = LocalTrackOther_mapIter.first.z0() < 0.0 ? SECTOR::_45_ID : SECTOR::_56_ID;
-            if (LocalTrackOther_mapIter.second.size() == 0) {
-                continue;
-            }
-
-            int station_other = LocalTrackOther_mapIter.second.at(0).first.planeKey.station;
-            if (sector == sector_other && station == 1 && station_other == 2) {
-                std::array<bool, 4> active_plane_other{ {false, false, false, false} };
-                active_plane_other[0] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 0)) == 1;
-                active_plane_other[1] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 1)) == 1;
-                active_plane_other[2] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 2)) == 1;
-                active_plane_other[3] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 3)) == 1;
-
-                int active_num_other = std::count_if(active_plane_other.begin(), active_plane_other.end(), [](bool it) -> bool{return it;});
-                if (active_num_other >= required_active_planes) {
-                    const auto track_x_cyl = LocalTrack_mapIter.first.x0();
-                    const auto track_x_box = LocalTrackOther_mapIter.first.x0();
-                    const auto track_time_cyl = LocalTrack_mapIter.first.time();
-                    const auto track_time_box = LocalTrackOther_mapIter.first.time();
-                    histos.track_x_box_vs_cyl[sector]->Fill(track_x_cyl, track_x_box);
-                    histos.track_time_box_vs_cyl[sector]->Fill(track_time_cyl, track_time_box);
-                    histos.track_dt_vs_dx[sector]->Fill(track_x_cyl - track_x_box, track_time_cyl - track_time_box);
-                }
-            }
-        }
-
         //we don't check active planes here, because each channel might require different number of them
         // edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
 
@@ -351,6 +361,76 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
         histos.trk_time_SPC_vs_BX[stationKey]->Fill(iEvent.bunchCrossing(), Track_time_SPC);
         histos.trk_time_SPC_vs_LS[stationKey]->Fill(iEvent.luminosityBlock(), Track_time_SPC);
+
+        bool is_any_track_in_other_station{false};
+        for (const auto& LocalTrackOther_mapIter : DiamondDet.GetDiamondTrack_map()) {
+            int sector_other = LocalTrackOther_mapIter.first.z0() < 0.0 ? SECTOR::_45_ID : SECTOR::_56_ID;
+            if (LocalTrackOther_mapIter.second.size() == 0) {
+                continue;
+            }
+
+            int station_other = LocalTrackOther_mapIter.second.at(0).first.planeKey.station;
+            if (sector == sector_other && station == 1 && station_other == 2) {
+                std::array<bool, 4> active_plane_other{ {false, false, false, false} };
+                active_plane_other[0] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 0)) == 1;
+                active_plane_other[1] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 1)) == 1;
+                active_plane_other[2] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 2)) == 1;
+                active_plane_other[3] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 3)) == 1;
+
+                int active_num_other = std::count_if(active_plane_other.begin(), active_plane_other.end(), [](bool it) -> bool{return it;});
+                if (active_num_other >= required_active_planes) {
+                    is_any_track_in_other_station = true;
+                    const auto track_x_cyl = LocalTrack_mapIter.first.x0();
+                    const auto track_x_box = LocalTrackOther_mapIter.first.x0();
+                    const auto track_time_cyl = LocalTrack_mapIter.first.time();
+                    const auto track_time_box = LocalTrackOther_mapIter.first.time();
+                    histos.track_x_box_vs_cyl[sector]->Fill(track_x_cyl, track_x_box);
+                    histos.track_time_box_vs_cyl[sector]->Fill(track_time_cyl, track_time_box);
+                    histos.track_dt_vs_dx[sector]->Fill(track_x_cyl - track_x_box, track_time_cyl - track_time_box);
+                    const bool are_compatible_in_x{std::abs(track_x_cyl - track_x_box) < track_x_max_dev[sector]};
+                    const bool are_compatible_in_time{std::abs(track_time_cyl - track_time_box) < track_time_max_dev[sector]};
+                    if (!are_compatible_in_x) {
+                        histos.timing_tracks_population[sector]->Fill(2);
+                    }
+                    if (!are_compatible_in_time) {
+                        histos.timing_tracks_population[sector]->Fill(3);
+                    }
+                    if (are_compatible_in_x && are_compatible_in_time) {
+                        histos.timing_tracks_population[sector]->Fill(4);
+                        std::vector<std::pair<ChannelKey, CTPPSDiamondRecHit>>::const_iterator other_hit_iter;
+                        double Other_Track_time_SPC = 100.0;
+                        double Other_Track_precision_SPC = 100.0;
+                        for (other_hit_iter = LocalTrackOther_mapIter.second.begin(); other_hit_iter < LocalTrackOther_mapIter.second.end(); other_hit_iter++) {
+                            auto& other_key = (*other_hit_iter).first;
+
+                            if(!active_plane[other_key.planeKey.plane]) {
+                                continue;
+                            }
+
+                            double hit_time_SPC = DiamondDet.GetTime(other_key);
+                            double hit_weig_SPC = DiamondDet.GetPadWeight(other_key);
+
+                            Other_Track_time_SPC = (Other_Track_time_SPC * pow(Other_Track_precision_SPC, -2) + hit_time_SPC * hit_weig_SPC) /
+                                             (pow(Other_Track_precision_SPC, -2) + hit_weig_SPC);
+                            Other_Track_precision_SPC = pow((pow(Other_Track_precision_SPC, -2) + hit_weig_SPC), -0.5);
+                        }
+                        const double track_weight = pow(Track_precision_SPC, -2);
+                        const double other_track_weight = pow(Other_Track_precision_SPC, -2);
+                        const double sector_beam_and_resolution = (Track_time_SPC * track_weight + Other_Track_time_SPC * other_track_weight) / (track_weight + other_track_weight);
+                        const double sector_resolution = pow(track_weight + other_track_weight, -0.5);
+                        histos.track_time[sector]->Fill(sector_beam_and_resolution);
+                        histos.track_resolution[sector]->Fill(sector_resolution);
+                    }
+                }
+            }
+        }
+        if (!is_any_track_in_other_station) {
+            if (station == 1) {
+                histos.timing_tracks_population[sector]->Fill(0);
+            } else {
+                histos.timing_tracks_population[sector]->Fill(1);
+            }
+        }
 
         if (mark_tag) {
             // edm::LogWarning("RecHitMap") << "Analyze method: RecHitMap Size: " << DiamondDet.getRecHitMap().size();
@@ -461,6 +541,20 @@ void DiamondTimingWorker::bookHistograms(DQMStore::IBooker& iBooker,
 
             name = "Track dt vs dx cyl - box sector " + arm_name;
             histos.track_dt_vs_dx[sector] = iBooker.book2D(name.c_str(), name + ";dx (mm);dt (ns)", 100, -50, 50, 2000, -20, 20);
+
+            name = "Timing track time sector " + std::to_string(detid.arm());
+            histos.track_time[sector] = iBooker.book1D(name.c_str(), name.c_str(), 1200, -60, 60);
+
+            name = "Timing track resolution sector " + std::to_string(detid.arm());
+            histos.track_resolution[sector] = iBooker.book1D(name.c_str(), name.c_str(), 1000, 0, 1);
+
+            name = "Timing tracks population sector " + std::to_string(detid.arm());
+            histos.timing_tracks_population[sector] = iBooker.book1D(name.c_str(), name.c_str(), 5, 0, 5);
+            histos.timing_tracks_population[sector]->setBinLabel(1, "Only cyl");
+            histos.timing_tracks_population[sector]->setBinLabel(2, "Only box");
+            histos.timing_tracks_population[sector]->setBinLabel(3, "Cyl and box not compatible in x");
+            histos.timing_tracks_population[sector]->setBinLabel(4, "Cyl and box not compatible in time");
+            histos.timing_tracks_population[sector]->setBinLabel(5, "Cyl and box compatible in x and time");
         }
 
         // Booking summary histograms for station
@@ -474,16 +568,16 @@ void DiamondTimingWorker::bookHistograms(DQMStore::IBooker& iBooker,
 
             auto stationKey = std::make_pair<int, int>(detid.arm(), detid.station());
 
-            std::string name = "Timing track time SPC sector " + std::to_string(detid.arm());
+            std::string name = "Timing track time SPC sector " + std::to_string(detid.arm()) + " station " + std::to_string(detid.station());
             histos.trk_time_SPC[stationKey] = iBooker.book1D(name.c_str(), name.c_str(), 1200, -60, 60);
 
-            name = "Timing track resolution sector " + std::to_string(detid.arm());
+            name = "Timing track resolution sector " + std::to_string(detid.arm()) + " station " + std::to_string(detid.station());
             histos.trk_res[stationKey] = iBooker.book1D(name.c_str(), name.c_str(), 1000, 0, 1);
 
-            name = "Timing track time SPC Vs BX sector " + std::to_string(detid.arm());
+            name = "Timing track time SPC Vs BX sector " + std::to_string(detid.arm()) + " station " + std::to_string(detid.station());
             histos.trk_time_SPC_vs_BX[stationKey] = iBooker.book2D(name.c_str(), name.c_str(), 4000, 0, 4000, 500, -5, 5);
 
-            name = "Timing track time SPC Vs LS sector " + std::to_string(detid.arm());
+            name = "Timing track time SPC Vs LS sector " + std::to_string(detid.arm()) + " station " + std::to_string(detid.station());
             histos.trk_time_SPC_vs_LS[stationKey] = iBooker.book2D(name.c_str(), name.c_str(), 4000, 0, 4000, 500, -5, 5);
         }
 
