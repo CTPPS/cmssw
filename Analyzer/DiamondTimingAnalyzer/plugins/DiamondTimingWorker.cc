@@ -94,7 +94,6 @@ private:
         std::map<int, MonitorElement*> track_dt_vs_dx;
         std::map<int, MonitorElement*> track_time;
         std::map<int, MonitorElement*> track_resolution;
-
         std::map<int, MonitorElement*> timing_tracks_population;
     };
     Histograms_DiamondTiming histos;
@@ -135,7 +134,8 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
     // calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>()),
     validOOT(iConfig.getParameter<int>("tagValidOOT")),
     required_active_planes(iConfig.getParameter<int>("requiredActivePlanes")),
-    track_plots_filename(iConfig.getParameter<std::string>("trackPlotsFilename")) {
+    track_plots_filename(iConfig.getParameter<std::string>("trackPlotsFilename")),
+    required_active_planes(iConfig.getParameter<int>("requiredActivePlanes")) {
         //TODO check if this tag is provde or no
     calibEsToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>(
         edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
@@ -157,6 +157,7 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
 
     //read planes config
     planes_config = JSON::read_planes_config(iConfig.getParameter<std::string>("planesConfig"));
+    std::cout << required_active_planes << std::endl;
 }
 
 //
