@@ -134,8 +134,7 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
     // calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>()),
     validOOT(iConfig.getParameter<int>("tagValidOOT")),
     required_active_planes(iConfig.getParameter<int>("requiredActivePlanes")),
-    track_plots_filename(iConfig.getParameter<std::string>("trackPlotsFilename")),
-    required_active_planes(iConfig.getParameter<int>("requiredActivePlanes")) {
+    track_plots_filename(iConfig.getParameter<std::string>("trackPlotsFilename")) {
         //TODO check if this tag is provde or no
     calibEsToken_ = esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd>(
         edm::ESInputTag(iConfig.getParameter<std::string>("timingCalibrationTag")));
