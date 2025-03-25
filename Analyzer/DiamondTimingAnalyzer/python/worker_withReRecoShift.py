@@ -76,6 +76,13 @@ options.register('requiredActivePlanes',
                  'Number of required active planes when computing the track resolution'
 )
 
+options.register('trackPlotsFilename',
+                 '',
+				 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.string,
+                 'Path to ROOT file with track plots per sector'
+)
+
 options.parseArguments()
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
@@ -230,6 +237,7 @@ if(options.calibInput != ''):
         Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         requiredActivePlanes = cms.int32(options.requiredActivePlanes),
+        trackPlotsFilename = cms.string(options.trackPlotsFilename),
     )
 elif (use_sqlite_file):
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
@@ -243,6 +251,7 @@ elif (use_sqlite_file):
             Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             requiredActivePlanes = cms.int32(options.requiredActivePlanes),
+            trackPlotsFilename = cms.string(options.trackPlotsFilename),
         )
 else:
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
@@ -256,6 +265,7 @@ else:
                 Ntracks_Lcuts = cms.vint32([-1,1,-1,1]), # minimum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
                 Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
                 requiredActivePlanes = cms.int32(options.requiredActivePlanes),
+                trackPlotsFilename = cms.string(options.trackPlotsFilename),
             )
 # else:
     # assert "need to provide timing calibration tag from json, slq file or db"
