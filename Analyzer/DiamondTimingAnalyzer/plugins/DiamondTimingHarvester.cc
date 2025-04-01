@@ -20,7 +20,7 @@
 #include <bitset>
 
 #include <iostream>
-#include <fstream> 
+#include <fstream>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -44,6 +44,7 @@
 #include "Analyzer/DiamondTimingAnalyzer/interface/JSON.h"
 
 #include "TFile.h"
+#include "TFitResult.h"
 #include "TGraph.h"
 
 //
@@ -92,7 +93,7 @@ private:
 // constructors and destructor
 //
 DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
-    : 
+    :
     geomEsToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord, edm::Transition::EndRun>()),
     // calibEsToken_(esConsumes<PPSTimingCalibration, PPSTimingCalibrationRcd, edm::Transition::EndRun>(edm::ESInputTag("PoolDBESSource:PPSTestCalibration"))),
     output_file(iConfig.getParameter<std::string>("calib_json_output")),
@@ -123,12 +124,12 @@ DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
 // ------------ method called for each event  ------------
 
 void DiamondTimingHarvester::dqmEndJob(DQMStore::IBooker &iBooker, DQMStore::IGetter &iGetter) {
-  std::cout << "LOOP INDEX! = " << loop_index << std::endl; 
+  std::cout << "LOOP INDEX! = " << loop_index << std::endl;
   std::cout << "CALIB FILES! = ";
   for (long unsigned int i = 0; i < calib_files.size(); i++)
   {
     std::cout << calib_files[i] << ",";
-  } 
+  }
   std::cout << std::endl;
   std::cout<<"######## EndJob ########"<<std::endl;
 }
@@ -137,11 +138,11 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
                DQMStore::IGetter &iGetter,
                edm::Run const &iRun,
                edm::EventSetup const &iSetup) {
-  
+
     std::map<ChannelKey, double> Resolution_L2_map_;
-  
+
     ///////////////////////////////////////////
-    // deriving full track based L2 resolution	
+    // deriving full track based L2 resolution
     ///////////////////////////////////////////
     std::cout<<"####### EndRun #######"<<std::endl;
 
@@ -154,11 +155,14 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
     const auto& calib = calibs[loop_index];
     edm::LogWarning("Calibs") << "calibs["<< loop_index << "]" << calibs[loop_index];
 
+    std::map<int, MonitorElement*> sector_track_time;
+    std::map<std::pair<int, int>, MonitorElement*> station_track_time;
+
     std::string ch_name, ch_path;
     for (auto it = geom.beginSensor(); it != geom.endSensor(); ++it) {
         if (!CTPPSDiamondDetId::check(it->first))
             continue;
-    
+
         //channel id and path
         const CTPPSDiamondDetId detid(it->first);
         ChannelKey histo_key(detid);
@@ -181,8 +185,8 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
         edm::LogWarning("l2_res")<<"l2 res number: "<<  l2_res->getEntries() << " for path" <<ch_path << std::endl;
         if(l2_res->getEntries() > 100){
 			l2_res->getTH1F()->Fit("gaus","+Q","",-10,10);
-			
-			if(l2_res->getTH1F()->GetFunction("gaus") != NULL){				
+
+			if(l2_res->getTH1F()->GetFunction("gaus") != NULL){
 				double ResL2_mean = l2_res->getTH1F()->GetFunction("gaus")->GetParameter(1);
 				double ResL2_sigma = l2_res->getTH1F()->GetFunction("gaus")->GetParameter(2);
 				l2_res->getTH1F()->Fit("gaus","","",ResL2_mean-(2.2*ResL2_sigma),ResL2_mean+(2.2*ResL2_sigma));
@@ -212,20 +216,48 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
         //auto* resStepHist = iBooker.book2D("res_vs_step_" + ch_name, "Resolution vs Step;Step;Resolution (ns)", 1200, -1, loop_index+2, 1200, 0, 1);
         auto* resStepHist = iBooker.book1D("res_vs_step_" + ch_name, "Resolution vs Step;Step;Resolution (ns)", 1200, -1, loop_index+2);
         resStepHist->getTH1F()->SetMarkerStyle(20);
-        
-        
-        
+
+
+
         for(int i=0; i<=loop_index; i++){
             resStepHist->Fill(i, calibs[i].timePrecision(histo_key));
         }
         resStepHist->Fill(loop_index+1, Resolution_L2_map_[histo_key]);
-    
+
         //res diff
         if(loop_index > 0){
             auto* mEl = iBooker.book1D("diff_res_" + ch_name, "Resolution difference;Difference (ns);Entries", 1200, -1, 1);
-                
+
             double diff = std::abs(Resolution_L2_map_[histo_key] - calibs[loop_index].timePrecision(histo_key));
             mEl->Fill(diff);
+        }
+
+        const auto sector = detid.arm();
+        if (!sector_track_time.contains(sector)) {
+            std::string sector_path;
+            detid.armName(sector_path, CTPPSDiamondDetId::nPath);
+            std::string sector_one_digit{std::to_string(sector)};
+            sector_track_time[sector] = iGetter.get(sector_path + "/" + "Timing track time sector " + sector_one_digit);
+            const auto& sector_track_time_fit = sector_track_time[sector]->getTH1F()->Fit("gaus", "S");
+            if (!sector_track_time_fit->IsValid()) {
+                throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track time for sector " + sector_one_digit;
+            }
+
+        }
+
+        const auto station = detid.station();
+        const auto station_key = std::pair{sector, station};
+        if (!station_track_time.contains(station_key)) {
+            std::string station_path;
+            detid.stationName(station_path, CTPPSDiamondDetId::nPath);
+            const std::string sector_one_digit{std::to_string(sector)};
+            const std::string station_one_digit{std::to_string(station)};
+            station_track_time[station_key] = iGetter.get(station_path + "/" + "Timing track time SPC sector " + sector_one_digit + " station " + station_one_digit);
+            station_track_time[station_key]->getTH1F()->Fit("gaus");
+            const auto& station_track_time_fit = sector_track_time[sector]->getTH1F()->Fit("gaus", "S");
+            if (!station_track_time_fit->IsValid()) {
+                throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track time for sector " + sector_one_digit + "station " + station_one_digit;
+            }
         }
     }
 
