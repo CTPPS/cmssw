@@ -156,7 +156,6 @@ DiamondTimingWorker::DiamondTimingWorker(const edm::ParameterSet& iConfig)
 
     //read planes config
     planes_config = JSON::read_planes_config(iConfig.getParameter<std::string>("planesConfig"));
-    std::cout << required_active_planes << std::endl;
 }
 
 //
@@ -297,8 +296,7 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         // if (!(Sector_TBA[sector]))
         //     continue;
 
-        if (LocalTrack_mapIter.second.size() == 0)
-            continue;
+        if (LocalTrack_mapIter.second.size() < 2) continue;
 
         //station id
         int station = LocalTrack_mapIter.second.at(0).first.planeKey.station;
@@ -318,13 +316,10 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         int active_num = std::count_if(active_plane.begin(), active_plane.end(), [](bool it) -> bool{return it;});
         // edm::LogWarning("ActivePlaneNumber") << "Active Plane Number: " << active_num;
 
-        //EDO suggestion
-        if(active_num < required_active_planes) continue;
-
         //we don't check active planes here, because each channel might require different number of them
         // edm::LogWarning("GetTrackMuxInSector") << "GetTrackMuxInSector: " << DiamondDet.GetTrackMuxInSector(sector);
 
-        bool mark_tag = DiamondDet.GetTrackMuxInStation(stationKey) == 1;
+        bool mark_tag = DiamondDet.GetTrackMuxInStation(stationKey) == 1 && active_num >= required_active_planes;
 
         std::vector<ChannelKey> hit_selected(PLANES_X_DETECTOR);
         std::vector<std::pair<ChannelKey, CTPPSDiamondRecHit>>::const_iterator hit_iter;
@@ -336,16 +331,11 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
         for (hit_iter = LocalTrack_mapIter.second.begin(); hit_iter < LocalTrack_mapIter.second.end(); hit_iter++) {
             auto& key = (*hit_iter).first;
 
-            if(!active_plane[key.planeKey.plane]) {
-                // edm::LogWarning("HitSelectedFillingNotActive") << "Key "<< key.planeKey.plane;
-                continue;
-            }
-
             double hit_time_SPC = DiamondDet.GetTime(key);
             // double hit_prec_SPC = DiamondDet.GetPadPrecision(key); //TODO: Unused variable
             double hit_weig_SPC = DiamondDet.GetPadWeight(key);
 
-            if (mark_tag) {
+            if (mark_tag && active_plane[key.planeKey.plane]) {
                 // edm::LogWarning("HitSelectedIsFilling")  << "mark_tag true. " << "Key "<< key << "key.planeKey.plane "<< key.planeKey.plane;
                 hit_selected[key.planeKey.plane] = key;  // save for resolution reco
             } else {
@@ -371,56 +361,43 @@ void DiamondTimingWorker::analyze(const edm::Event& iEvent, const edm::EventSetu
 
             int station_other = LocalTrackOther_mapIter.second.at(0).first.planeKey.station;
             if (sector == sector_other && station == 1 && station_other == 2) {
-                std::array<bool, 4> active_plane_other{ {false, false, false, false} };
-                active_plane_other[0] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 0)) == 1;
-                active_plane_other[1] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 1)) == 1;
-                active_plane_other[2] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 2)) == 1;
-                active_plane_other[3] = DiamondDet.GetMuxInTrack(PlaneKey(sector_other, station_other, 3)) == 1;
+                is_any_track_in_other_station = true;
+                const auto track_x_cyl = LocalTrack_mapIter.first.x0();
+                const auto track_x_box = LocalTrackOther_mapIter.first.x0();
+                const auto track_time_cyl = LocalTrack_mapIter.first.time();
+                const auto track_time_box = LocalTrackOther_mapIter.first.time();
+                histos.track_x_box_vs_cyl[sector]->Fill(track_x_cyl, track_x_box);
+                histos.track_time_box_vs_cyl[sector]->Fill(track_time_cyl, track_time_box);
+                histos.track_dt_vs_dx[sector]->Fill(track_x_cyl - track_x_box, track_time_cyl - track_time_box);
+                const bool are_compatible_in_x{std::abs(track_x_cyl - track_x_box) < track_x_max_dev[sector]};
+                const bool are_compatible_in_time{std::abs(track_time_cyl - track_time_box) < track_time_max_dev[sector]};
+                if (!are_compatible_in_x) {
+                    histos.timing_tracks_population[sector]->Fill(2);
+                }
+                if (!are_compatible_in_time) {
+                    histos.timing_tracks_population[sector]->Fill(3);
+                }
+                if (are_compatible_in_x && are_compatible_in_time) {
+                    histos.timing_tracks_population[sector]->Fill(4);
+                    std::vector<std::pair<ChannelKey, CTPPSDiamondRecHit>>::const_iterator other_hit_iter;
+                    double Other_Track_time_SPC = 100.0;
+                    double Other_Track_precision_SPC = 100.0;
+                    for (other_hit_iter = LocalTrackOther_mapIter.second.begin(); other_hit_iter < LocalTrackOther_mapIter.second.end(); other_hit_iter++) {
+                        auto& other_key = (*other_hit_iter).first;
 
-                int active_num_other = std::count_if(active_plane_other.begin(), active_plane_other.end(), [](bool it) -> bool{return it;});
-                if (active_num_other >= required_active_planes) {
-                    is_any_track_in_other_station = true;
-                    const auto track_x_cyl = LocalTrack_mapIter.first.x0();
-                    const auto track_x_box = LocalTrackOther_mapIter.first.x0();
-                    const auto track_time_cyl = LocalTrack_mapIter.first.time();
-                    const auto track_time_box = LocalTrackOther_mapIter.first.time();
-                    histos.track_x_box_vs_cyl[sector]->Fill(track_x_cyl, track_x_box);
-                    histos.track_time_box_vs_cyl[sector]->Fill(track_time_cyl, track_time_box);
-                    histos.track_dt_vs_dx[sector]->Fill(track_x_cyl - track_x_box, track_time_cyl - track_time_box);
-                    const bool are_compatible_in_x{std::abs(track_x_cyl - track_x_box) < track_x_max_dev[sector]};
-                    const bool are_compatible_in_time{std::abs(track_time_cyl - track_time_box) < track_time_max_dev[sector]};
-                    if (!are_compatible_in_x) {
-                        histos.timing_tracks_population[sector]->Fill(2);
+                        double hit_time_SPC = DiamondDet.GetTime(other_key);
+                        double hit_weig_SPC = DiamondDet.GetPadWeight(other_key);
+
+                        Other_Track_time_SPC = (Other_Track_time_SPC * pow(Other_Track_precision_SPC, -2) + hit_time_SPC * hit_weig_SPC) /
+                                            (pow(Other_Track_precision_SPC, -2) + hit_weig_SPC);
+                        Other_Track_precision_SPC = pow((pow(Other_Track_precision_SPC, -2) + hit_weig_SPC), -0.5);
                     }
-                    if (!are_compatible_in_time) {
-                        histos.timing_tracks_population[sector]->Fill(3);
-                    }
-                    if (are_compatible_in_x && are_compatible_in_time) {
-                        histos.timing_tracks_population[sector]->Fill(4);
-                        std::vector<std::pair<ChannelKey, CTPPSDiamondRecHit>>::const_iterator other_hit_iter;
-                        double Other_Track_time_SPC = 100.0;
-                        double Other_Track_precision_SPC = 100.0;
-                        for (other_hit_iter = LocalTrackOther_mapIter.second.begin(); other_hit_iter < LocalTrackOther_mapIter.second.end(); other_hit_iter++) {
-                            auto& other_key = (*other_hit_iter).first;
-
-                            if(!active_plane[other_key.planeKey.plane]) {
-                                continue;
-                            }
-
-                            double hit_time_SPC = DiamondDet.GetTime(other_key);
-                            double hit_weig_SPC = DiamondDet.GetPadWeight(other_key);
-
-                            Other_Track_time_SPC = (Other_Track_time_SPC * pow(Other_Track_precision_SPC, -2) + hit_time_SPC * hit_weig_SPC) /
-                                             (pow(Other_Track_precision_SPC, -2) + hit_weig_SPC);
-                            Other_Track_precision_SPC = pow((pow(Other_Track_precision_SPC, -2) + hit_weig_SPC), -0.5);
-                        }
-                        const double track_weight = pow(Track_precision_SPC, -2);
-                        const double other_track_weight = pow(Other_Track_precision_SPC, -2);
-                        const double sector_beam_and_resolution = (Track_time_SPC * track_weight + Other_Track_time_SPC * other_track_weight) / (track_weight + other_track_weight);
-                        const double sector_resolution = pow(track_weight + other_track_weight, -0.5);
-                        histos.track_time[sector]->Fill(sector_beam_and_resolution);
-                        histos.track_resolution[sector]->Fill(sector_resolution);
-                    }
+                    const double track_weight = pow(Track_precision_SPC, -2);
+                    const double other_track_weight = pow(Other_Track_precision_SPC, -2);
+                    const double sector_track_time = (Track_time_SPC * track_weight + Other_Track_time_SPC * other_track_weight) / (track_weight + other_track_weight);
+                    const double sector_track_resolution = pow(track_weight + other_track_weight, -0.5);
+                    histos.track_time[sector]->Fill(sector_track_time);
+                    histos.track_resolution[sector]->Fill(sector_track_resolution);
                 }
             }
         }
