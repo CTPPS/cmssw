@@ -60,8 +60,11 @@ void DiamondDetectorClass::ExtractData(){
         for (const auto& recHit : _recHits){ //rechit
             // if(((recHit.ootIndex() != 0) // TODO: To be used with newest tag
             // edm::LogWarning("Offset") <<"Offset:" << SPC_map_[key].offset;
-            if(((recHit.ootIndex() != (int)(SPC_map_[key].offset/25)) // TODO: To be used with newest tag
-                &&  valid_OOT_!=-1) ||  recHit.multipleHits()) continue;
+
+            // For Run 2 OR the condition below with is_oot_valid
+            // For Run 3 don't add it as time_offset is used for DP correction
+            // const bool is_oot_valid{(recHit.ootIndex() != (int)(SPC_map_[key].offset/25)) && valid_OOT_!=-1};
+            if (recHit.multipleHits()) continue;
 
 
             Mux_map_[key.planeKey]++;
