@@ -23,13 +23,13 @@ options.register('globalTag',
                 "GT to use")
 
 options.register ('rootFiles',
-				  'file:run_output.root', 
+				  'file:run_output.root',
                   VarParsing.multiplicity.list,
 				  VarParsing.varType.string,
 				  "root files produced by DQMWorker")
 
 options.register ('outputDirectoryRoot',
-				  'OutputHarvester', 
+				  'OutputHarvester',
                   VarParsing.multiplicity.singleton,
 				  VarParsing.varType.string,
 				  "root output dircetory")
@@ -76,23 +76,30 @@ options.register ('rmsMax',
 				  VarParsing.varType.float,
 				  "max rms of t distribution")
 
-options.register('sqlFileName', 
+options.register('sqlFileName',
                     '',
 				  VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   'sqlFileNameForCalib'
 )
 
-options.register('useDB', 
+options.register('useDB',
                     '',
 				  VarParsing.multiplicity.singleton,
                   VarParsing.varType.string,
                   'use data base for calibraiton'
 )
-		
-				  		  
+
+options.register('shouldPlotSectorTimingTrack',
+                 False,
+				 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.bool,
+                 'Whether to do the sector timing track plots'
+)
+
+
 options.parseArguments()
-				  
+
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -122,7 +129,7 @@ elif options.useDB=='False':
     use_db=False
 elif options.useDB!='':
     assert 'UseDB paramter is not valid. It should be True or False (case sensitive)'
-else: 
+else:
     use_db=False
 
 
@@ -131,7 +138,7 @@ else:
 
 use_sqlite_file = options.sqlFileName != ''
 if (use_sqlite_file):
-        print('Using SQL file')                                        
+        print('Using SQL file')
         process.load('CondCore.CondDB.CondDB_cfi')
         process.CondDB.connect = options.sqlFileName # SQLite input TODO: migrate to using tag
         process.PoolDBESSource = cms.ESSource('PoolDBESSource',
@@ -140,7 +147,7 @@ if (use_sqlite_file):
                 toGet = cms.VPSet(
                     cms.PSet(
                         record = cms.string('PPSTimingCalibrationRcd'),
-                        tag = cms.string('DiamondTimingCalibration') 
+                        tag = cms.string('DiamondTimingCalibration')
                     )
                 )
 )
@@ -150,9 +157,9 @@ elif options.calibInput != '':
         calibrationFile = cms.string(options.calibInput),
         subDetector = cms.uint32(2),
         appendToDataLabel = cms.string('')
-    ) 
+    )
 else: #default use db
-    print('Using db') 
+    print('Using db')
     process.GlobalTag.toGet = cms.VPSet()
     process.GlobalTag.toGet.append(
     cms.PSet(record = cms.string("PPSTimingCalibrationRcd"),
@@ -161,7 +168,7 @@ else: #default use db
             connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
         )
     )
-    #TODO: uncomment below when delete sqlite file dependency 
+    #TODO: uncomment below when delete sqlite file dependency
     # process.GlobalTag.toGet = cms.VPSet(
     #     cms.PSet(record = cms.string('PPSTimingCalibrationRcd'),
     #                 tag = cms.string('PPSDiamondTimingCalibration_Run3_v1_hlt'), # working tag: PPSDiamondTimingCalibration_Run3_v1_hlt
@@ -174,7 +181,7 @@ else: #default use db
 # rechits production
 process.load("DQM.Integration.config.environment_cfi")
 process.load("DQMServices.Components.DQMEnvironment_cfi")
-process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file 
+process.load('Geometry.VeryForwardGeometry.geometryRPFromDB_cfi') #TODO: use geometry form DB not from file
 
 # PROCESS HARVESTER:
 if(options.calibInput != ''):
@@ -187,7 +194,8 @@ if(options.calibInput != ''):
 	calibFiles = cms.vstring(options.calibFiles),
 	loopIndex = cms.int32(options.loopIndex),
 	meanMax = cms.double(options.meanMax),
-	rmsMax = cms.double(options.rmsMax)
+	rmsMax = cms.double(options.rmsMax),
+    shouldPlotSectorTimingTrack = cms.bool(options.shouldPlotSectorTimingTrack)
 	)
 elif (use_sqlite_file):
 	process.diamondTimingHarvester = DQMEDHarvester("DiamondTimingHarvester",
@@ -196,7 +204,8 @@ elif (use_sqlite_file):
    calibFiles = cms.vstring(options.calibFiles),
    loopIndex = cms.int32(options.loopIndex),
    meanMax = cms.double(options.meanMax),
-   rmsMax = cms.double(options.rmsMax)
+   rmsMax = cms.double(options.rmsMax),
+   shouldPlotSectorTimingTrack = cms.bool(options.shouldPlotSectorTimingTrack)
 )
 else: # defualt use db
     process.diamondTimingHarvester = DQMEDHarvester("DiamondTimingHarvester",
@@ -205,9 +214,10 @@ else: # defualt use db
 	calibFiles = cms.vstring(options.calibFiles),
 	loopIndex = cms.int32(options.loopIndex),
 	meanMax = cms.double(options.meanMax),
-	rmsMax = cms.double(options.rmsMax)
+	rmsMax = cms.double(options.rmsMax),
+    shouldPlotSectorTimingTrack = cms.bool(options.shouldPlotSectorTimingTrack)
 	)
-# else: 
+# else:
 #     assert "need to provide timing calibration tag from json, slq file or db"
 
 # process.diamondTimingHarvester.timingCalibrationTag=cms.string("PoolDBESSource:PPSTestCalibration")

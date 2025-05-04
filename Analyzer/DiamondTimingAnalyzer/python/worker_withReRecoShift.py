@@ -83,6 +83,13 @@ options.register('trackPlotsFilename',
                  'Path to ROOT file with track plots per sector'
 )
 
+options.register('shouldPlotSectorTimingTrack',
+                 False,
+				 VarParsing.multiplicity.singleton,
+                 VarParsing.varType.bool,
+                 'Whether to do the sector timing track plots'
+)
+
 options.parseArguments()
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEventsToProcess))
@@ -238,6 +245,7 @@ if(options.calibInput != ''):
         Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
         requiredActivePlanes = cms.int32(options.requiredActivePlanes),
         trackPlotsFilename = cms.string(options.trackPlotsFilename),
+        shouldPlotSectorTimingTrack = cms.bool(options.shouldPlotSectorTimingTrack)
     )
 elif (use_sqlite_file):
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
@@ -252,6 +260,7 @@ elif (use_sqlite_file):
             Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
             requiredActivePlanes = cms.int32(options.requiredActivePlanes),
             trackPlotsFilename = cms.string(options.trackPlotsFilename),
+            shouldPlotSectorTimingTrack = cms.bool(options.shouldPlotSectorTimingTrack)
         )
 else:
     process.diamondTimingWorker = DQMEDAnalyzer("DiamondTimingWorker",
@@ -266,6 +275,7 @@ else:
                 Ntracks_Ucuts = cms.vint32([-1,6,-1,6]), # maximum number of tracks in pots [45-210, 45-220, 56-210, 56-220]
                 requiredActivePlanes = cms.int32(options.requiredActivePlanes),
                 trackPlotsFilename = cms.string(options.trackPlotsFilename),
+                shouldPlotSectorTimingTrack = cms.bool(options.shouldPlotSectorTimingTrack)
             )
 # else:
     # assert "need to provide timing calibration tag from json, slq file or db"
