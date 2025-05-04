@@ -79,6 +79,7 @@ private:
 
   double mean_max;
   double rms_max;
+  const bool should_plot_sector_timing_track;
 };
 
 //
@@ -100,7 +101,8 @@ DiamondTimingHarvester::DiamondTimingHarvester(const edm::ParameterSet& iConfig)
     calib_files(iConfig.getParameter<std::vector<std::string>>("calibFiles")),
     loop_index(iConfig.getParameter<int>("loopIndex")),
     mean_max(iConfig.getParameter<double>("meanMax")),
-    rms_max(iConfig.getParameter<double>("rmsMax"))
+    rms_max(iConfig.getParameter<double>("rmsMax")),
+    should_plot_sector_timing_track(iConfig.getParameter<bool>("shouldPlotSectorTimingTrack"))
     {
     if(calib_files.size() != (long unsigned int)loop_index){
         edm::LogError("DiamondTimingHarvester")<<"Not enough calibration files";
@@ -232,31 +234,33 @@ void DiamondTimingHarvester::dqmEndRun(DQMStore::IBooker &iBooker,
             mEl->Fill(diff);
         }
 
-        const auto sector = detid.arm();
-        if (!sector_track_time.contains(sector)) {
-            std::string sector_path;
-            detid.armName(sector_path, CTPPSDiamondDetId::nPath);
-            std::string sector_one_digit{std::to_string(sector)};
-            sector_track_time[sector] = iGetter.get(sector_path + "/" + "Timing track time sector " + sector_one_digit);
-            const auto& sector_track_time_fit = sector_track_time[sector]->getTH1F()->Fit("gaus", "S", "", -2, 2);
-            if (!sector_track_time_fit->IsValid()) {
-                throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track time for sector " + sector_one_digit;
+        if (should_plot_sector_timing_track) {
+            const auto sector = detid.arm();
+            if (!sector_track_time.contains(sector)) {
+                std::string sector_path;
+                detid.armName(sector_path, CTPPSDiamondDetId::nPath);
+                std::string sector_one_digit{std::to_string(sector)};
+                sector_track_time[sector] = iGetter.get(sector_path + "/" + "Timing track time sector " + sector_one_digit);
+                const auto& sector_track_time_fit = sector_track_time[sector]->getTH1F()->Fit("gaus", "S", "", -2, 2);
+                if (!sector_track_time_fit->IsValid()) {
+                    throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track time for sector " + sector_one_digit;
+                }
+
             }
 
-        }
-
-        const auto station = detid.station();
-        const auto station_key = std::pair{sector, station};
-        if (!station_track_time.contains(station_key)) {
-            std::string station_path;
-            detid.stationName(station_path, CTPPSDiamondDetId::nPath);
-            const std::string sector_one_digit{std::to_string(sector)};
-            const std::string station_one_digit{std::to_string(station)};
-            station_track_time[station_key] = iGetter.get(station_path + "/" + "Timing track time SPC sector " + sector_one_digit + " station " + station_one_digit);
-            station_track_time[station_key]->getTH1F()->Fit("gaus");
-            const auto& station_track_time_fit = station_track_time[station_key]->getTH1F()->Fit("gaus", "S", "", -2, 2);
-            if (!station_track_time_fit->IsValid()) {
-                throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track time for sector " + sector_one_digit + "station " + station_one_digit;
+            const auto station = detid.station();
+            const auto station_key = std::pair{sector, station};
+            if (!station_track_time.contains(station_key)) {
+                std::string station_path;
+                detid.stationName(station_path, CTPPSDiamondDetId::nPath);
+                const std::string sector_one_digit{std::to_string(sector)};
+                const std::string station_one_digit{std::to_string(station)};
+                station_track_time[station_key] = iGetter.get(station_path + "/" + "Timing track time SPC sector " + sector_one_digit + " station " + station_one_digit);
+                station_track_time[station_key]->getTH1F()->Fit("gaus");
+                const auto& station_track_time_fit = station_track_time[station_key]->getTH1F()->Fit("gaus", "S", "", -2, 2);
+                if (!station_track_time_fit->IsValid()) {
+                    throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track time for sector " + sector_one_digit + "station " + station_one_digit;
+                }
             }
         }
     }
