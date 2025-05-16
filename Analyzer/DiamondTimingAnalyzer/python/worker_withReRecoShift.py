@@ -175,7 +175,7 @@ if (use_sqlite_file):
         process.CondDB.connect = options.sqlFileName # SQLite input TODO: migrate to using tag
         process.PoolDBESSource = cms.ESSource('PoolDBESSource',
                 process.CondDB,
-                DumpStats = cms.untracked.bool(True),
+                DumpStat = cms.untracked.bool(True),
                 toGet = cms.VPSet(
                     cms.PSet(
                         record = cms.string('PPSTimingCalibrationRcd'),
