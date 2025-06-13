@@ -102,12 +102,12 @@ private:
   int binGroupingX_ = 1;
   int binGroupingY_ = 1;
 
-  int mapXbins_ = 200 / binGroupingX_;
+  int mapXbins_ = 267 / binGroupingX_;
   float mapXmin_;
   float mapXmax_;
-  int mapYbins_ = 300 / binGroupingY_;
-  float mapYmin_ = -15.;
-  float mapYmax_ = 15.;
+  int mapYbins_ = 400 / binGroupingY_;
+  float mapYmin_ = -20.;
+  float mapYmax_ = 20.;
 
   double xiBins_ = 44;
   double xiMin_ = 0;
@@ -218,7 +218,7 @@ ReferenceAnalysisDQMWorker::ReferenceAnalysisDQMWorker(const edm::ParameterSet &
       {std::pair<int, int>(1, 2), fiducialYHighVector_.at(3)},
   };
   detectorTiltAngle_ = iConfig.getUntrackedParameter<double>("detectorTiltAngle");
-  mapXmin_ = 0. * TMath::Cos(detectorTiltAngle_ / 180. * TMath::Pi());
+  mapXmin_ = -10. * TMath::Cos(detectorTiltAngle_ / 180. * TMath::Pi());
   mapXmax_ = 30. * TMath::Cos(detectorTiltAngle_ / 180. * TMath::Pi());
   detectorRotationAngle_ = iConfig.getUntrackedParameter<double>("detectorRotationAngle");
 }
