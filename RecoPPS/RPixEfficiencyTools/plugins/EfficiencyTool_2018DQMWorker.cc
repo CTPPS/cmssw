@@ -191,12 +191,12 @@ private:
 
   int binGroupingX_ = 1;
   int binGroupingY_ = 1;
-  int mapXbins = 200 / binGroupingX_;
+  int mapXbins = 267 / binGroupingX_;
   float mapXmin_;
   float mapXmax_;
-  int mapYbins = 300 / binGroupingY_;
-  float mapYmin = -15.;
-  float mapYmax = 15.;
+  int mapYbins = 400 / binGroupingY_;
+  float mapYmin = -20.;
+  float mapYmax = 20.;
   float fitXmin = 45.;
   float fitXmax = 58.;
 
@@ -345,7 +345,7 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
       {std::pair<int, int>(1, 2), fiducialYHighVector_.at(3)},
   };
   detectorTiltAngle_ = iConfig.getUntrackedParameter<double>("detectorTiltAngle");
-  mapXmin_ = 0. * TMath::Cos(detectorTiltAngle_ / 180. * TMath::Pi());
+  mapXmin_ = -10. * TMath::Cos(detectorTiltAngle_ / 180. * TMath::Pi());
   mapXmax_ = 30. * TMath::Cos(detectorTiltAngle_ / 180. * TMath::Pi());  //18.4 is default angle
   detectorRotationAngle_ = iConfig.getUntrackedParameter<double>("detectorRotationAngle");
 
