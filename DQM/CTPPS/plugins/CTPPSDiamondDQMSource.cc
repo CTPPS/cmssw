@@ -1030,7 +1030,7 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
     const CTPPSDiamondDetId detId(tracks.detId()), detId_pot(detId.rpId());
     const auto& x_shift = diamShifts_.at(detId_pot);
     // extract the rotation angle for the diamond pot
-    auto cosRotAngle = diamRotations_.at(detId_pot) * CTPPSGeometry::Vector(1, 0, 0);
+    // auto cosRotAngle = diamRotations_.at(detId_pot) * CTPPSGeometry::Vector(1, 0, 0);
 
     for (const auto& track : tracks) {
       if (!track.isValid())
@@ -1053,12 +1053,21 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
         TH1F* trackHistoInTimeTmp = potPlots_[detId_pot].trackDistribution->getTH1F();
 
         // X coordinate of the left edge of the track in the local coordinate system
-        auto localTrackX =
-            (track.x0() - diamTranslations_.at(detId_pot).x() + diamHalfWidths_.at(detId_pot) - track.x0Sigma()) /
-            cosRotAngle.x();
-
-        int startBin = trackHistoInTimeTmp->FindBin((localTrackX));
+        // auto localTrackX =
+        //     (track.x0() - diamTranslations_.at(detId_pot).x() + diamHalfWidths_.at(detId_pot) - track.x0Sigma()) /
+        //     cosRotAngle.x();
+        // auto localTrackX =
+        //     (track.x0() - diamTranslations_.at(detId_pot).x() + diamHalfWidths_.at(detId_pot) - track.x0Sigma());
+        // int startBin = trackHistoInTimeTmp->FindBin((localTrackX));
+        // std::cout << "Track X0: " << track.x0() << " X0Sigma: " << track.x0Sigma()
+        //           << " localTrackX: " << localTrackX << " cosRotAngle: " << cosRotAngle.x() << std::endl;
+        int startBin = trackHistoInTimeTmp->FindBin(track.x0() - track.x0Sigma());
         int numOfBins = 2 * track.x0Sigma() * INV_DISPLAY_RESOLUTION_FOR_HITS_MM;
+        // std::cout << "Event no " << event.id().event() << " DetId: " << detId << " Pot: " << detId_pot << std::endl;
+        // std::cout << "Track X0: " << track.x0() << " X0Sigma: " << track.x0Sigma()
+        //           << " localTrackX: " << localTrackX << " startBin: " << startBin << " numOfBins: " << numOfBins
+        //           << std::endl;
+
         for (int i = 0; i < numOfBins; ++i)
           trackHistoInTimeTmp->Fill(trackHistoInTimeTmp->GetBinCenter(startBin + i));
       }
