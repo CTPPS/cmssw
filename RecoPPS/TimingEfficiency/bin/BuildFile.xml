@@ -1,0 +1,14 @@
+<use name="boost"/>
+<use name="root"/>
+<use name="DataFormats/FWLite"/>
+<use name="DataFormats/Luminosity"/>
+<use name="FWCore/FWLite"/>
+<use name="FWCore/ParameterSetReader"/>
+<use name="PhysicsTools/FWLite"/>
+<use name="DataFormats/CTPPSDetId"/>
+
+<environment>
+  <bin file="FWLiteTimingEfficiencyRadiography.cc">
+  </bin>
+
+</environment>
