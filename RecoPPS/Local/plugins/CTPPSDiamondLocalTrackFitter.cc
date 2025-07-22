@@ -24,6 +24,8 @@
 #include "DataFormats/CTPPSReco/interface/CTPPSDiamondLocalTrack.h"
 
 #include "RecoPPS/Local/interface/CTPPSDiamondTrackRecognition.h"
+#include "Geometry/Records/interface/VeryForwardRealGeometryRecord.h"
+#include "Geometry/VeryForwardGeometryBuilder/interface/CTPPSGeometry.h"
 
 class CTPPSDiamondLocalTrackFitter : public edm::stream::EDProducer<> {
 public:
@@ -37,12 +39,14 @@ private:
   edm::EDGetTokenT<edm::DetSetVector<CTPPSDiamondRecHit> > recHitsToken_;
   const edm::ParameterSet trk_algo_params_;
   std::unordered_map<CTPPSDetId, std::unique_ptr<CTPPSDiamondTrackRecognition> > trk_algo_;
+  edm::ESGetToken<CTPPSGeometry, VeryForwardRealGeometryRecord> ctppsGeometryEventToken_;
 };
 
 CTPPSDiamondLocalTrackFitter::CTPPSDiamondLocalTrackFitter(const edm::ParameterSet& iConfig)
     : recHitsToken_(
           consumes<edm::DetSetVector<CTPPSDiamondRecHit> >(iConfig.getParameter<edm::InputTag>("recHitsTag"))),
-      trk_algo_params_(iConfig.getParameter<edm::ParameterSet>("trackingAlgorithmParams")) {
+          trk_algo_params_(iConfig.getParameter<edm::ParameterSet>("trackingAlgorithmParams")),
+          ctppsGeometryEventToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord>()){
   produces<edm::DetSetVector<CTPPSDiamondLocalTrack> >();
 }
 
@@ -52,6 +56,8 @@ void CTPPSDiamondLocalTrackFitter::produce(edm::Event& iEvent, const edm::EventS
 
   edm::Handle<edm::DetSetVector<CTPPSDiamondRecHit> > recHits;
   iEvent.getByToken(recHitsToken_, recHits);
+
+  const CTPPSGeometry* ctppsGeometry = &iSetup.getData(ctppsGeometryEventToken_);
 
   // clear all hits possibly inherited from previous event
   for (auto& algo_vs_id : trk_algo_)
@@ -65,8 +71,22 @@ void CTPPSDiamondLocalTrackFitter::produce(edm::Event& iEvent, const edm::EventS
       trk_algo_[detid] = std::make_unique<CTPPSDiamondTrackRecognition>(trk_algo_params_);
     for (const auto& hit : vec)
       // skip hits without a leading edge
-      if (hit.ootIndex() != CTPPSDiamondRecHit::TIMESLICE_WITHOUT_LEADING)
-        trk_algo_[detid]->addHit(hit);
+      if (hit.ootIndex() != CTPPSDiamondRecHit::TIMESLICE_WITHOUT_LEADING){
+        CTPPSDiamondRecHit hitCopy(hit);
+
+        auto localVector = CTPPSGeometry::Vector(hit.x(), hit.y(), hit.z());
+        const auto diam = ctppsGeometry->sensor(detid);
+        localVector -= diam->translation();
+        localVector = diam->rotation().Inverse() * localVector;
+        hitCopy.setX(localVector.x());
+        hitCopy.setY(localVector.y());
+        // print X,Y,Z coordinates before and after transformation
+        // std::cout << "Hit before transformation: X=" << hit.x() << ", Y=" << hit.y() << ", Z=" << hit.z() << std::endl;
+        // std::cout << "Hit after transformation: X=" << localVector.x() << std::endl;
+       
+        trk_algo_[detid]->addHit(hitCopy);
+      }
+        
   }
 
   // build the tracks for all stations
