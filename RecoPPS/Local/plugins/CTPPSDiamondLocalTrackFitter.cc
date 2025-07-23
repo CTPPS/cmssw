@@ -118,24 +118,24 @@ void CTPPSDiamondLocalTrackFitter::produce(edm::Event& iEvent, const edm::EventS
     }
   }
 
-  // print the local tracks
-  std::cout << "Local tracks for event " << iEvent.id() << ":" << std::endl;
-  for (const auto& vec : *pOutLocal) {
-    const CTPPSDiamondDetId raw_detid(vec.detId()), detid(raw_detid.arm(), raw_detid.station(), raw_detid.rp());
-    std::cout << "  DetId: " << detid << std::endl;
-    for (const auto& track : vec) {
-      std::cout << "    Track: x0=" << track.x0() << ", y0=" << track.y0() << ", z0=" << track.z0() << std::endl;
-    }
-  }
-  // print the global tracks
-  std::cout << "Global tracks for event " << iEvent.id() << ":" << std::endl;
-  for (const auto& vec : *pOutGlobal) {
-    const CTPPSDiamondDetId raw_detid(vec.detId()), detid(raw_detid.arm(), raw_detid.station(), raw_detid.rp());
-    std::cout << "  DetId: " << detid << std::endl;
-    for (const auto& track : vec) {
-      std::cout << "    Track: x0=" << track.x0() << ", y0=" << track.y0() << ", z0=" << track.z0() << std::endl;
-    }
-  }
+  // // print the local tracks
+  // std::cout << "Local tracks for event " << iEvent.id() << ":" << std::endl;
+  // for (const auto& vec : *pOutLocal) {
+  //   const CTPPSDiamondDetId raw_detid(vec.detId()), detid(raw_detid.arm(), raw_detid.station(), raw_detid.rp());
+  //   std::cout << "  DetId: " << detid << std::endl;
+  //   for (const auto& track : vec) {
+  //     std::cout << "    Track: x0=" << track.x0() << ", y0=" << track.y0() << ", z0=" << track.z0() << std::endl;
+  //   }
+  // }
+  // // print the global tracks
+  // std::cout << "Global tracks for event " << iEvent.id() << ":" << std::endl;
+  // for (const auto& vec : *pOutGlobal) {
+  //   const CTPPSDiamondDetId raw_detid(vec.detId()), detid(raw_detid.arm(), raw_detid.station(), raw_detid.rp());
+  //   std::cout << "  DetId: " << detid << std::endl;
+  //   for (const auto& track : vec) {
+  //     std::cout << "    Track: x0=" << track.x0() << ", y0=" << track.y0() << ", z0=" << track.z0() << std::endl;
+  //   }
+  // }
 
   iEvent.put(std::move(pOutGlobal));
 }
