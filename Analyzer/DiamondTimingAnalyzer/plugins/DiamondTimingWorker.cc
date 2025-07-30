@@ -170,20 +170,45 @@ void DiamondTimingWorker::dqmBeginRun(const edm::Run& iRun, const edm::EventSetu
         if (tracks_plot_file.IsOpen()) {
             const std::string runNumber{std::to_string(iRun.run())};
             const std::array<std::pair<int, std::string>, 2> sectors{{{0, "45"}, {1, "56"}}};
-            constexpr unsigned int std_dev_param_index{2};
             for (const auto& [sector_one_digit, sector_two_digits] : sectors) {
                 std::string track_dt_vs_dx_plot_path{"DQMData/Run " + runNumber + "/CTPPS/Run summary/TimingDiamond/sector " + sector_two_digits + "/Track dt vs dx cyl - box sector " + std::to_string(sector_one_digit)};
                 const auto* track_dt_vs_dx_plot = tracks_plot_file.Get<TH2F>(track_dt_vs_dx_plot_path.c_str());
+                std::string track_time_box_vs_cyl_path{"DQMData/Run " + runNumber + "/CTPPS/Run summary/TimingDiamond/sector " + sector_two_digits + "/Track time box vs cyl sector " + std::to_string(sector_one_digit)};
+                const auto* track_time_box_vs_cyl = tracks_plot_file.Get<TH2F>(track_time_box_vs_cyl_path.c_str());
                 if (track_dt_vs_dx_plot) {
                     const std::unique_ptr<TH1D> track_x{track_dt_vs_dx_plot->ProjectionX("_py1")};
                     const TFitResultPtr& track_x_fit{track_x->Fit("gaus", "SN", "", -3, 3)};
+
                     const std::unique_ptr<TH1D> track_time{track_dt_vs_dx_plot->ProjectionY("_py2")};
-                    const TFitResultPtr& track_time_fit{track_time->Fit("gaus", "SN")};
-                    if (track_x_fit->IsValid() && track_time_fit->IsValid()) {
-                        track_x_max_dev[sector_one_digit] = 3 * track_x_fit->Parameter(std_dev_param_index);
-                        track_time_max_dev[sector_one_digit] = 3 * track_time_fit->Parameter(std_dev_param_index);
+                    const std::unique_ptr<TH1D> track_time_box{track_time_box_vs_cyl->ProjectionX("_py3")};
+                    const std::unique_ptr<TH1D> track_time_cyl{track_time_box_vs_cyl->ProjectionY("_py4")};
+                    const TFitResultPtr& track_time_box_fit{track_time_box->Fit("gaus", "SN", "", -3, 3)};
+                    const TFitResultPtr& track_time_cyl_fit{track_time_cyl->Fit("gaus", "SN", "", -3, 3)};
+                    if (track_time_box_fit->IsValid() && track_time_cyl_fit->IsValid()) {
+                        const std::vector<double> track_time_box_fit_parameters{track_time_box_fit->Parameters()};
+                        const std::vector<double> track_time_cyl_fit_parameters{track_time_cyl_fit->Parameters()};
+                        TF1 track_time_fit_function{"", "gaus(0)+gaus(3)", -3, 3};
+                        track_time_fit_function.SetParameters(
+                            track_time_box_fit_parameters[0],
+                            track_time_box_fit_parameters[1],
+                            track_time_box_fit_parameters[2],
+                            track_time_cyl_fit_parameters[0],
+                            track_time_cyl_fit_parameters[1],
+                            track_time_cyl_fit_parameters[2]
+                        );
+                        const TFitResultPtr& track_time_fit{track_time->Fit(&track_time_fit_function, "SNR")};
+                        if (track_x_fit->IsValid() && track_time_fit->IsValid()) {
+                            track_x_max_dev[sector_one_digit] = 3 * track_x_fit->Parameter(2);
+                            const double track_time_const1{track_time_fit->Parameter(0)};
+                            const double track_time_const2{track_time_fit->Parameter(3)};
+                            const double track_time_sigma1{track_time_fit->Parameter(2)};
+                            const double track_time_sigma2{track_time_fit->Parameter(5)};
+                            track_time_max_dev[sector_one_digit] = 3 * ((track_time_const1 * track_time_sigma1 + track_time_const2 * track_time_sigma2) / (track_time_const1 + track_time_const2));
+                        } else {
+                            throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track dt vs dx projections.";
+                        }
                     } else {
-                        throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track dt vs dx projections.";
+                        throw edm::Exception{edm::errors::FatalRootError} << "Can't fit the track time projections.";
                     }
                 }
             }
