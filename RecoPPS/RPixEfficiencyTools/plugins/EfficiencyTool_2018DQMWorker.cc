@@ -93,9 +93,12 @@ protected:
 private:
   virtual void analyze(const edm::Event &, const edm::EventSetup &) override;
   void endJob();
-  virtual void initialize();
+   virtual void initialize();
   void printMeans();
 
+  //modifica lettura bunch
+  std::vector<int> selectedBXs_;
+ 
   // Computes the probability of having numberToExtract inefficient planes
   float probabilityNplanesBlind(const std::vector<uint32_t> &inputPlaneList,
                                 int numberToExtract,
@@ -139,8 +142,8 @@ private:
   int maxTracksPerEvent;
 
   static const unsigned int totalNumberOfBunches_ = 3564;
-  std::string bunchSelection_;
-  std::string bunchListFileName_;
+  //std::string bunchSelection_;
+  //std::string bunchListFileName_;
   bool validBunchArray_[totalNumberOfBunches_];
 
   MonitorElement *h1BunchCrossing_;
@@ -319,9 +322,9 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
   minTracksPerEvent_ = iConfig.getParameter<int>("minTracksPerEvent");
   maxTracksPerEvent = iConfig.getParameter<int>("maxTracksPerEvent");
   supplementaryPlots_ = iConfig.getParameter<bool>("supplementaryPlots");
-  bunchSelection_ = iConfig.getUntrackedParameter<std::string>("bunchSelection");
-  bunchListFileName_ = iConfig.getUntrackedParameter<std::string>("bunchListFileName");
-  binGroupingX_ = iConfig.getUntrackedParameter<int>("binGroupingX");
+  //bunchSelection_ = iConfig.getUntrackedParameter<std::string>("bunchSelection");
+  //bunchListFileName_ = iConfig.getUntrackedParameter<std::string>("bunchListFileName");
+   binGroupingX_ = iConfig.getUntrackedParameter<int>("binGroupingX");
   binGroupingY_ = iConfig.getUntrackedParameter<int>("binGroupingY");
   fiducialXLowVector_ = iConfig.getUntrackedParameter<std::vector<double>>("fiducialXLow");
   fiducialYLowVector_ = iConfig.getUntrackedParameter<std::vector<double>>("fiducialYLow");
@@ -348,6 +351,22 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
   mapXmin_ = -10. * TMath::Cos(detectorTiltAngle_ / 180. * TMath::Pi());
   mapXmax_ = 30. * TMath::Cos(detectorTiltAngle_ / 180. * TMath::Pi());  //18.4 is default angle
   detectorRotationAngle_ = iConfig.getUntrackedParameter<double>("detectorRotationAngle");
+
+   //Setup BX selection
+  selectedBXs_ = iConfig.getUntrackedParameter<std::vector<int>>("selectedBXs", {});
+  std::fill_n(validBunchArray_, 3564, false);
+  for (const auto& bx : selectedBXs_) {
+   if (bx < 3564)
+  validBunchArray_[bx] = true;
+  }
+
+  // selectedBXs_ = iConfig.getUntrackedParameter<std::vector<unsigned int>>("selectedBXs");
+   // std::fill_n(validBunchArray_, 3564, false);
+   // for (const auto &bx : selectedBXs_) {
+     // if (bx >= 0 && bx < 3564)
+     //   validBunchArray_[bx] = true;
+  //  }
+
 
   initialize();
   
@@ -379,6 +398,8 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
     }
   }
   debug_ = iConfig.getUntrackedParameter<bool>("debug");
+
+ 
 
   // Prescale parameters
   usePrescales_ = iConfig.getParameter<bool>("usePrescales");
@@ -991,9 +1012,12 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent, const edm::
     weight *= prescales.second; // Correct for the HLT prescale value
   }
 
-  if (!validBunchArray_[iEvent.eventAuxiliary().bunchCrossing()])
-    return;
-  h1BunchCrossing_->Fill(iEvent.eventAuxiliary().bunchCrossing(), weight);
+  // if (!validBunchArray_[iEvent.eventAuxiliary().bunchCrossing()])
+  // return;
+  int bx = iEvent.eventAuxiliary().bunchCrossing();
+  if (validBunchArray_[bx])
+    h1BunchCrossing_->Fill(bx, weight);
+
 
   LHCInfoCombined lhcInfoCombined(iSetup, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_, useNewLHCInfo_);
 
@@ -1403,9 +1427,13 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent, const edm::
   }
 }
 
-void EfficiencyTool_2018DQMWorker::initialize() {
-  // Applying bunch selection
 
+
+
+void EfficiencyTool_2018DQMWorker::initialize() {
+}
+  // Applying bunch selection
+  /*
   std::ifstream bunchListFile(bunchListFileName_.data());
   if (bunchSelection_ == "NoSelection") {
     std::fill_n(validBunchArray_, totalNumberOfBunches_, true);
@@ -1462,7 +1490,7 @@ void EfficiencyTool_2018DQMWorker::initialize() {
       validBunchArray_[i] = filledBunchArray[i];
   }
 }
-
+*/
 void EfficiencyTool_2018DQMWorker::fillDescriptions(edm::ConfigurationDescriptions &descriptions) {
   edm::ParameterSetDescription desc;
 
@@ -1485,12 +1513,16 @@ void EfficiencyTool_2018DQMWorker::fillDescriptions(edm::ConfigurationDescriptio
   desc.add<bool>("isCorrelationPlotEnabled", false)
     ->setComment("Only enable if the estimation of the correlation between Strips and Pixel tracks is under study "
                  "(disables filling of TGraph, reducing the output file size)");
-  desc.addUntracked<std::string>("bunchSelection", "NoSelection")
-    ->setComment("Bunch selection to be applied. Possible values are: NoSelection, CentralBunchesInTrain, "
-                 "FirstBunchInTrain, LastBunchInTrain, FilledBunches");
-  desc.addUntracked<std::string>("bunchListFileName", "injectionScheme.csv")
-    ->setComment("Name of the file containing the bunch list");
-  desc.addUntracked<int>("binGroupingX", 1)
+  //desc.addUntracked<std::string>("bunchSelection", "NoSelection")
+  //  ->setComment("Bunch selection to be applied. Possible values are: NoSelection, CentralBunchesInTrain, "
+  //               "FirstBunchInTrain, LastBunchInTrain, FilledBunches");
+  //desc.addUntracked<std::string>("bunchListFileName", "injectionScheme.csv")
+  // ->setComment("Name of the file containing the bunch list");
+  
+  desc.addUntracked<std::vector<int>>("selectedBXs")
+    ->setComment("Number of bunches selected");
+    
+    desc.addUntracked<int>("binGroupingX", 1)
     ->setComment("Number of bins to be grouped in the X axis of the efficiency plots");
   desc.addUntracked<int>("binGroupingY", 1)
     ->setComment("Number of bins to be grouped in the Y axis of the efficiency plots");
