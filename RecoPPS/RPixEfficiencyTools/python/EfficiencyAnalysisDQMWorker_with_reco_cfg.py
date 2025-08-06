@@ -205,19 +205,24 @@ process.GlobalTag = GlobalTag(process.GlobalTag, gt)
 
 
 #SETUP INJSCHEMENAME
+selected_bxs_list = []
+
 if options.InjSchemeName != '':
     print("Using injection scheme name:", options.InjSchemeName)
     bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{options.InjSchemeName}.json"
+    
     if not os.path.exists(bunches_json_path):
-        print(f"Error: Bunches JSON file {bunches_json_path} does not exist.")
-        sys.exit(1)
-    with open(bunches_json_path, "r") as f:
-        bunches_data = json.load(f)
-    selected_bxs_list = bunches_data.get("leftmost", [])
-
-    # If no selected bunches are provided, use all available ones
-    if not selected_bxs_list:
-        selected_bxs_list = list(range(3564))   # Default to all bunch crossings in a 25ns LHC fill 
+        print(f"Warning: Bunches JSON file {bunches_json_path} does not exist, using all bunches")
+        selected_bxs_list = list(range(3564)) 
+    else:    
+        with open(bunches_json_path, "r") as f:
+            bunches_data = json.load(f)
+    
+        selected_bxs_list = bunches_data.get("leftmost", [])
+        
+        if not selected_bxs_list:
+            print("No Selected bunches found in JSON, using all bunches.")
+            selected_bxs_list = list(range(3564))   # Default to all bunch crossings in a 25ns LHC fill 
 else:
     print("No injection scheme name provided, using all bunches.")
     selected_bxs_list = list(range(3564))   
