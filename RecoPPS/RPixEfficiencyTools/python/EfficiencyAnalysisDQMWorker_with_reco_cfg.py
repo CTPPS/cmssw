@@ -6,7 +6,10 @@ from DQMServices.Core.DQMEDAnalyzer import DQMEDAnalyzer
 from Configuration.StandardSequences.Eras import eras
 from Configuration.AlCa.GlobalTag import GlobalTag
 import FWCore.ParameterSet.VarParsing as VarParsing
+import json
+import argparse
 
+import subprocess
 
 # GLOBAL CONSTANT VARIABLES
 # fiducial variables restrict the area to analyze 
@@ -51,11 +54,18 @@ options.register('runNumber',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.int,
                 "CMS Run Number")
-options.register('bunchSelection',
-                '',
-                VarParsing.VarParsing.multiplicity.singleton,
-                VarParsing.VarParsing.varType.string,
-                "bunches to be analyzed")
+options.register('selectedBXs',
+                 [],
+                VarParsing.VarParsing.multiplicity.list,
+                VarParsing.VarParsing.varType.int,
+                "Selected bunch crossing numbers")
+
+'''options.register('bunchSelection',
+                 '',
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "bunches to be analyzed")'''
+
 options.register('jsonFileName',
                 '',
                 VarParsing.VarParsing.multiplicity.singleton,
@@ -76,6 +86,11 @@ options.register('globalTag',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.string,
                 "GT to use")
+options.register('InjSchemeName',
+                '',     
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.string,
+                "Injection scheme name to use")
 
 
 #INTERPOT
@@ -188,15 +203,29 @@ else:
 print('Using GT:',gt)
 process.GlobalTag = GlobalTag(process.GlobalTag, gt)
 
-# Patch for LHCInfo not in GT
-process.GlobalTag.toGet.append(
-    cms.PSet(
-    record = cms.string("LHCInfoPerFillRcd"),
-    tag = cms.string("LHCInfoPerFill_endFill_Run3_v1"),
-    label = cms.untracked.string(""),
-    connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-    )
-)
+
+#SETUP INJSCHEMENAME
+if options.InjSchemeName != '':
+    print("Using injection scheme name:", options.InjSchemeName)
+    bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{options.InjSchemeName}.json"
+    if not os.path.exists(bunches_json_path):
+        print(f"Error: Bunches JSON file {bunches_json_path} does not exist.")
+        sys.exit(1)
+    with open(bunches_json_path, "r") as f:
+        bunches_data = json.load(f)
+    selected_bxs_list = bunches_data.get("leftmost", [])
+
+    # If no selected bunches are provided, use all available ones
+    if not selected_bxs_list:
+        selected_bxs_list = list(range(3564))   # Default to all bunch crossings in a 25ns LHC fill 
+else:
+    print("No injection scheme name provided, using all bunches.")
+    selected_bxs_list = list(range(3564))   
+
+
+
+
+
 process.GlobalTag.toGet.append(
     cms.PSet(
     record = cms.string("LHCInfoPerLSRcd"),
@@ -265,6 +294,69 @@ protonTag = 'ctppsProtonsAlCaRecoProducer'
 print('Using track InputTag:',trackTag)
 print('Using proton InputTag:',protonTag)
 
+
+'''
+#GET BUNCHES FROM INJECTION SCHEME NAME
+# This part is to get the bunches from the injection scheme name provided as an argument
+if options.InjSchemeName:
+    print("Using injection scheme name:", options.InjSchemeName)
+    bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{options.InjSchemeName}.json"
+    if not os.path.exists(bunches_json_path):
+        print(f"Error: Bunches JSON file {bunches_json_path} does not exist.")
+        sys.exit(1)
+    with open(bunches_json_path, "r") as f:
+        bunches_data = json.load(f)
+    selected_bxs_list = bunches_data.get("leftmost", [])
+    # If no selected bunches are provided, use all available ones
+    if not selected_bxs_list:
+        selected_bxs_list = list(range(3564))
+else:
+    # If no injection scheme name is provided, use all bunches
+    print("No injection scheme name provided, using all bunches.")
+    selected_bxs_list = list(range(3564))
+
+
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("arg", type=str, help="Argomento nel formato Chiave=Valore")
+args = parser.parse_args()
+
+# Parse manuale dell'argomento chiave=valore
+key_value = args.arg.split("=", 1)  # max 1 split
+if len(key_value) != 2:
+    print("Errore: l'argomento deve essere nel formato Chiave=Valore")
+    exit(1)
+
+key, value = key_value
+if key != "InjSchemename":
+    print("Errore: la chiave deve essere 'InjSchemename'")
+    exit(1)
+
+# Ora puoi usare value come il nome dello schema
+bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{value}.json"
+
+print("Path generato:", bunches_json_path)
+#GET JSON FILE WITH BUNCHES FROM terminal argument
+
+parser = argparse.ArgumentParser(description="Script con argomento InjSchemename")
+parser.add_argument("InjSchemename", type=str, help="Nome dello schema di iniezione")
+args = parser.parse_args()
+
+
+bunches_json_path = "/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{arg.InjSchemename}.json"  
+with open(bunches_json_path, "r") as f:
+    bunches_data = json.load(f)
+selected_bxs_list = bunches_data.get("leftmost", [])
+
+# If no selected bunches are provided, use all available ones
+if not selected_bxs_list:
+    selected_bxs_list = list(range(3564))  # Default to all bunch crossings in a 25ns LHC fill
+
+'''
+
+
+
 #SETUP WORKER
 process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     tagPixelLocalTracks=cms.untracked.InputTag(trackTag),
@@ -276,8 +368,10 @@ process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     minTracksPerEvent=cms.int32(0),
     maxTracksPerEvent=cms.int32(99),
     supplementaryPlots=cms.bool(options.supplementaryPlots),
-    bunchSelection=cms.untracked.string(options.bunchSelection),
-    bunchListFileName=cms.untracked.string(injectionSchemeFileName),
+    #bunchSelection=cms.untracked.string(options.bunchSelection),
+    #bunchListFileName=cms.untracked.string(injectionSchemeFileName),
+    
+    selectedBXs=cms.untracked.vint32(*selected_bxs_list),
     binGroupingX=cms.untracked.int32(1),
     binGroupingY=cms.untracked.int32(1),
     fiducialXLow=cms.untracked.vdouble(fiducialXLow),
