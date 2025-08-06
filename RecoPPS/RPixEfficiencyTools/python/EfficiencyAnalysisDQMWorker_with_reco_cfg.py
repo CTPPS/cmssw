@@ -212,8 +212,8 @@ if options.InjSchemeName != '':
     bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{options.InjSchemeName}.json"
     
     if not os.path.exists(bunches_json_path):
-        print(f"Warning: Bunches JSON file {bunches_json_path} does not exist, using all bunches")
-        selected_bxs_list = list(range(3564)) 
+        print(f"Error: Bunches JSON file {bunches_json_path} does not exist.")
+        sys.exit(1)
     else:    
         with open(bunches_json_path, "r") as f:
             bunches_data = json.load(f)
