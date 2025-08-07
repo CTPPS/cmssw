@@ -204,12 +204,13 @@ print('Using GT:',gt)
 process.GlobalTag = GlobalTag(process.GlobalTag, gt)
 
 
+
 #SETUP INJSCHEMENAME
 selected_bxs_list = []
 
 if options.InjSchemeName != '':
     print("Using injection scheme name:", options.InjSchemeName)
-    bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{options.InjSchemeName}.json"
+    bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/BunchesSelection/bunches_{options.InjSchemeName}.json"
     
     if not os.path.exists(bunches_json_path):
         print(f"Error: Bunches JSON file {bunches_json_path} does not exist.")
@@ -218,7 +219,7 @@ if options.InjSchemeName != '':
         with open(bunches_json_path, "r") as f:
             bunches_data = json.load(f)
     
-        selected_bxs_list = bunches_data.get("leftmost", [])
+        selected_bxs_list = bunches_data.get("first_in_train", [])
         
         if not selected_bxs_list:
             print("No Selected bunches found in JSON, using all bunches.")
@@ -300,65 +301,7 @@ print('Using track InputTag:',trackTag)
 print('Using proton InputTag:',protonTag)
 
 
-'''
-#GET BUNCHES FROM INJECTION SCHEME NAME
-# This part is to get the bunches from the injection scheme name provided as an argument
-if options.InjSchemeName:
-    print("Using injection scheme name:", options.InjSchemeName)
-    bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{options.InjSchemeName}.json"
-    if not os.path.exists(bunches_json_path):
-        print(f"Error: Bunches JSON file {bunches_json_path} does not exist.")
-        sys.exit(1)
-    with open(bunches_json_path, "r") as f:
-        bunches_data = json.load(f)
-    selected_bxs_list = bunches_data.get("leftmost", [])
-    # If no selected bunches are provided, use all available ones
-    if not selected_bxs_list:
-        selected_bxs_list = list(range(3564))
-else:
-    # If no injection scheme name is provided, use all bunches
-    print("No injection scheme name provided, using all bunches.")
-    selected_bxs_list = list(range(3564))
 
-
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument("arg", type=str, help="Argomento nel formato Chiave=Valore")
-args = parser.parse_args()
-
-# Parse manuale dell'argomento chiave=valore
-key_value = args.arg.split("=", 1)  # max 1 split
-if len(key_value) != 2:
-    print("Errore: l'argomento deve essere nel formato Chiave=Valore")
-    exit(1)
-
-key, value = key_value
-if key != "InjSchemename":
-    print("Errore: la chiave deve essere 'InjSchemename'")
-    exit(1)
-
-# Ora puoi usare value come il nome dello schema
-bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{value}.json"
-
-print("Path generato:", bunches_json_path)
-#GET JSON FILE WITH BUNCHES FROM terminal argument
-
-parser = argparse.ArgumentParser(description="Script con argomento InjSchemename")
-parser.add_argument("InjSchemename", type=str, help="Nome dello schema di iniezione")
-args = parser.parse_args()
-
-
-bunches_json_path = "/eos/cms/store/group/dpg_ctpps/comm_ctpps/TimingEfficiencyBunches/bunches_{arg.InjSchemename}.json"  
-with open(bunches_json_path, "r") as f:
-    bunches_data = json.load(f)
-selected_bxs_list = bunches_data.get("leftmost", [])
-
-# If no selected bunches are provided, use all available ones
-if not selected_bxs_list:
-    selected_bxs_list = list(range(3564))  # Default to all bunch crossings in a 25ns LHC fill
-
-'''
 
 
 
