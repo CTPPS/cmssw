@@ -6,6 +6,8 @@ from DQMServices.Core.DQMEDAnalyzer import DQMEDAnalyzer
 from Configuration.StandardSequences.Eras import eras
 from Configuration.AlCa.GlobalTag import GlobalTag
 import FWCore.ParameterSet.VarParsing as VarParsing
+import json
+import argparse
 
 
 # GLOBAL CONSTANT VARIABLES
@@ -51,21 +53,23 @@ options.register('runNumber',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.int,
                 "CMS Run Number")
-options.register('bunchSelection',
-                '',
-                VarParsing.VarParsing.multiplicity.singleton,
-                VarParsing.VarParsing.varType.string,
-                "bunches to be analyzed")
+options.register('selectedBXs',
+                 [],
+                VarParsing.VarParsing.multiplicity.list,
+                VarParsing.VarParsing.varType.int,
+                "Selected bunch crossing numbers")
+
+'''options.register('bunchSelection',
+                 '',
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "bunches to be analyzed")'''
+
 options.register('jsonFileName',
                 '',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.string,
                 "JSON file list name")
-options.register('injectionSchemeFileName',
-                '',
-                VarParsing.VarParsing.multiplicity.singleton,
-                VarParsing.VarParsing.varType.bool,
-                "Injection scheme file name")
 options.register('supplementaryPlots',
                 True,
                 VarParsing.VarParsing.multiplicity.singleton,
@@ -76,6 +80,11 @@ options.register('globalTag',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.string,
                 "GT to use")
+options.register('InjSchemeName',
+                '',     
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.string,
+                "Injection scheme name to use")
 
 
 #INTERPOT
@@ -127,23 +136,6 @@ elif options.sourceFileList != '':
     fileList = FileUtils.loadListFromFile (options.sourceFileList) 
     inputFiles = cms.untracked.vstring( *fileList)
 
-# runToScheme = {}
-# with open("./data/RunToScheme2018.csv") as runToSchemeFile:
-#     firstcycle = True
-#     next(runToSchemeFile)
-#     for line in runToSchemeFile:
-#        (run, fill, injectionScheme) = line.split(", ")
-#        runToScheme[int(run)] = injectionScheme.rstrip()
-
-# if options.bunchSelection != 'NoSelection' and options.bunchSelection != '':
-#     if options.runNumber in runToScheme.keys():
-#         injectionSchemeFileName = './data/2018_FillingSchemes/'+runToScheme[options.runNumber]+'.csv'
-#     else:
-#         injectionSchemeFileName = options.injectionSchemeFileName
-#     print("Using filling scheme: "+injectionSchemeFileName)
-# else:
-#     injectionSchemeFileName = ''
-injectionSchemeFileName = ''
 
 
 #LOAD NECCESSARY DEPENDENCIES
@@ -188,15 +180,35 @@ else:
 print('Using GT:',gt)
 process.GlobalTag = GlobalTag(process.GlobalTag, gt)
 
-# Patch for LHCInfo not in GT
-process.GlobalTag.toGet.append(
-    cms.PSet(
-    record = cms.string("LHCInfoPerFillRcd"),
-    tag = cms.string("LHCInfoPerFill_endFill_Run3_v1"),
-    label = cms.untracked.string(""),
-    connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-    )
-)
+
+
+#SETUP INJSCHEMENAME
+selected_bxs_list = []
+
+if options.InjSchemeName != '':
+    print("Using injection scheme name:", options.InjSchemeName)
+    bunches_json_path = f"/eos/cms/store/group/dpg_ctpps/comm_ctpps/BunchesSelection/bunches_{options.InjSchemeName}.json"
+    
+    if not os.path.exists(bunches_json_path):
+        print(f"Error: Bunches JSON file {bunches_json_path} does not exist.")
+        sys.exit(1)
+    else:    
+        with open(bunches_json_path, "r") as f:
+            bunches_data = json.load(f)
+    
+        selected_bxs_list = bunches_data.get("first_in_train", [])
+        
+        if not selected_bxs_list:
+            print("No Selected bunches found in JSON, using all bunches.")
+            selected_bxs_list = list(range(3564))   # Default to all bunch crossings in a 25ns LHC fill 
+else:
+    print("No injection scheme name provided, using all bunches.")
+    selected_bxs_list = list(range(3564))   
+
+
+
+
+
 process.GlobalTag.toGet.append(
     cms.PSet(
     record = cms.string("LHCInfoPerLSRcd"),
@@ -265,6 +277,11 @@ protonTag = 'ctppsProtonsAlCaRecoProducer'
 print('Using track InputTag:',trackTag)
 print('Using proton InputTag:',protonTag)
 
+
+
+
+
+
 #SETUP WORKER
 process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     tagPixelLocalTracks=cms.untracked.InputTag(trackTag),
@@ -276,8 +293,7 @@ process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     minTracksPerEvent=cms.int32(0),
     maxTracksPerEvent=cms.int32(99),
     supplementaryPlots=cms.bool(options.supplementaryPlots),
-    bunchSelection=cms.untracked.string(options.bunchSelection),
-    bunchListFileName=cms.untracked.string(injectionSchemeFileName),
+    selectedBXs=cms.untracked.vint32(*selected_bxs_list),
     binGroupingX=cms.untracked.int32(1),
     binGroupingY=cms.untracked.int32(1),
     fiducialXLow=cms.untracked.vdouble(fiducialXLow),
