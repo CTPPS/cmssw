@@ -142,8 +142,6 @@ private:
   int maxTracksPerEvent;
 
   static const unsigned int totalNumberOfBunches_ = 3564;
-  //std::string bunchSelection_;
-  //std::string bunchListFileName_;
   bool validBunchArray_[totalNumberOfBunches_];
 
   MonitorElement *h1BunchCrossing_;
@@ -322,9 +320,7 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
   minTracksPerEvent_ = iConfig.getParameter<int>("minTracksPerEvent");
   maxTracksPerEvent = iConfig.getParameter<int>("maxTracksPerEvent");
   supplementaryPlots_ = iConfig.getParameter<bool>("supplementaryPlots");
-  //bunchSelection_ = iConfig.getUntrackedParameter<std::string>("bunchSelection");
-  //bunchListFileName_ = iConfig.getUntrackedParameter<std::string>("bunchListFileName");
-   binGroupingX_ = iConfig.getUntrackedParameter<int>("binGroupingX");
+  binGroupingX_ = iConfig.getUntrackedParameter<int>("binGroupingX");
   binGroupingY_ = iConfig.getUntrackedParameter<int>("binGroupingY");
   fiducialXLowVector_ = iConfig.getUntrackedParameter<std::vector<double>>("fiducialXLow");
   fiducialYLowVector_ = iConfig.getUntrackedParameter<std::vector<double>>("fiducialYLow");
@@ -360,12 +356,6 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
   validBunchArray_[bx] = true;
   }
 
-  // selectedBXs_ = iConfig.getUntrackedParameter<std::vector<unsigned int>>("selectedBXs");
-   // std::fill_n(validBunchArray_, 3564, false);
-   // for (const auto &bx : selectedBXs_) {
-     // if (bx >= 0 && bx < 3564)
-     //   validBunchArray_[bx] = true;
-  //  }
 
 
   initialize();
@@ -1432,65 +1422,7 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent, const edm::
 
 void EfficiencyTool_2018DQMWorker::initialize() {
 }
-  // Applying bunch selection
-  /*
-  std::ifstream bunchListFile(bunchListFileName_.data());
-  if (bunchSelection_ == "NoSelection") {
-    std::fill_n(validBunchArray_, totalNumberOfBunches_, true);
-    return;
-  }
-  if (!bunchListFile.good()) {
-    std::cout << "BunchList file not good. Skipping buch selection..." << std::endl;
-    return;
-  }
-
-  bool filledBunchArray[totalNumberOfBunches_];
-  std::fill_n(filledBunchArray, totalNumberOfBunches_, false);
-  std::fill_n(validBunchArray_, totalNumberOfBunches_, false);
-
-  bool startReading = false;
-  while (bunchListFile.good()) {
-    std::string line;
-    getline(bunchListFile, line);
-    if (line == "" || line == "\r")
-      continue;
-    std::vector<std::string> elements;
-    boost::split(elements, line, boost::is_any_of(","));
-    if (elements.at(0) == "B1 bucket number") {
-      startReading = true;
-      continue;
-    }
-    if (line.find("HEAD ON COLLISIONS FOR B2") != std::string::npos)
-      break;
-    if (!startReading)
-      continue;
-    if (elements.at(3) != "-")
-      filledBunchArray[(std::atoi(elements.at(3).data()) - 1) / 10 + 1] = true;
-  }
-  for (unsigned int i = 0; i < totalNumberOfBunches_; ++i) {
-    if (bunchSelection_ == "CentralBunchesInTrain") {
-      if (i == 0)
-        validBunchArray_[i] =
-            filledBunchArray[totalNumberOfBunches_ - 1] && filledBunchArray[i] && filledBunchArray[i + 1];
-      else if (i == totalNumberOfBunches_ - 1)
-        validBunchArray_[i] = filledBunchArray[i - 1] && filledBunchArray[i] && filledBunchArray[0];
-      else
-        validBunchArray_[i] = filledBunchArray[i - 1] && filledBunchArray[i] && filledBunchArray[i + 1];
-    } else if (bunchSelection_ == "FirstBunchInTrain") {
-      if (i == 0)
-        validBunchArray_[i] = filledBunchArray[i] && !filledBunchArray[totalNumberOfBunches_ - 1];
-      else
-        validBunchArray_[i] = filledBunchArray[i] && !filledBunchArray[i - 1];
-    } else if (bunchSelection_ == "LastBunchInTrain") {
-      if (i == totalNumberOfBunches_ - 1)
-        validBunchArray_[i] = filledBunchArray[i] && !filledBunchArray[0];
-      else
-        validBunchArray_[i] = filledBunchArray[i] && !filledBunchArray[i + 1];
-    } else if (bunchSelection_ == "FilledBunches")
-      validBunchArray_[i] = filledBunchArray[i];
-  }
-}
-*/
+  
 void EfficiencyTool_2018DQMWorker::fillDescriptions(edm::ConfigurationDescriptions &descriptions) {
   edm::ParameterSetDescription desc;
 
@@ -1513,14 +1445,8 @@ void EfficiencyTool_2018DQMWorker::fillDescriptions(edm::ConfigurationDescriptio
   desc.add<bool>("isCorrelationPlotEnabled", false)
     ->setComment("Only enable if the estimation of the correlation between Strips and Pixel tracks is under study "
                  "(disables filling of TGraph, reducing the output file size)");
-  //desc.addUntracked<std::string>("bunchSelection", "NoSelection")
-  //  ->setComment("Bunch selection to be applied. Possible values are: NoSelection, CentralBunchesInTrain, "
-  //               "FirstBunchInTrain, LastBunchInTrain, FilledBunches");
-  //desc.addUntracked<std::string>("bunchListFileName", "injectionScheme.csv")
-  // ->setComment("Name of the file containing the bunch list");
-  
   desc.addUntracked<std::vector<int>>("selectedBXs")
-    ->setComment("Number of bunches selected");
+    ->setComment("Number of selected bunches");
     
     desc.addUntracked<int>("binGroupingX", 1)
     ->setComment("Number of bins to be grouped in the X axis of the efficiency plots");

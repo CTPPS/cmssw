@@ -9,7 +9,6 @@ import FWCore.ParameterSet.VarParsing as VarParsing
 import json
 import argparse
 
-import subprocess
 
 # GLOBAL CONSTANT VARIABLES
 # fiducial variables restrict the area to analyze 
@@ -71,11 +70,6 @@ options.register('jsonFileName',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.string,
                 "JSON file list name")
-options.register('injectionSchemeFileName',
-                '',
-                VarParsing.VarParsing.multiplicity.singleton,
-                VarParsing.VarParsing.varType.bool,
-                "Injection scheme file name")
 options.register('supplementaryPlots',
                 True,
                 VarParsing.VarParsing.multiplicity.singleton,
@@ -142,23 +136,6 @@ elif options.sourceFileList != '':
     fileList = FileUtils.loadListFromFile (options.sourceFileList) 
     inputFiles = cms.untracked.vstring( *fileList)
 
-# runToScheme = {}
-# with open("./data/RunToScheme2018.csv") as runToSchemeFile:
-#     firstcycle = True
-#     next(runToSchemeFile)
-#     for line in runToSchemeFile:
-#        (run, fill, injectionScheme) = line.split(", ")
-#        runToScheme[int(run)] = injectionScheme.rstrip()
-
-# if options.bunchSelection != 'NoSelection' and options.bunchSelection != '':
-#     if options.runNumber in runToScheme.keys():
-#         injectionSchemeFileName = './data/2018_FillingSchemes/'+runToScheme[options.runNumber]+'.csv'
-#     else:
-#         injectionSchemeFileName = options.injectionSchemeFileName
-#     print("Using filling scheme: "+injectionSchemeFileName)
-# else:
-#     injectionSchemeFileName = ''
-injectionSchemeFileName = ''
 
 
 #LOAD NECCESSARY DEPENDENCIES
@@ -316,9 +293,6 @@ process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     minTracksPerEvent=cms.int32(0),
     maxTracksPerEvent=cms.int32(99),
     supplementaryPlots=cms.bool(options.supplementaryPlots),
-    #bunchSelection=cms.untracked.string(options.bunchSelection),
-    #bunchListFileName=cms.untracked.string(injectionSchemeFileName),
-    
     selectedBXs=cms.untracked.vint32(*selected_bxs_list),
     binGroupingX=cms.untracked.int32(1),
     binGroupingY=cms.untracked.int32(1),
