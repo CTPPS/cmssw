@@ -65,7 +65,7 @@ void PlotTimingEfficiencies(TString infile = "timingHistograms.root")
 
   c1->cd(3); pl0st156->SetMaximum(1); pl0st156->Draw("colz"); pl0st156->SetTitle("56 cyl plane0"); pl0st156->SetStats(0);
   c1->cd(4); pl1st156->SetMaximum(1); pl1st156->Draw("colz"); pl1st156->SetTitle("56 cyl plane1"); pl1st156->SetStats(0);
-  c1->cd(7); pl2st156->SetMaximum(1); pl2st156->Draw("colz"); pl3st156->SetTitle("56 cyl plane2"); pl2st156->SetStats(0);
+  c1->cd(7); pl2st156->SetMaximum(1); pl2st156->Draw("colz"); pl2st156->SetTitle("56 cyl plane2"); pl2st156->SetStats(0);
   c1->cd(8); pl3st156->SetMaximum(1); pl3st156->Draw("colz"); pl3st156->SetTitle("56 cyl plane3"); pl3st156->SetStats(0);
 
   TCanvas *c2 = new TCanvas("c2","c2",800,400);
