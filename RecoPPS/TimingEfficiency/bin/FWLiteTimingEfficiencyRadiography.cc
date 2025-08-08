@@ -25,11 +25,11 @@
 #include "PhysicsTools/FWLite/interface/TFileService.h"
 #include "PhysicsTools/FWLite/interface/CommandLineParser.h"
 
-int main(int argc, char * argv[]) {
+int main(int argc, char* argv[]) {
   // define what muon you are using; this is necessary as FWLite is not
   // capable of reading edm::Views
-  using reco::Muon;
   using optutl::CommandLineParser;
+  using reco::Muon;
 
   // ----------------------------------------------------------------------
   // First Part:
@@ -40,7 +40,7 @@ int main(int argc, char * argv[]) {
   // ----------------------------------------------------------------------
 
   // load framework libraries
-  gSystem -> Load("libFWCoreFWLite");
+  gSystem->Load("libFWCoreFWLite");
   FWLiteEnabler::enable();
 
   // initialize command line parser
@@ -70,32 +70,34 @@ int main(int argc, char * argv[]) {
   int mode_ = parser.integerValue("mode");
 
   // AOD input files
-  std::vector < std::string > inFiles_;
+  std::vector<std::string> inFiles_;
 
   {
-    std::vector < std::string > tokens;
+    std::vector<std::string> tokens;
     boost::split(tokens, inputPathsCSV, boost::is_any_of(","));
-    for (const std::string & token: tokens) {
+    for (const std::string& token : tokens) {
       inFiles_.push_back(boost::algorithm::trim_copy(token));
       // std::cout << inFiles_.back() << '\n';
     }
   }
 
-  std::set < int > pickedBunches;
+  std::set<int> pickedBunches;
   if (pickedBunchesCSV != "") {
     std::cout << "pickedBunchesCSV provided -- only those bunches considered\n";
-    std::vector < std::string > tokens;
+    std::vector<std::string> tokens;
     boost::split(tokens, pickedBunchesCSV, boost::is_any_of(","));
 
-    for (const std::string & token: tokens) {
+    for (const std::string& token : tokens) {
       try {
-        int bunch = boost::lexical_cast < int > (boost::algorithm::trim_copy(token));
+        int bunch = boost::lexical_cast<int>(boost::algorithm::trim_copy(token));
         pickedBunches.insert(bunch);
-      } catch (const boost::bad_lexical_cast & e) {
+      } catch (const boost::bad_lexical_cast& e) {
         std::cerr << "Invalid bunch number: '" << token << "'\n";
+        return 1;
       }
     }
-    for (auto x: pickedBunches) std::cout << x << " ";
+    for (auto x : pickedBunches)
+      std::cout << x << " ";
     std::cout << '\n';
   }
 
@@ -104,76 +106,76 @@ int main(int argc, char * argv[]) {
   TFileDirectory dir = fs.mkdir("diamondHistograms");
 
   // Pixel-diamond x-correlation to define matching cuts
-  TH2F * xtpix21045_ = dir.make < TH2F > ("xtpix21045", "xtpix21045", 40, -10, 30, 40, -10, 30);
-  TH2F * xtpix21056_ = dir.make < TH2F > ("xtpix21056", "xtpix21056", 40, -10, 30, 40, -10, 30);
+  TH2F* xtpix21045_ = dir.make<TH2F>("xtpix21045", "xtpix21045", 40, -10, 30, 40, -10, 30);
+  TH2F* xtpix21056_ = dir.make<TH2F>("xtpix21056", "xtpix21056", 40, -10, 30, 40, -10, 30);
 
   // Denominator for all efficiencies
-  TH2F * deffden45_ = dir.make < TH2F > ("deffden45", "deffden45", 200, -2, 20, 200, -8, 16);
-  TH2F * deffden56_ = dir.make < TH2F > ("deffden56", "deffden56", 200, -2, 20, 200, -8, 16);
+  TH2F* deffden45_ = dir.make<TH2F>("deffden45", "deffden45", 200, -2, 20, 200, -8, 16);
+  TH2F* deffden56_ = dir.make<TH2F>("deffden56", "deffden56", 200, -2, 20, 200, -8, 16);
 
   // Numerator for per-arm/track efficiencies
-  TH2F * deffnum45_ = dir.make < TH2F > ("deffnum45", "deffnum45", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum56_ = dir.make < TH2F > ("deffnum56", "deffnum56", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45_ = dir.make<TH2F>("deffnum45", "deffnum45", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum56_ = dir.make<TH2F>("deffnum56", "deffnum56", 200, -2, 20, 200, -8, 16);
 
-  TH2F * dboxeffnum45_ = dir.make < TH2F > ("dboxeffnum45", "dboxeffnum45", 200, -2, 20, 200, -8, 16);
-  TH2F * dboxeffnum56_ = dir.make < TH2F > ("dboxeffnum56", "dboxeffnum56", 200, -2, 20, 200, -8, 16);
+  TH2F* dboxeffnum45_ = dir.make<TH2F>("dboxeffnum45", "dboxeffnum45", 200, -2, 20, 200, -8, 16);
+  TH2F* dboxeffnum56_ = dir.make<TH2F>("dboxeffnum56", "dboxeffnum56", 200, -2, 20, 200, -8, 16);
 
   // Numerator for per-plane efficiencies, cylindrical RPs
-  TH2F * deffnum45plane0_ = dir.make < TH2F > ("deffnum45plane0", "deffnum45plane0", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum56plane0_ = dir.make < TH2F > ("deffnum56plane0", "deffnum56plane0", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum45plane1_ = dir.make < TH2F > ("deffnum45plane1", "deffnum45plane1", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum56plane1_ = dir.make < TH2F > ("deffnum56plane1", "deffnum56plane1", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum45plane2_ = dir.make < TH2F > ("deffnum45plane2", "deffnum45plane2", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum56plane2_ = dir.make < TH2F > ("deffnum56plane2", "deffnum56plane2", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum45plane3_ = dir.make < TH2F > ("deffnum45plane3", "deffnum45plane3", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum56plane3_ = dir.make < TH2F > ("deffnum56plane3", "deffnum56plane3", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45plane0_ = dir.make<TH2F>("deffnum45plane0", "deffnum45plane0", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum56plane0_ = dir.make<TH2F>("deffnum56plane0", "deffnum56plane0", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45plane1_ = dir.make<TH2F>("deffnum45plane1", "deffnum45plane1", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum56plane1_ = dir.make<TH2F>("deffnum56plane1", "deffnum56plane1", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45plane2_ = dir.make<TH2F>("deffnum45plane2", "deffnum45plane2", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum56plane2_ = dir.make<TH2F>("deffnum56plane2", "deffnum56plane2", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45plane3_ = dir.make<TH2F>("deffnum45plane3", "deffnum45plane3", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum56plane3_ = dir.make<TH2F>("deffnum56plane3", "deffnum56plane3", 200, -2, 20, 200, -8, 16);
 
   // Numerator for per-plane efficiencies, box RPs
-  TH2F * deffnum45boxplane0_ = dir.make < TH2F > ("deffnum45boxplane0", "deffnum45boxplane0", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum56boxplane0_ = dir.make < TH2F > ("deffnum56boxplane0", "deffnum56boxplane0", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum45boxplane1_ = dir.make < TH2F > ("deffnum45boxplane1", "deffnum45boxplane1", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum56boxplane1_ = dir.make < TH2F > ("deffnum56boxplane1", "deffnum56boxplane1", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum45boxplane2_ = dir.make < TH2F > ("deffnum45boxplane2", "deffnum45boxplane2", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum56boxplane2_ = dir.make < TH2F > ("deffnum56boxplane2", "deffnum56boxplane2", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum45boxplane3_ = dir.make < TH2F > ("deffnum45boxplane3", "deffnum45boxplane3", 200, -2, 20, 200, -8, 16);
-  TH2F * deffnum56boxplane3_ = dir.make < TH2F > ("deffnum56boxplane3", "deffnum56boxplane3", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45boxplane0_ = dir.make<TH2F>("deffnum45boxplane0", "deffnum45boxplane0", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum56boxplane0_ = dir.make<TH2F>("deffnum56boxplane0", "deffnum56boxplane0", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45boxplane1_ = dir.make<TH2F>("deffnum45boxplane1", "deffnum45boxplane1", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum56boxplane1_ = dir.make<TH2F>("deffnum56boxplane1", "deffnum56boxplane1", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45boxplane2_ = dir.make<TH2F>("deffnum45boxplane2", "deffnum45boxplane2", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum56boxplane2_ = dir.make<TH2F>("deffnum56boxplane2", "deffnum56boxplane2", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45boxplane3_ = dir.make<TH2F>("deffnum45boxplane3", "deffnum45boxplane3", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum56boxplane3_ = dir.make<TH2F>("deffnum56boxplane3", "deffnum56boxplane3", 200, -2, 20, 200, -8, 16);
 
   // Average ToT, cylindrical RPs
-  TH2F * tot45plane0_ = dir.make < TH2F > ("tot45plane0", "tot45plane0", 200, -2, 20, 200, -8, 16);
-  TH2F * tot56plane0_ = dir.make < TH2F > ("tot56plane0", "tot56plane0", 200, -2, 20, 200, -8, 16);
-  TH2F * tot45plane1_ = dir.make < TH2F > ("tot45plane1", "tot45plane1", 200, -2, 20, 200, -8, 16);
-  TH2F * tot56plane1_ = dir.make < TH2F > ("tot56plane1", "tot56plane1", 200, -2, 20, 200, -8, 16);
-  TH2F * tot45plane2_ = dir.make < TH2F > ("tot45plane2", "tot45plane2", 200, -2, 20, 200, -8, 16);
-  TH2F * tot56plane2_ = dir.make < TH2F > ("tot56plane2", "tot56plane2", 200, -2, 20, 200, -8, 16);
-  TH2F * tot45plane3_ = dir.make < TH2F > ("tot45plane3", "tot45plane3", 200, -2, 20, 200, -8, 16);
-  TH2F * tot56plane3_ = dir.make < TH2F > ("tot56plane3", "tot56plane3", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45plane0_ = dir.make<TH2F>("tot45plane0", "tot45plane0", 200, -2, 20, 200, -8, 16);
+  TH2F* tot56plane0_ = dir.make<TH2F>("tot56plane0", "tot56plane0", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45plane1_ = dir.make<TH2F>("tot45plane1", "tot45plane1", 200, -2, 20, 200, -8, 16);
+  TH2F* tot56plane1_ = dir.make<TH2F>("tot56plane1", "tot56plane1", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45plane2_ = dir.make<TH2F>("tot45plane2", "tot45plane2", 200, -2, 20, 200, -8, 16);
+  TH2F* tot56plane2_ = dir.make<TH2F>("tot56plane2", "tot56plane2", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45plane3_ = dir.make<TH2F>("tot45plane3", "tot45plane3", 200, -2, 20, 200, -8, 16);
+  TH2F* tot56plane3_ = dir.make<TH2F>("tot56plane3", "tot56plane3", 200, -2, 20, 200, -8, 16);
 
   // Average ToT, box RPs
-  TH2F * tot45boxplane0_ = dir.make < TH2F > ("tot45boxplane0", "tot45boxplane0", 200, -2, 20, 200, -8, 16);
-  TH2F * tot56boxplane0_ = dir.make < TH2F > ("tot56boxplane0", "tot56boxplane0", 200, -2, 20, 200, -8, 16);
-  TH2F * tot45boxplane1_ = dir.make < TH2F > ("tot45boxplane1", "tot45boxplane1", 200, -2, 20, 200, -8, 16);
-  TH2F * tot56boxplane1_ = dir.make < TH2F > ("tot56boxplane1", "tot56boxplane1", 200, -2, 20, 200, -8, 16);
-  TH2F * tot45boxplane2_ = dir.make < TH2F > ("tot45boxplane2", "tot45boxplane2", 200, -2, 20, 200, -8, 16);
-  TH2F * tot56boxplane2_ = dir.make < TH2F > ("tot56boxplane2", "tot56boxplane2", 200, -2, 20, 200, -8, 16);
-  TH2F * tot45boxplane3_ = dir.make < TH2F > ("tot45boxplane3", "tot45boxplane3", 200, -2, 20, 200, -8, 16);
-  TH2F * tot56boxplane3_ = dir.make < TH2F > ("tot56boxplane3", "tot56boxplane3", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45boxplane0_ = dir.make<TH2F>("tot45boxplane0", "tot45boxplane0", 200, -2, 20, 200, -8, 16);
+  TH2F* tot56boxplane0_ = dir.make<TH2F>("tot56boxplane0", "tot56boxplane0", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45boxplane1_ = dir.make<TH2F>("tot45boxplane1", "tot45boxplane1", 200, -2, 20, 200, -8, 16);
+  TH2F* tot56boxplane1_ = dir.make<TH2F>("tot56boxplane1", "tot56boxplane1", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45boxplane2_ = dir.make<TH2F>("tot45boxplane2", "tot45boxplane2", 200, -2, 20, 200, -8, 16);
+  TH2F* tot56boxplane2_ = dir.make<TH2F>("tot56boxplane2", "tot56boxplane2", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45boxplane3_ = dir.make<TH2F>("tot45boxplane3", "tot45boxplane3", 200, -2, 20, 200, -8, 16);
+  TH2F* tot56boxplane3_ = dir.make<TH2F>("tot56boxplane3", "tot56boxplane3", 200, -2, 20, 200, -8, 16);
 
-  TH2F * numvsls_ = dir.make < TH2F > ("numvsls_", "numvsls_", 1000, 0, 1000, 18, -2, 16);
+  TH2F* numvsls_ = dir.make<TH2F>("numvsls_", "numvsls_", 1000, 0, 1000, 18, -2, 16);
 
   // Radiographies and anti-radiographies
-  TH2F * drad45_ = dir.make < TH2F > ("drad45", "drad45", 200, -2, 20, 200, -8, 16);
-  TH2F * drad56_ = dir.make < TH2F > ("drad56", "drad56", 200, -2, 20, 200, -8, 16);
-  TH2F * dantirad45_ = dir.make < TH2F > ("dantirad45", "dantirad45", 200, -2, 20, 200, -8, 16);
-  TH2F * dantirad56_ = dir.make < TH2F > ("dantirad56", "dantirad56", 200, -2, 20, 200, -8, 16);
-  TH2F * dboxrad45_ = dir.make < TH2F > ("dboxrad45", "dboxrad45", 200, -2, 20, 200, -8, 16);
-  TH2F * dboxrad56_ = dir.make < TH2F > ("dboxrad56", "dboxrad56", 200, -2, 20, 200, -8, 16);
-  TH2F * dboxantirad45_ = dir.make < TH2F > ("dboxantirad45", "dboxantirad45", 200, -2, 20, 200, -8, 16);
-  TH2F * dboxantirad56_ = dir.make < TH2F > ("dboxantirad56", "dboxantirad56", 200, -2, 20, 200, -8, 16);
+  TH2F* drad45_ = dir.make<TH2F>("drad45", "drad45", 200, -2, 20, 200, -8, 16);
+  TH2F* drad56_ = dir.make<TH2F>("drad56", "drad56", 200, -2, 20, 200, -8, 16);
+  TH2F* dantirad45_ = dir.make<TH2F>("dantirad45", "dantirad45", 200, -2, 20, 200, -8, 16);
+  TH2F* dantirad56_ = dir.make<TH2F>("dantirad56", "dantirad56", 200, -2, 20, 200, -8, 16);
+  TH2F* dboxrad45_ = dir.make<TH2F>("dboxrad45", "dboxrad45", 200, -2, 20, 200, -8, 16);
+  TH2F* dboxrad56_ = dir.make<TH2F>("dboxrad56", "dboxrad56", 200, -2, 20, 200, -8, 16);
+  TH2F* dboxantirad45_ = dir.make<TH2F>("dboxantirad45", "dboxantirad45", 200, -2, 20, 200, -8, 16);
+  TH2F* dboxantirad56_ = dir.make<TH2F>("dboxantirad56", "dboxantirad56", 200, -2, 20, 200, -8, 16);
 
-  TH1F * ls_ = dir.make < TH1F > ("ls", "ls", 2000, 0, 2000);
+  TH1F* ls_ = dir.make<TH1F>("ls", "ls", 2000, 0, 2000);
 
   // Considered bunches
-  TH1F * bunchNumbers_ = dir.make < TH1F > ("bunchPresence", "Bunch Presence;BX;Presence", 3564, 0.5, 3564.5);
+  TH1F* bunchNumbers_ = dir.make<TH1F>("bunchPresence", "Bunch Presence;BX;Presence", 3564, 0.5, 3564.5);
 
   // loop the events
   int ievt = 0;
@@ -182,8 +184,11 @@ int main(int argc, char * argv[]) {
 
   for (unsigned int iFile = 0; iFile < inFiles_.size(); ++iFile) {
     // open input file (can be located on castor)
-    TFile * inFile = TFile::Open(inFiles_[iFile].c_str());
-    if (inFile) {
+    TFile* inFile = TFile::Open(inFiles_[iFile].c_str());
+    if (!inFile || inFile->IsZombie()) {
+      std::cerr << "ERROR: Could not open file!: " << inFiles_[iFile] << std::endl;
+      return 1;
+    } else {
       // ----------------------------------------------------------------------
       // Second Part:
       //
@@ -195,13 +200,12 @@ int main(int argc, char * argv[]) {
       fwlite::Event ev(inFile);
 
       for (ev.toBegin(); !ev.atEnd(); ++ev, ++ievt) {
-        edm::EventBase
-        const & event = ev;
+        edm::EventBase const& event = ev;
 
         // if pickedBunchesCSV provided, filter-out all that arent on the list
         if (pickedBunchesCSV != "" && pickedBunches.count(event.bunchCrossing()) == 0)
           continue;
-        bunchNumbers_ -> Fill(event.bunchCrossing());
+        bunchNumbers_->Fill(event.bunchCrossing());
         // std::cout << "picking:  " << event.bunchCrossing() << '\n';
 
         // break loop if maximal number of events is reached
@@ -217,7 +221,7 @@ int main(int argc, char * argv[]) {
         if (lumiblock_ < minLS_ || lumiblock_ > maxLS_)
           continue;
 
-        ls_ -> Fill(lumiblock_);
+        ls_->Fill(lumiblock_);
 
         // Long RP IDs for Lite tracks
         // Pixels
@@ -231,7 +235,7 @@ int main(int argc, char * argv[]) {
         // 2054160384
 
         // Diamonds box
-        // 2073034752 
+        // 2073034752
         // 2056257536
 
         //        float x45210=-999.;
@@ -259,8 +263,8 @@ int main(int argc, char * argv[]) {
         int nboxtimetrack45 = 0;
         int nboxtimetrack56 = 0;
 
-        // Handle to the collection of lite tracks                                                                                                                                  
-        edm::Handle < std::vector < CTPPSLocalTrackLite > > ppstracks;
+        // Handle to the collection of lite tracks
+        edm::Handle<std::vector<CTPPSLocalTrackLite> > ppstracks;
 
         // Switch to run on AlCaPPS or standard Physics AOD
         if (mode_ == 1)
@@ -271,30 +275,31 @@ int main(int argc, char * argv[]) {
         /*
          * Loop on tracks to get pixel tracks for the efficiency denominator
          */
-        for (std::vector < CTPPSLocalTrackLite > ::const_iterator track0 = ppstracks -> begin(); track0 != ppstracks -> end(); ++track0) {
+        for (std::vector<CTPPSLocalTrackLite>::const_iterator track0 = ppstracks->begin(); track0 != ppstracks->end();
+             ++track0) {
           //	    std::cout << track0->rpId() << std::endl;
 
-          if (track0 -> rpId() == 2014838784) {
+          if (track0->rpId() == 2014838784) {
             n45210++;
             //		x45210=track0->x();
             //		y45210=track0->y();
           }
-          if (track0 -> rpId() == 2031616000) {
+          if (track0->rpId() == 2031616000) {
             n56210++;
             //		x56210=track0->x();
             //		y56210=track0->y();
           }
           /*
            * If 220 pixels are needed */
-          if (track0 -> rpId() == 2040004608) {
+          if (track0->rpId() == 2040004608) {
             n56220++;
-            x56220 = track0 -> x();
-            y56220 = track0 -> y();
+            x56220 = track0->x();
+            y56220 = track0->y();
           }
-          if (track0 -> rpId() == 2023227392) {
+          if (track0->rpId() == 2023227392) {
             n45220++;
-            x45220 = track0 -> x();
-            y45220 = track0 -> y();
+            x45220 = track0->x();
+            y45220 = track0->y();
           }
           /**/
         }
@@ -303,113 +308,112 @@ int main(int argc, char * argv[]) {
         if (((n45210 == 1) && (n45220 == 1)) || ((n56220 == 1) && (n56210 == 1))) {
           // Denominator for efficiency: events with exactly 1 pixel track in the 45-210 pixels
           if (n45210 == 1 && n45220 == 1)
-            deffden45_ -> Fill(x45220, y45220);
+            deffden45_->Fill(x45220, y45220);
 
-          // Denominator for efficiency: events with exactly 1 pixel track in the 56-210 pixels                                                                                         
+          // Denominator for efficiency: events with exactly 1 pixel track in the 56-210 pixels
           if (n56210 == 1 && n56220 == 1)
-            deffden56_ -> Fill(x56220, y56220);
+            deffden56_->Fill(x56220, y56220);
 
           /*
            * Loop again to check time-tracks for the per-arm efficiency numerator
            */
-          for (std::vector < CTPPSLocalTrackLite > ::const_iterator track1 = ppstracks -> begin(); track1 != ppstracks -> end(); ++track1) {
-            if (track1 -> rpId() == 2054160384) {
-              xtimetrack45 = track1 -> x();
+          for (std::vector<CTPPSLocalTrackLite>::const_iterator track1 = ppstracks->begin(); track1 != ppstracks->end();
+               ++track1) {
+            if (track1->rpId() == 2054160384) {
+              xtimetrack45 = track1->x();
 
               if (n45210 == 1 && n45220 == 1) {
-                // Pixel-diamond correlation to define matching cuts                                                                                                             
-                xtpix21045_ -> Fill(x45220, xtimetrack45);
+                // Pixel-diamond correlation to define matching cuts
+                xtpix21045_->Fill(x45220, xtimetrack45);
 
-                // Histogram for radiography                                                                                                                                     
-                drad45_ -> Fill(x45220, y45220);
+                // Histogram for radiography
+                drad45_->Fill(x45220, y45220);
 
-                if (fabs(x45220 - xtimetrack45) < 20) // x-matching between pixel+time tracks for eff. numerator                                                  
-                  deffnum45_ -> Fill(x45220, y45220);
+                if (fabs(x45220 - xtimetrack45) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                  deffnum45_->Fill(x45220, y45220);
               }
 
               ntimetrack45++;
             }
 
-            if (track1 -> rpId() == 2070937600) {
-              xtimetrack56 = track1 -> x();
+            if (track1->rpId() == 2070937600) {
+              xtimetrack56 = track1->x();
 
               if (n56210 == 1 && n56220 == 1) {
-                // Pixel-diamond correlation to define matching cuts                                                                                                             
-                xtpix21056_ -> Fill(x56220, xtimetrack56);
+                // Pixel-diamond correlation to define matching cuts
+                xtpix21056_->Fill(x56220, xtimetrack56);
 
-                // Histogram for radiography                                                                                                                                     
-                drad56_ -> Fill(x56220, y56220);
+                // Histogram for radiography
+                drad56_->Fill(x56220, y56220);
 
-                if (fabs(x56220 - xtimetrack56) < 20) // x-matching between pixel+time tracks for eff. numerator
-                  deffnum56_ -> Fill(x56220, y56220);
-
+                if (fabs(x56220 - xtimetrack56) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                  deffnum56_->Fill(x56220, y56220);
               }
 
               ntimetrack56++;
             }
-            if (track1 -> rpId() == 2056257536) {
-              xboxtimetrack45 = track1 -> x();
+            if (track1->rpId() == 2056257536) {
+              xboxtimetrack45 = track1->x();
 
               if (n45210 == 1 && n45220 == 1) {
-                // Pixel-diamond correlation to define matching cuts                                                                                                                                 
-                xtpix21045_ -> Fill(x45220, xboxtimetrack45);
+                // Pixel-diamond correlation to define matching cuts
+                xtpix21045_->Fill(x45220, xboxtimetrack45);
 
-                // Histogram for radiography                                                                                                                                                         
-                dboxrad45_ -> Fill(x45220, y45220);
+                // Histogram for radiography
+                dboxrad45_->Fill(x45220, y45220);
 
-                if (fabs(x45220 - xboxtimetrack45) < 20) // x-matching between pixel+time tracks for eff. numerator                                                                                      
-                  dboxeffnum45_ -> Fill(x45220, y45220);
+                if (fabs(x45220 - xboxtimetrack45) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                  dboxeffnum45_->Fill(x45220, y45220);
               }
 
               nboxtimetrack45++;
             }
-            if (track1 -> rpId() == 2073034752) {
-              xboxtimetrack56 = track1 -> x();
+            if (track1->rpId() == 2073034752) {
+              xboxtimetrack56 = track1->x();
 
               if (n56210 == 1 && n56220 == 1) {
-                // Pixel-diamond correlation to define matching cuts                                                                                                                               
-                xtpix21056_ -> Fill(x56220, xboxtimetrack56);
+                // Pixel-diamond correlation to define matching cuts
+                xtpix21056_->Fill(x56220, xboxtimetrack56);
 
-                // Histogram for radiography                                                                                                                                                       
-                dboxrad56_ -> Fill(x56220, y56220);
+                // Histogram for radiography
+                dboxrad56_->Fill(x56220, y56220);
 
-                if (fabs(x56220 - xboxtimetrack56) < 20) // x-matching between pixel+time tracks for eff. numerator                                                                                 
-                  dboxeffnum56_ -> Fill(x56220, y56220);
+                if (fabs(x56220 - xboxtimetrack56) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                  dboxeffnum56_->Fill(x56220, y56220);
               }
 
               nboxtimetrack56++;
             }
-
           }
 
           /*
            *Histograms for anti-radiography: events with 1 track in pixels and none in the diamonds
            */
           if (n45210 == 1 && n45220 == 1 && ntimetrack45 == 0)
-            dantirad45_ -> Fill(x45220, y45220);
+            dantirad45_->Fill(x45220, y45220);
 
           if (n56210 == 1 && n56220 == 1 && ntimetrack56 == 0)
-            dantirad56_ -> Fill(x56220, y56220);
+            dantirad56_->Fill(x56220, y56220);
 
           if (n45210 == 1 && n45220 == 1 && nboxtimetrack45 == 0)
-            dboxantirad45_ -> Fill(x45220, y45220);
+            dboxantirad45_->Fill(x45220, y45220);
           if (n56210 == 1 && n56220 == 1 && nboxtimetrack56 == 0)
-            dboxantirad56_ -> Fill(x56220, y56220);
+            dboxantirad56_->Fill(x56220, y56220);
 
           /*
            * Now loop on Diamond rechits to do plane-by-plane efficiencies
            */
-          edm::Handle < edm::DetSetVector < CTPPSDiamondRecHit > > diamondRecHits;
+          edm::Handle<edm::DetSetVector<CTPPSDiamondRecHit> > diamondRecHits;
 
-          // Switch to run on AlCaPPS or standard Physics AOD                                                                                                                               
+          // Switch to run on AlCaPPS or standard Physics AOD
           if (mode_ == 1)
             event.getByLabel(std::string("ctppsDiamondRecHitsAlCaRecoProducer"), diamondRecHits);
           else if (mode_ == 2)
             event.getByLabel(std::string("ctppsDiamondRecHits"), diamondRecHits);
 
-          for (const auto & rechits_ds: * diamondRecHits) {
+          for (const auto& rechits_ds : *diamondRecHits) {
             const CTPPSDiamondDetId detidforrh(rechits_ds.detId());
-            for (const auto & rechit: rechits_ds) {
+            for (const auto& rechit : rechits_ds) {
               int arm = detidforrh.arm();
               int plane = detidforrh.plane();
               float xrh = rechit.x();
@@ -424,147 +428,146 @@ int main(int argc, char * argv[]) {
 
               // Sector 45
               if (station == 1 && plane == 0 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x45220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator
+                numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45plane0_ -> Fill(x45220, y45220);
-                  tot45plane0_ -> Fill(x45220, y45220, tot);
+                  deffnum45plane0_->Fill(x45220, y45220);
+                  tot45plane0_->Fill(x45220, y45220, tot);
                 }
               }
               if (station == 1 && plane == 1 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x45220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                            
+                numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45plane1_ -> Fill(x45220, y45220);
-                  tot45plane1_ -> Fill(x45220, y45220, tot);
+                  deffnum45plane1_->Fill(x45220, y45220);
+                  tot45plane1_->Fill(x45220, y45220, tot);
                 }
               }
               if (station == 1 && plane == 2 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x45220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                            
+                numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45plane2_ -> Fill(x45220, y45220);
-                  tot45plane2_ -> Fill(x45220, y45220, tot);
+                  deffnum45plane2_->Fill(x45220, y45220);
+                  tot45plane2_->Fill(x45220, y45220, tot);
                 }
               }
               if (station == 1 && plane == 3 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x45220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                            
+                numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45plane3_ -> Fill(x45220, y45220);
-                  tot45plane3_ -> Fill(x45220, y45220, tot);
+                  deffnum45plane3_->Fill(x45220, y45220);
+                  tot45plane3_->Fill(x45220, y45220, tot);
                 }
               }
 
               // Sector 56
               if (station == 1 && plane == 0 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator
+                numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56plane0_ -> Fill(x56220, y56220);
-                  tot56plane0_ -> Fill(x56220, y56220, tot);
+                  deffnum56plane0_->Fill(x56220, y56220);
+                  tot56plane0_->Fill(x56220, y56220, tot);
                 }
               }
               if (station == 1 && plane == 1 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                            
+                numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56plane1_ -> Fill(x56220, y56220);
-                  tot56plane1_ -> Fill(x56220, y56220, tot);
+                  deffnum56plane1_->Fill(x56220, y56220);
+                  tot56plane1_->Fill(x56220, y56220, tot);
                 }
               }
               if (station == 1 && plane == 2 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                            
+                numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56plane2_ -> Fill(x56220, y56220);
-                  tot56plane2_ -> Fill(x56220, y56220, tot);
+                  deffnum56plane2_->Fill(x56220, y56220);
+                  tot56plane2_->Fill(x56220, y56220, tot);
                 }
               }
               if (station == 1 && plane == 3 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                            
+                numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56plane3_ -> Fill(x56220, y56220);
-                  tot56plane3_ -> Fill(x56220, y56220, tot);
+                  deffnum56plane3_->Fill(x56220, y56220);
+                  tot56plane3_->Fill(x56220, y56220, tot);
                 }
               }
 
               // Sector 45 box
               if (station == 2 && plane == 0 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x45220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                                         
+                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45boxplane0_ -> Fill(x45220, y45220);
-                  tot45boxplane0_ -> Fill(x45220, y45220, tot);
+                  deffnum45boxplane0_->Fill(x45220, y45220);
+                  tot45boxplane0_->Fill(x45220, y45220, tot);
                 }
               }
               if (station == 2 && plane == 1 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x45220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                                         
+                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45boxplane1_ -> Fill(x45220, y45220);
-                  tot45boxplane1_ -> Fill(x45220, y45220, tot);
+                  deffnum45boxplane1_->Fill(x45220, y45220);
+                  tot45boxplane1_->Fill(x45220, y45220, tot);
                 }
               }
               if (station == 2 && plane == 2 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x45220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                                         
+                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45boxplane2_ -> Fill(x45220, y45220);
-                  tot45boxplane2_ -> Fill(x45220, y45220, tot);
+                  deffnum45boxplane2_->Fill(x45220, y45220);
+                  tot45boxplane2_->Fill(x45220, y45220, tot);
                 }
               }
               if (station == 2 && plane == 3 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x45220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                                         
+                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45boxplane3_ -> Fill(x45220, y45220);
-                  tot45boxplane3_ -> Fill(x45220, y45220, tot);
+                  deffnum45boxplane3_->Fill(x45220, y45220);
+                  tot45boxplane3_->Fill(x45220, y45220, tot);
                 }
               }
 
               // Sector 56 box
               if (station == 2 && plane == 0 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                                         
+                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56boxplane0_ -> Fill(x56220, y56220);
-                  tot56boxplane0_ -> Fill(x56220, y56220, tot);
+                  deffnum56boxplane0_->Fill(x56220, y56220);
+                  tot56boxplane0_->Fill(x56220, y56220, tot);
                 }
               }
               if (station == 2 && plane == 1 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                                         
+                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56boxplane1_ -> Fill(x56220, y56220);
-                  tot56boxplane1_ -> Fill(x56220, y56220, tot);
+                  deffnum56boxplane1_->Fill(x56220, y56220);
+                  tot56boxplane1_->Fill(x56220, y56220, tot);
                 }
               }
               if (station == 2 && plane == 2 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                                         
+                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56boxplane2_ -> Fill(x56220, y56220);
-                  tot56boxplane2_ -> Fill(x56220, y56220, tot);
+                  deffnum56boxplane2_->Fill(x56220, y56220);
+                  tot56boxplane2_->Fill(x56220, y56220, tot);
                 }
               }
               if (station == 2 && plane == 3 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
-                numvsls_ -> Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56220 - xrh) < 20) //  x-matching between pixel+diamond rechits for eff. numerator                                                         
+                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56boxplane3_ -> Fill(x56220, y56220);
-                  tot56boxplane3_ -> Fill(x56220, y56220, tot);
+                  deffnum56boxplane3_->Fill(x56220, y56220);
+                  tot56boxplane3_->Fill(x56220, y56220, tot);
                 }
               }
-
             }
           }
         }
       }
 
       // close input file
-      inFile -> Close();
+      inFile->Close();
     }
     // break loop if maximal number of events is reached:
     // this has to be done twice to stop the file loop as well
