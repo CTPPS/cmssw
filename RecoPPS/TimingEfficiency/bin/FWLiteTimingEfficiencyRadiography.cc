@@ -533,14 +533,8 @@ int main(int argc, char* argv[]) {
 
   parser.integerValue("maxEvents") = 120000000;
   parser.integerValue("outputEvery") = 10000;
-  parser.addOption("outputFileAllBunches",
-                   CommandLineParser::kString,
-                   "output file for all bunches",
-                   "timingHistogramsAllBunches.root");
-  parser.addOption("outputFilePickedBunches",
-                   CommandLineParser::kString,
-                   "output file for picked bunches",
-                   "timingHistogramsPickedBunches.root");
+  parser.addOption("outputFileAllBunches", CommandLineParser::kString, "output file for all bunches", "");
+  parser.addOption("outputFilePickedBunches", CommandLineParser::kString, "output file for picked bunches", "");
 
   parser.addOption("inputPathsCSV", CommandLineParser::kString, "Comma-separated list of input root files", "");
   parser.addOption("pickedBunchesCSV", CommandLineParser::kString, "Comma-separated list of picked bunches", "");
@@ -548,10 +542,6 @@ int main(int argc, char* argv[]) {
   parser.addOption("maxLS", CommandLineParser::kInteger, "last LumiSection", 9999);
   parser.addOption("minimumToT", CommandLineParser::kDouble, "minimum ToT for rechits", -999.0);
   parser.addOption("mode", CommandLineParser::kInteger, "use AlCaPPS or PromptReco", 1);
-  parser.addOption("calculateWithAllBunchesAnyways",
-                   CommandLineParser::kBool,
-                   "Also calculate with all bunches even if pickedBunchesCSV is provided",
-                   false);
 
   // parse arguments
   parser.parseArguments(argc, argv);
@@ -565,7 +555,11 @@ int main(int argc, char* argv[]) {
   std::string inputPathsCSV = parser.stringValue("inputPathsCSV");
   std::string pickedBunchesCSV = parser.stringValue("pickedBunchesCSV");
   int mode_ = parser.integerValue("mode");
-  bool calculateWithAllBunchesAnyways_ = parser.boolValue("calculateWithAllBunchesAnyways");
+
+  if (outputFileAllBunches_ == "" && outputFilePickedBunches_ == "") {
+    std::cerr << "At least one output path has to be provided (outputFileAllBunches, outputFilePickedBunches).\n";
+    exit(EXIT_FAILURE);
+  }
 
   // AOD input files
   std::vector<std::string> inFiles_;
@@ -595,8 +589,12 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (pickedBunches_.size()) {
-    std::cout << "Calculating histograms for picked bunches.\n Provided bunches:\n";
+  if (outputFilePickedBunches_ > 0 && pickedBunches_.size() == 0) {
+    std::cout<<"outputFilePickedBunches argument provided but no bunches given in pickedBunchesCSV. Program will NOT run for picked bunches.\n";
+  }
+
+  if (outputFilePickedBunches_ != "" && pickedBunches_.size() > 0) {
+    std::cout << "outputFilePickedBunches and pickedBunchesCSV arguments provided. \nCalculating histograms for picked bunches: ";
     for (auto x : pickedBunches_)
       std::cout << x << " ";
     std::cout << '\n';
@@ -607,8 +605,8 @@ int main(int argc, char* argv[]) {
     std::cout << "DONE Calculating histograms for picked bunches.\n";
   }
 
-  if (pickedBunches_.size() == 0 || calculateWithAllBunchesAnyways_) {
-    std::cout << "Calculating histograms for all bunches.\n";
+  if (outputFileAllBunches_ != "") {
+    std::cout << "outputFileAllBunches arguments provided. \nCalculating histograms for all bunches.\n";
 
     calculateAndSaveHistograms(
         maxEvents_, outputEvery_, minLS_, maxLS_, totCut_, outputFileAllBunches_, mode_, inFiles_);
