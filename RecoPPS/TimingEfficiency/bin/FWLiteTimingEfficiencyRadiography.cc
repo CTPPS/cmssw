@@ -1,6 +1,6 @@
+#include <cstdlib>
 #include <string>
 #include <vector>
-#include <fstream>
 #include <iostream>
 
 #include <TH1F.h>
@@ -8,6 +8,7 @@
 #include <TROOT.h>
 #include <TFile.h>
 #include <TSystem.h>
+#include <TVirtualPad.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
@@ -25,82 +26,15 @@
 #include "PhysicsTools/FWLite/interface/TFileService.h"
 #include "PhysicsTools/FWLite/interface/CommandLineParser.h"
 
-int main(int argc, char* argv[]) {
-  // define what muon you are using; this is necessary as FWLite is not
-  // capable of reading edm::Views
-  using optutl::CommandLineParser;
-  using reco::Muon;
-
-  // ----------------------------------------------------------------------
-  // First Part:
-  //
-  //  * enable FWLite
-  //  * book the histograms of interest
-  //  * open the input file
-  // ----------------------------------------------------------------------
-
-  // load framework libraries
-  gSystem->Load("libFWCoreFWLite");
-  FWLiteEnabler::enable();
-
-  // initialize command line parser
-  optutl::CommandLineParser parser("Analyze FWLite Histograms");
-
-  // set defaults
-  parser.integerValue("maxEvents") = 120000000;
-  parser.integerValue("outputEvery") = 10000;
-  parser.stringValue("outputFile") = "timingHistograms.root";
-  parser.addOption("inputPathsCSV", CommandLineParser::kString, "Comma-separated list of input root files", "");
-  parser.addOption("pickedBunchesCSV", CommandLineParser::kString, "Comma-separated list of picked bunches", "");
-  parser.addOption("minLS", CommandLineParser::kInteger, "first LumiSection", 1);
-  parser.addOption("maxLS", CommandLineParser::kInteger, "last LumiSection", 9999);
-  parser.addOption("minimumToT", CommandLineParser::kDouble, "minimum ToT for rechits", -999.0);
-  parser.addOption("mode", CommandLineParser::kInteger, "use AlCaPPS or PromptReco", 1);
-
-  // parse arguments
-  parser.parseArguments(argc, argv);
-  int maxEvents_ = parser.integerValue("maxEvents");
-  unsigned int outputEvery_ = parser.integerValue("outputEvery");
-  int minLS_ = parser.integerValue("minLS");
-  int maxLS_ = parser.integerValue("maxLS");
-  double totCut_ = parser.doubleValue("minimumToT");
-  std::string outputFile_ = parser.stringValue("outputFile");
-  std::string inputPathsCSV = parser.stringValue("inputPathsCSV");
-  std::string pickedBunchesCSV = parser.stringValue("pickedBunchesCSV");
-  int mode_ = parser.integerValue("mode");
-
-  // AOD input files
-  std::vector<std::string> inFiles_;
-
-  {
-    std::vector<std::string> tokens;
-    boost::split(tokens, inputPathsCSV, boost::is_any_of(","));
-    for (const std::string& token : tokens) {
-      inFiles_.push_back(boost::algorithm::trim_copy(token));
-      // std::cout << inFiles_.back() << '\n';
-    }
-  }
-
-  std::set<int> pickedBunches;
-  if (pickedBunchesCSV != "") {
-    std::cout << "pickedBunchesCSV provided -- only those bunches considered\n";
-    std::vector<std::string> tokens;
-    boost::split(tokens, pickedBunchesCSV, boost::is_any_of(","));
-
-    for (const std::string& token : tokens) {
-      try {
-        int bunch = boost::lexical_cast<int>(boost::algorithm::trim_copy(token));
-        pickedBunches.insert(bunch);
-      } catch (const boost::bad_lexical_cast& e) {
-        std::cerr << "Invalid bunch number: '" << token << "'\n";
-        return 1;
-      }
-    }
-    for (auto x : pickedBunches)
-      std::cout << x << " ";
-    std::cout << '\n';
-  }
-
+void calculateAndSaveHistograms(int maxEvents_,
+                                unsigned int outputEvery_,
+                                int minLS_,
+                                int maxLS_,
+                                double totCut_,
+                                const std::string& outputFile_,
+                                int mode_,
+                                const std::vector<std::string>& inFiles_,
+                                const std::set<int>& pickedBunches_ = {}) {
   // book a set of histograms
   fwlite::TFileService fs = fwlite::TFileService(outputFile_);
   TFileDirectory dir = fs.mkdir("diamondHistograms");
@@ -187,7 +121,7 @@ int main(int argc, char* argv[]) {
     TFile* inFile = TFile::Open(inFiles_[iFile].c_str());
     if (!inFile || inFile->IsZombie()) {
       std::cerr << "ERROR: Could not open file!: " << inFiles_[iFile] << std::endl;
-      return 1;
+      exit(EXIT_FAILURE);
     } else {
       // ----------------------------------------------------------------------
       // Second Part:
@@ -203,7 +137,7 @@ int main(int argc, char* argv[]) {
         edm::EventBase const& event = ev;
 
         // if pickedBunchesCSV provided, filter-out all that arent on the list
-        if (pickedBunchesCSV != "" && pickedBunches.count(event.bunchCrossing()) == 0)
+        if (pickedBunches_.size() && pickedBunches_.count(event.bunchCrossing()) == 0)
           continue;
         bunchNumbers_->Fill(event.bunchCrossing());
         // std::cout << "picking:  " << event.bunchCrossing() << '\n';
@@ -573,6 +507,113 @@ int main(int argc, char* argv[]) {
     // this has to be done twice to stop the file loop as well
     if (maxEvents_ > 0 ? ievt + 1 > maxEvents_ : false)
       break;
+  }
+}
+
+int main(int argc, char* argv[]) {
+  // define what muon you are using; this is necessary as FWLite is not
+  // capable of reading edm::Views
+  using optutl::CommandLineParser;
+  using reco::Muon;
+
+  // ----------------------------------------------------------------------
+  // First Part:
+  //
+  //  * enable FWLite
+  //  * book the histograms of interest
+  //  * open the input file
+  // ----------------------------------------------------------------------
+
+  // load framework libraries
+  gSystem->Load("libFWCoreFWLite");
+  FWLiteEnabler::enable();
+
+  // initialize command line parser
+  optutl::CommandLineParser parser("Analyze FWLite Histograms");
+
+  parser.integerValue("maxEvents") = 120000000;
+  parser.integerValue("outputEvery") = 10000;
+  parser.addOption("outputFileAllBunches",
+                   CommandLineParser::kString,
+                   "output file for all bunches",
+                   "timingHistogramsAllBunches.root");
+  parser.addOption("outputFilePickedBunches",
+                   CommandLineParser::kString,
+                   "output file for picked bunches",
+                   "timingHistogramsPickedBunches.root");
+
+  parser.addOption("inputPathsCSV", CommandLineParser::kString, "Comma-separated list of input root files", "");
+  parser.addOption("pickedBunchesCSV", CommandLineParser::kString, "Comma-separated list of picked bunches", "");
+  parser.addOption("minLS", CommandLineParser::kInteger, "first LumiSection", 1);
+  parser.addOption("maxLS", CommandLineParser::kInteger, "last LumiSection", 9999);
+  parser.addOption("minimumToT", CommandLineParser::kDouble, "minimum ToT for rechits", -999.0);
+  parser.addOption("mode", CommandLineParser::kInteger, "use AlCaPPS or PromptReco", 1);
+  parser.addOption("calculateWithAllBunchesAnyways",
+                   CommandLineParser::kBool,
+                   "Also calculate with all bunches even if pickedBunchesCSV is provided",
+                   false);
+
+  // parse arguments
+  parser.parseArguments(argc, argv);
+  int maxEvents_ = parser.integerValue("maxEvents");
+  unsigned int outputEvery_ = parser.integerValue("outputEvery");
+  int minLS_ = parser.integerValue("minLS");
+  int maxLS_ = parser.integerValue("maxLS");
+  double totCut_ = parser.doubleValue("minimumToT");
+  std::string outputFileAllBunches_ = parser.stringValue("outputFileAllBunches");
+  std::string outputFilePickedBunches_ = parser.stringValue("outputFilePickedBunches");
+  std::string inputPathsCSV = parser.stringValue("inputPathsCSV");
+  std::string pickedBunchesCSV = parser.stringValue("pickedBunchesCSV");
+  int mode_ = parser.integerValue("mode");
+  bool calculateWithAllBunchesAnyways_ = parser.boolValue("calculateWithAllBunchesAnyways");
+
+  // AOD input files
+  std::vector<std::string> inFiles_;
+
+  {
+    std::vector<std::string> tokens;
+    boost::split(tokens, inputPathsCSV, boost::is_any_of(","));
+    for (const std::string& token : tokens) {
+      inFiles_.push_back(boost::algorithm::trim_copy(token));
+      // std::cout << inFiles_.back() << '\n';
+    }
+  }
+
+  std::set<int> pickedBunches_;
+  if (pickedBunchesCSV != "") {
+    std::vector<std::string> tokens;
+    boost::split(tokens, pickedBunchesCSV, boost::is_any_of(","));
+
+    for (const std::string& token : tokens) {
+      try {
+        int bunch = boost::lexical_cast<int>(boost::algorithm::trim_copy(token));
+        pickedBunches_.insert(bunch);
+      } catch (const boost::bad_lexical_cast& e) {
+        std::cerr << "Invalid bunch number: '" << token << "'\n";
+        std::exit(EXIT_FAILURE);
+      }
+    }
+  }
+
+  if (pickedBunches_.size()) {
+    std::cout << "Calculating histograms for picked bunches.\n Provided bunches:\n";
+    for (auto x : pickedBunches_)
+      std::cout << x << " ";
+    std::cout << '\n';
+
+    calculateAndSaveHistograms(
+        maxEvents_, outputEvery_, minLS_, maxLS_, totCut_, outputFilePickedBunches_, mode_, inFiles_, pickedBunches_);
+
+    std::cout << "DONE Calculating histograms for picked bunches.\n";
+  }
+
+  if (pickedBunches_.size() == 0 || calculateWithAllBunchesAnyways_) {
+    std::cout << "Calculating histograms for all bunches.\n";
+
+    calculateAndSaveHistograms(
+        maxEvents_, outputEvery_, minLS_, maxLS_, totCut_, outputFileAllBunches_, mode_, inFiles_);
+
+    std::cout << "DONE Calculating histograms for all bunches.\n";
   }
 
   return 0;
