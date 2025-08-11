@@ -1,5 +1,7 @@
 void PlotTimingEfficiencies(TString infile = "timingHistograms.root")
 {
+  gStyle->SetPalette(kBird);
+
   TFile *f = TFile::Open(infile);
 
   TH2F *den45 = (TH2F *)f->Get("diamondHistograms/deffden45");
