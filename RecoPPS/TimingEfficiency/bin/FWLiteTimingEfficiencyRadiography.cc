@@ -1,7 +1,8 @@
 #include <cstdlib>
+#include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include <TH1F.h>
 #include <TH2F.h>
@@ -12,10 +13,14 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 #include "DataFormats/FWLite/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
 #include "FWCore/FWLite/interface/FWLiteEnabler.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Utilities/interface/EDMException.h"
 
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/CTPPSDetId/interface/CTPPSDiamondDetId.h"
@@ -28,12 +33,11 @@
 
 void calculateAndSaveHistograms(int maxEvents_,
                                 unsigned int outputEvery_,
-                                int minLS_,
-                                int maxLS_,
                                 double totCut_,
                                 const std::string& outputFile_,
                                 int mode_,
                                 const std::vector<std::string>& inFiles_,
+                                std::optional<std::vector<std::pair<int, int>>> goodLumisections_ = std::nullopt,
                                 const std::set<int>& pickedBunches_ = {}) {
   // book a set of histograms
   fwlite::TFileService fs = fwlite::TFileService(outputFile_);
@@ -120,8 +124,7 @@ void calculateAndSaveHistograms(int maxEvents_,
     // open input file (can be located on castor)
     TFile* inFile = TFile::Open(inFiles_[iFile].c_str());
     if (!inFile || inFile->IsZombie()) {
-      std::cerr << "ERROR: Could not open file!: " << inFiles_[iFile] << std::endl;
-      exit(EXIT_FAILURE);
+      throw edm::Exception{edm::errors::FileOpenError} << "Could not open file!: " << inFiles_[iFile] << std::endl;
     } else {
       // ----------------------------------------------------------------------
       // Second Part:
@@ -139,21 +142,32 @@ void calculateAndSaveHistograms(int maxEvents_,
         // if pickedBunchesCSV provided, filter-out all that arent on the list
         if (pickedBunches_.size() && pickedBunches_.count(event.bunchCrossing()) == 0)
           continue;
-        bunchNumbers_->Fill(event.bunchCrossing());
-        // std::cout << "picking:  " << event.bunchCrossing() << '\n';
 
         // break loop if maximal number of events is reached
         if (maxEvents_ > 0 ? ievt + 1 > maxEvents_ : false)
           break;
+
         // simple event counter
         if (outputEvery_ != 0 ? (ievt > 0 && ievt % outputEvery_ == 0) : false)
-          std::cout << "  processing event: " << ievt << std::endl;
+          edm::LogInfo("TimingEfficiencyRadiography") << "processing event: " << ievt << std::endl;
 
         // LumiSection
         lumiblock_ = ev.luminosityBlock();
 
-        if (lumiblock_ < minLS_ || lumiblock_ > maxLS_)
-          continue;
+        if (goodLumisections_) {
+          bool found = false;
+          for (auto [startLumi, endLumi] : goodLumisections_.value()) {
+            if (startLumi <= lumiblock_ && lumiblock_ <= endLumi) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            continue;
+          }
+        }
+
+        bunchNumbers_->Fill(event.bunchCrossing());
 
         ls_->Fill(lumiblock_);
 
@@ -198,7 +212,7 @@ void calculateAndSaveHistograms(int maxEvents_,
         int nboxtimetrack56 = 0;
 
         // Handle to the collection of lite tracks
-        edm::Handle<std::vector<CTPPSLocalTrackLite> > ppstracks;
+        edm::Handle<std::vector<CTPPSLocalTrackLite>> ppstracks;
 
         // Switch to run on AlCaPPS or standard Physics AOD
         if (mode_ == 1)
@@ -337,7 +351,7 @@ void calculateAndSaveHistograms(int maxEvents_,
           /*
            * Now loop on Diamond rechits to do plane-by-plane efficiencies
            */
-          edm::Handle<edm::DetSetVector<CTPPSDiamondRecHit> > diamondRecHits;
+          edm::Handle<edm::DetSetVector<CTPPSDiamondRecHit>> diamondRecHits;
 
           // Switch to run on AlCaPPS or standard Physics AOD
           if (mode_ == 1)
@@ -535,11 +549,12 @@ int main(int argc, char* argv[]) {
   parser.integerValue("outputEvery") = 10000;
   parser.addOption("outputFileAllBunches", CommandLineParser::kString, "output file for all bunches", "");
   parser.addOption("outputFilePickedBunches", CommandLineParser::kString, "output file for picked bunches", "");
-
+  parser.addOption("certificationJSONPath",
+                   CommandLineParser::kString,
+                   "path to certification JSON (used to filter out unwanted lumisections)",
+                   "");
   parser.addOption("inputPathsCSV", CommandLineParser::kString, "Comma-separated list of input root files", "");
   parser.addOption("pickedBunchesCSV", CommandLineParser::kString, "Comma-separated list of picked bunches", "");
-  parser.addOption("minLS", CommandLineParser::kInteger, "first LumiSection", 1);
-  parser.addOption("maxLS", CommandLineParser::kInteger, "last LumiSection", 9999);
   parser.addOption("minimumToT", CommandLineParser::kDouble, "minimum ToT for rechits", -999.0);
   parser.addOption("mode", CommandLineParser::kInteger, "use AlCaPPS or PromptReco", 1);
 
@@ -547,18 +562,17 @@ int main(int argc, char* argv[]) {
   parser.parseArguments(argc, argv);
   int maxEvents_ = parser.integerValue("maxEvents");
   unsigned int outputEvery_ = parser.integerValue("outputEvery");
-  int minLS_ = parser.integerValue("minLS");
-  int maxLS_ = parser.integerValue("maxLS");
   double totCut_ = parser.doubleValue("minimumToT");
   std::string outputFileAllBunches_ = parser.stringValue("outputFileAllBunches");
   std::string outputFilePickedBunches_ = parser.stringValue("outputFilePickedBunches");
+  std::string certificationJSONPath_ = parser.stringValue("certificationJSONPath");
   std::string inputPathsCSV = parser.stringValue("inputPathsCSV");
   std::string pickedBunchesCSV = parser.stringValue("pickedBunchesCSV");
   int mode_ = parser.integerValue("mode");
 
-  if (outputFileAllBunches_ == "" && outputFilePickedBunches_ == "") {
-    std::cerr << "At least one output path has to be provided (outputFileAllBunches, outputFilePickedBunches).\n";
-    exit(EXIT_FAILURE);
+  if (outputFileAllBunches_.empty() && outputFilePickedBunches_.empty()) {
+    throw edm::Exception{edm::errors::NotFound}
+        << "At least one output path has to be provided (outputFileAllBunches, outputFilePickedBunches).\n";
   }
 
   // AOD input files
@@ -569,12 +583,71 @@ int main(int argc, char* argv[]) {
     boost::split(tokens, inputPathsCSV, boost::is_any_of(","));
     for (const std::string& token : tokens) {
       inFiles_.push_back(boost::algorithm::trim_copy(token));
-      // std::cout << inFiles_.back() << '\n';
+    }
+  }
+
+  std::optional<std::vector<std::pair<int, int>>> goodLumisections_ = std::nullopt;
+  {
+    auto firstNonemptyFileIt =
+        std::find_if(inFiles_.begin(), inFiles_.end(), [](const std::string& s) { return !s.empty(); });
+    if (firstNonemptyFileIt == inFiles_.end()) {
+      throw edm::Exception{edm::errors::FileOpenError} << "No input file provided: " << inFiles_.front() << std::endl;
+    }
+
+    if (!certificationJSONPath_.empty()) {
+      boost::property_tree::ptree root;
+
+      try {
+        boost::property_tree::read_json(certificationJSONPath_, root);
+      } catch (const boost::property_tree::json_parser_error& e) {
+        throw edm::Exception(edm::errors::FileReadError)
+            << "Failed to parse JSON file: " << certificationJSONPath_ << "\n"
+            << e.what() << "\n";
+      }
+
+      TFile* file = TFile::Open(firstNonemptyFileIt->c_str());
+      if (!file || file->IsZombie()) {
+        throw edm::Exception{edm::errors::FileOpenError} << "Failed to open ROOT file: " << inFiles_.front()
+                                                         << std::endl;
+      }
+
+      fwlite::Event event(file);
+      event.to(0);
+      int runNumber = event.eventAuxiliary().run();
+      file->Close();
+
+      for (const auto& item : root) {
+        int key = std::stoi(item.first);
+        if (key != runNumber) {
+          continue;
+        }
+
+        std::vector<std::pair<int, int>> pairs_vec;
+
+        for (const auto& inner_array : item.second) {
+          auto it = inner_array.second.begin();
+
+          int first_val = it->second.get_value<int>();
+          ++it;
+          int second_val = it->second.get_value<int>();
+
+          pairs_vec.emplace_back(first_val, second_val);
+        }
+
+        goodLumisections_ = std::move(pairs_vec);
+        break;
+      }
+      edm::LogInfo("TimingEfficiencyRadiography") << "Good lumisection ranges: ";
+
+      for (auto lumisectionRange : goodLumisections_.value()) {
+        edm::LogInfo("TimingEfficiencyRadiography") << "[" << lumisectionRange.first << "] ";
+      }
+      edm::LogInfo("TimingEfficiencyRadiography") << '\n';
     }
   }
 
   std::set<int> pickedBunches_;
-  if (pickedBunchesCSV != "") {
+  if (!pickedBunchesCSV.empty()) {
     std::vector<std::string> tokens;
     boost::split(tokens, pickedBunchesCSV, boost::is_any_of(","));
 
@@ -583,35 +656,36 @@ int main(int argc, char* argv[]) {
         int bunch = boost::lexical_cast<int>(boost::algorithm::trim_copy(token));
         pickedBunches_.insert(bunch);
       } catch (const boost::bad_lexical_cast& e) {
-        std::cerr << "Invalid bunch number: '" << token << "'\n";
-        std::exit(EXIT_FAILURE);
+        throw edm::Exception{edm::errors::NotFound} << "Invalid bunch number: '" << token << "'\n";
       }
     }
   }
 
   if (outputFilePickedBunches_ > 0 && pickedBunches_.size() == 0) {
-    std::cout<<"outputFilePickedBunches argument provided but no bunches given in pickedBunchesCSV. Program will NOT run for picked bunches.\n";
+    edm::LogWarning("TimingEfficiencyRadiography")
+        << "outputFilePickedBunches argument provided but no bunches given in pickedBunchesCSV. Program will NOT "
+           "run for picked bunches.\n";
   }
 
-  if (outputFilePickedBunches_ != "" && pickedBunches_.size() > 0) {
-    std::cout << "outputFilePickedBunches and pickedBunchesCSV arguments provided. \nCalculating histograms for picked bunches: ";
+  if (!outputFilePickedBunches_.empty() && pickedBunches_.size() > 0) {
+    edm::LogInfo("TimingEfficiencyRadiography") << "outputFilePickedBunches and pickedBunchesCSV arguments provided.\n"
+                                                << "Calculating histograms for picked bunches: ";
     for (auto x : pickedBunches_)
-      std::cout << x << " ";
-    std::cout << '\n';
+      edm::LogInfo("TimingEfficiencyRadiography") << x << " ";
+    edm::LogInfo("TimingEfficiencyRadiography") << "\n";
 
     calculateAndSaveHistograms(
-        maxEvents_, outputEvery_, minLS_, maxLS_, totCut_, outputFilePickedBunches_, mode_, inFiles_, pickedBunches_);
-
-    std::cout << "DONE Calculating histograms for picked bunches.\n";
+        maxEvents_, outputEvery_, totCut_, outputFilePickedBunches_, mode_, inFiles_, goodLumisections_, pickedBunches_);
+    edm::LogInfo("TimingEfficiencyRadiography") << "DONE Calculating histograms for picked bunches.\n";
   }
 
-  if (outputFileAllBunches_ != "") {
-    std::cout << "outputFileAllBunches arguments provided. \nCalculating histograms for all bunches.\n";
+  if (!outputFileAllBunches_.empty()) {
+    edm::LogInfo("TimingEfficiencyRadiography")
+        << "outputFileAllBunches arguments provided. \nCalculating histograms for all bunches.\n";
 
     calculateAndSaveHistograms(
-        maxEvents_, outputEvery_, minLS_, maxLS_, totCut_, outputFileAllBunches_, mode_, inFiles_);
-
-    std::cout << "DONE Calculating histograms for all bunches.\n";
+        maxEvents_, outputEvery_, totCut_, outputFileAllBunches_, mode_, inFiles_, goodLumisections_);
+    edm::LogInfo("TimingEfficiencyRadiography") << "DONE Calculating histograms for all bunches.\n";
   }
 
   return 0;
