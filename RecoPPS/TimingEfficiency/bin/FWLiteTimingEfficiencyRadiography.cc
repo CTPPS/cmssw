@@ -153,7 +153,7 @@ void calculateAndSaveHistograms(int maxEvents_,
 
         // simple event counter
         if (outputEvery_ != 0 ? (ievt > 0 && ievt % outputEvery_ == 0) : false)
-          edm::LogWarning("TimingEfficiencyRadiography") << "processing event: " << ievt << std::endl;
+          edm::LogWarning("TimingEfficiencyRadiography") << "processing event: " << ievt;
 
         // LumiSection
         lumiblock_ = ev.luminosityBlock();
@@ -630,8 +630,6 @@ int main(int argc, char* argv[]) {
       }
 
       if (goodLumisections_) {
-        edm::LogWarning("TimingEfficiencyRadiography") << "Good lumisection ranges: ";
-
         auto pair_to_string = [](const std::pair<int, int>& x) {
           std::ostringstream oss;
           oss << "[" << x.first << ", " << x.second << "]";
@@ -639,9 +637,9 @@ int main(int argc, char* argv[]) {
         };
 
         edm::LogWarning("TimingEfficiencyRadiography")
-            << "["
+            << "Good lumisection ranges: ["
             << boost::algorithm::join(goodLumisections_.value() | boost::adaptors::transformed(pair_to_string), ", ")
-            << "]\n";
+            << "]";
       }
     }
   }
@@ -664,32 +662,29 @@ int main(int argc, char* argv[]) {
   if (outputFilePickedBunches_ > 0 && pickedBunches_.size() == 0) {
     edm::LogWarning("TimingEfficiencyRadiography")
         << "outputFilePickedBunches argument provided but no bunches given in pickedBunchesCSV. Program will NOT "
-           "run for picked bunches.\n";
+           "run for picked bunches.";
   }
 
   if (!outputFilePickedBunches_.empty() && pickedBunches_.size() > 0) {
     edm::LogWarning("TimingEfficiencyRadiography")
-        << "outputFilePickedBunches and pickedBunchesCSV arguments provided. "
-        << "Calculating histograms for picked bunches: ";
-
-    edm::LogWarning("TimingEfficiencyRadiography")
-        << "["
+        << "outputFilePickedBunches and pickedBunchesCSV arguments provided. \n"
+        << "Calculating histograms for picked bunches: ["
         << boost::algorithm::join(pickedBunches_ | boost::adaptors::transformed(boost::lexical_cast<std::string, int>),
                                   ", ")
-        << "]\n";
+        << "]";
 
     calculateAndSaveHistograms(
         maxEvents_, outputEvery_, totCut_, outputFilePickedBunches_, mode_, inFiles_, goodLumisections_, pickedBunches_);
-    edm::LogWarning("TimingEfficiencyRadiography") << "DONE Calculating histograms for picked bunches.\n";
+    edm::LogWarning("TimingEfficiencyRadiography") << "DONE Calculating histograms for picked bunches.";
   }
 
   if (!outputFileAllBunches_.empty()) {
     edm::LogWarning("TimingEfficiencyRadiography")
-        << "outputFileAllBunches arguments provided. \nCalculating histograms for all bunches.\n";
+        << "outputFileAllBunches arguments provided. \nCalculating histograms for all bunches.";
 
     calculateAndSaveHistograms(
         maxEvents_, outputEvery_, totCut_, outputFileAllBunches_, mode_, inFiles_, goodLumisections_);
-    edm::LogWarning("TimingEfficiencyRadiography") << "DONE Calculating histograms for all bunches.\n";
+    edm::LogWarning("TimingEfficiencyRadiography") << "DONE Calculating histograms for all bunches.";
   }
 
   return 0;
