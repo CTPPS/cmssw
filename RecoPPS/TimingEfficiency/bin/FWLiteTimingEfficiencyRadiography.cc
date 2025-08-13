@@ -362,12 +362,8 @@ void calculateAndSaveHistograms(int maxEvents_,
               float xrh = rechit.x();
               int station = detidforrh.station();
 
-              //		    std::cout << station << std::endl;
-              //		    std::cout << rechit.id() << std::endl;
-
               // Not currently used
               float tot = rechit.toT();
-              //		int channel = detidforrh.channel();
 
               // Sector 45
               if (station == 1 && plane == 0 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
