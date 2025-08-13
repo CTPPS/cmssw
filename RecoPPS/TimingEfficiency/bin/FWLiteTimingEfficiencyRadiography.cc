@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -15,6 +16,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/range/adaptors.hpp>
+#include <boost/range/join.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include "DataFormats/FWLite/interface/Event.h"
 #include "DataFormats/Common/interface/Handle.h"
@@ -149,7 +153,7 @@ void calculateAndSaveHistograms(int maxEvents_,
 
         // simple event counter
         if (outputEvery_ != 0 ? (ievt > 0 && ievt % outputEvery_ == 0) : false)
-          edm::LogInfo("TimingEfficiencyRadiography") << "processing event: " << ievt << std::endl;
+          edm::LogWarning("TimingEfficiencyRadiography") << "processing event: " << ievt << std::endl;
 
         // LumiSection
         lumiblock_ = ev.luminosityBlock();
@@ -185,11 +189,6 @@ void calculateAndSaveHistograms(int maxEvents_,
         // Diamonds box
         // 2073034752
         // 2056257536
-
-        //        float x45210=-999.;
-        //        float y45210=-999.;
-        //        float x56210=-999.;
-        //        float y56210=-999.;
 
         // If 220 pixels are needed
         float x56220 = -999.;
@@ -229,13 +228,9 @@ void calculateAndSaveHistograms(int maxEvents_,
 
           if (track0->rpId() == 2014838784) {
             n45210++;
-            //		x45210=track0->x();
-            //		y45210=track0->y();
           }
           if (track0->rpId() == 2031616000) {
             n56210++;
-            //		x56210=track0->x();
-            //		y56210=track0->y();
           }
           /*
            * If 220 pixels are needed */
@@ -637,12 +632,21 @@ int main(int argc, char* argv[]) {
         goodLumisections_ = std::move(pairs_vec);
         break;
       }
-      edm::LogInfo("TimingEfficiencyRadiography") << "Good lumisection ranges: ";
 
-      for (auto lumisectionRange : goodLumisections_.value()) {
-        edm::LogInfo("TimingEfficiencyRadiography") << "[" << lumisectionRange.first << "] ";
+      if (goodLumisections_) {
+        edm::LogWarning("TimingEfficiencyRadiography") << "Good lumisection ranges: ";
+
+        auto pair_to_string = [](const std::pair<int, int>& x) {
+          std::ostringstream oss;
+          oss << "[" << x.first << ", " << x.second << "]";
+          return oss.str();
+        };
+
+        edm::LogWarning("TimingEfficiencyRadiography")
+            << "["
+            << boost::algorithm::join(goodLumisections_.value() | boost::adaptors::transformed(pair_to_string), ", ")
+            << "]\n";
       }
-      edm::LogInfo("TimingEfficiencyRadiography") << '\n';
     }
   }
 
@@ -668,24 +672,24 @@ int main(int argc, char* argv[]) {
   }
 
   if (!outputFilePickedBunches_.empty() && pickedBunches_.size() > 0) {
-    edm::LogInfo("TimingEfficiencyRadiography") << "outputFilePickedBunches and pickedBunchesCSV arguments provided.\n"
-                                                << "Calculating histograms for picked bunches: ";
-    for (auto x : pickedBunches_)
-      edm::LogInfo("TimingEfficiencyRadiography") << x << " ";
-    edm::LogInfo("TimingEfficiencyRadiography") << "\n";
+    edm::LogWarning("TimingEfficiencyRadiography")
+        << "outputFilePickedBunches and pickedBunchesCSV arguments provided. "
+        << "Calculating histograms for picked bunches: ";
+
+    edm::LogWarning("TimingEfficiencyRadiography") << "[" << boost::algorithm::join(pickedBunches_, ", ") << "]\n";
 
     calculateAndSaveHistograms(
         maxEvents_, outputEvery_, totCut_, outputFilePickedBunches_, mode_, inFiles_, goodLumisections_, pickedBunches_);
-    edm::LogInfo("TimingEfficiencyRadiography") << "DONE Calculating histograms for picked bunches.\n";
+    edm::LogWarning("TimingEfficiencyRadiography") << "DONE Calculating histograms for picked bunches.\n";
   }
 
   if (!outputFileAllBunches_.empty()) {
-    edm::LogInfo("TimingEfficiencyRadiography")
+    edm::LogWarning("TimingEfficiencyRadiography")
         << "outputFileAllBunches arguments provided. \nCalculating histograms for all bunches.\n";
 
     calculateAndSaveHistograms(
         maxEvents_, outputEvery_, totCut_, outputFileAllBunches_, mode_, inFiles_, goodLumisections_);
-    edm::LogInfo("TimingEfficiencyRadiography") << "DONE Calculating histograms for all bunches.\n";
+    edm::LogWarning("TimingEfficiencyRadiography") << "DONE Calculating histograms for all bunches.\n";
   }
 
   return 0;
