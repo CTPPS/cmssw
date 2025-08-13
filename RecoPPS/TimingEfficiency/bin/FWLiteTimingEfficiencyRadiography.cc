@@ -640,6 +640,10 @@ int main(int argc, char* argv[]) {
             << "Good lumisection ranges: ["
             << boost::algorithm::join(goodLumisections_.value() | boost::adaptors::transformed(pair_to_string), ", ")
             << "]";
+      } else {
+        edm::LogWarning("TimingEfficiencyRadiography")
+            << "Currently processed run (" << runNumber
+            << ") not found in the provided certification JSON! Processing ALL lumisections...";
       }
     }
   }
