@@ -672,7 +672,11 @@ int main(int argc, char* argv[]) {
         << "outputFilePickedBunches and pickedBunchesCSV arguments provided. "
         << "Calculating histograms for picked bunches: ";
 
-    edm::LogWarning("TimingEfficiencyRadiography") << "[" << boost::algorithm::join(pickedBunches_, ", ") << "]\n";
+    edm::LogWarning("TimingEfficiencyRadiography")
+        << "["
+        << boost::algorithm::join(pickedBunches_ | boost::adaptors::transformed(boost::lexical_cast<std::string, int>),
+                                  ", ")
+        << "]\n";
 
     calculateAndSaveHistograms(
         maxEvents_, outputEvery_, totCut_, outputFilePickedBunches_, mode_, inFiles_, goodLumisections_, pickedBunches_);
