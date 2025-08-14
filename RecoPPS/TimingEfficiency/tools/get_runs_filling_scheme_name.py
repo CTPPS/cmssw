@@ -42,9 +42,9 @@ class FillingSchemeNameGetter:
         query = qom.oms.query("fills")
         query.verbose = False
         query.filter("fill_number", fill_number)
-        query.attrs(["fill_number", "injection_scheme", "end_time"])
-        if fill_data := qom.get_oms_data(query).get(fill_number):
-            return fill_data.get("injection_scheme")
+        query.attrs(["fill_number", "injection_scheme"])
+        if fill_data := query.data().json().get("data"):
+            return fill_data[0].get("attributes", {}).get("injection_scheme")
         return None
 
 
