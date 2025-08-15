@@ -41,9 +41,9 @@ void calculateAndSaveHistograms(int maxEvents_,
                                 const std::string& outputFile_,
                                 int mode_,
                                 const std::vector<std::string>& inFiles_,
+                                bool doNotTrust220_ = false,
                                 std::optional<std::vector<std::pair<int, int>>> goodLumisections_ = std::nullopt,
                                 const std::set<int>& pickedBunches_ = {}) {
-
   // ----------------------------------------------------------------------
   // First Part:
   //
@@ -201,10 +201,10 @@ void calculateAndSaveHistograms(int maxEvents_,
         // 2056257536
 
         // If 220 pixels are needed
-        float x56220 = -999.;
-        float y56220 = -999.;
-        float x45220 = -999.;
-        float y45220 = -999.;
+        float x56 = -999.;
+        float y56 = -999.;
+        float x45 = -999.;
+        float y45 = -999.;
 
         float xtimetrack45 = -999.;
         float xtimetrack56 = -999.;
@@ -219,6 +219,9 @@ void calculateAndSaveHistograms(int maxEvents_,
         int n56220 = 0;
         int nboxtimetrack45 = 0;
         int nboxtimetrack56 = 0;
+
+        bool takePixelTrack45;
+        bool takePixelTrack56;
 
         // Handle to the collection of lite tracks
         edm::Handle<std::vector<CTPPSLocalTrackLite>> ppstracks;
@@ -238,34 +241,54 @@ void calculateAndSaveHistograms(int maxEvents_,
 
           if (track0->rpId() == 2014838784) {
             n45210++;
+            if (doNotTrust220_) {
+              x45 = track0->x();
+              y45 = track0->y();
+            }
           }
           if (track0->rpId() == 2031616000) {
             n56210++;
+            if (doNotTrust220_) {
+              x56 = track0->x();
+              y56 = track0->y();
+            }
           }
           /*
            * If 220 pixels are needed */
-          if (track0->rpId() == 2040004608) {
-            n56220++;
-            x56220 = track0->x();
-            y56220 = track0->y();
-          }
           if (track0->rpId() == 2023227392) {
             n45220++;
-            x45220 = track0->x();
-            y45220 = track0->y();
+            if (!doNotTrust220_) {
+              x45 = track0->x();
+              y45 = track0->y();
+            }
+          }
+          if (track0->rpId() == 2040004608) {
+            n56220++;
+            if (!doNotTrust220_) {
+              x56 = track0->x();
+              y56 = track0->y();
+            }
           }
           /**/
         }
 
+        if (doNotTrust220_) {
+          takePixelTrack45 = (n45210 == 1);
+          takePixelTrack56 = (n56210 == 1);
+        } else {
+          takePixelTrack45 = (n45210 == 1 && n45220 == 1);
+          takePixelTrack56 = (n56210 == 1 && n56220 == 1);
+        }
+
         // Skip everything unless the event has exactly 1 pixel track on at least one arm
-        if (((n45210 == 1) && (n45220 == 1)) || ((n56220 == 1) && (n56210 == 1))) {
+        if (takePixelTrack45 || takePixelTrack56) {
           // Denominator for efficiency: events with exactly 1 pixel track in the 45-210 pixels
-          if (n45210 == 1 && n45220 == 1)
-            deffden45_->Fill(x45220, y45220);
+          if (takePixelTrack45)
+            deffden45_->Fill(x45, y45);
 
           // Denominator for efficiency: events with exactly 1 pixel track in the 56-210 pixels
-          if (n56210 == 1 && n56220 == 1)
-            deffden56_->Fill(x56220, y56220);
+          if (takePixelTrack56)
+            deffden56_->Fill(x56, y56);
 
           /*
            * Loop again to check time-tracks for the per-arm efficiency numerator
@@ -275,15 +298,15 @@ void calculateAndSaveHistograms(int maxEvents_,
             if (track1->rpId() == 2054160384) {
               xtimetrack45 = track1->x();
 
-              if (n45210 == 1 && n45220 == 1) {
+              if (takePixelTrack45) {
                 // Pixel-diamond correlation to define matching cuts
-                xtpix21045_->Fill(x45220, xtimetrack45);
+                xtpix21045_->Fill(x45, xtimetrack45);
 
                 // Histogram for radiography
-                drad45_->Fill(x45220, y45220);
+                drad45_->Fill(x45, y45);
 
-                if (fabs(x45220 - xtimetrack45) < 20)  // x-matching between pixel+time tracks for eff. numerator
-                  deffnum45_->Fill(x45220, y45220);
+                if (fabs(x45 - xtimetrack45) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                  deffnum45_->Fill(x45, y45);
               }
 
               ntimetrack45++;
@@ -292,15 +315,15 @@ void calculateAndSaveHistograms(int maxEvents_,
             if (track1->rpId() == 2070937600) {
               xtimetrack56 = track1->x();
 
-              if (n56210 == 1 && n56220 == 1) {
+              if (takePixelTrack56) {
                 // Pixel-diamond correlation to define matching cuts
-                xtpix21056_->Fill(x56220, xtimetrack56);
+                xtpix21056_->Fill(x56, xtimetrack56);
 
                 // Histogram for radiography
-                drad56_->Fill(x56220, y56220);
+                drad56_->Fill(x56, y56);
 
-                if (fabs(x56220 - xtimetrack56) < 20)  // x-matching between pixel+time tracks for eff. numerator
-                  deffnum56_->Fill(x56220, y56220);
+                if (fabs(x56 - xtimetrack56) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                  deffnum56_->Fill(x56, y56);
               }
 
               ntimetrack56++;
@@ -308,15 +331,15 @@ void calculateAndSaveHistograms(int maxEvents_,
             if (track1->rpId() == 2056257536) {
               xboxtimetrack45 = track1->x();
 
-              if (n45210 == 1 && n45220 == 1) {
+              if (takePixelTrack45) {
                 // Pixel-diamond correlation to define matching cuts
-                xtpix21045_->Fill(x45220, xboxtimetrack45);
+                xtpix21045_->Fill(x45, xboxtimetrack45);
 
                 // Histogram for radiography
-                dboxrad45_->Fill(x45220, y45220);
+                dboxrad45_->Fill(x45, y45);
 
-                if (fabs(x45220 - xboxtimetrack45) < 20)  // x-matching between pixel+time tracks for eff. numerator
-                  dboxeffnum45_->Fill(x45220, y45220);
+                if (fabs(x45 - xboxtimetrack45) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                  dboxeffnum45_->Fill(x45, y45);
               }
 
               nboxtimetrack45++;
@@ -324,15 +347,15 @@ void calculateAndSaveHistograms(int maxEvents_,
             if (track1->rpId() == 2073034752) {
               xboxtimetrack56 = track1->x();
 
-              if (n56210 == 1 && n56220 == 1) {
+              if (takePixelTrack56) {
                 // Pixel-diamond correlation to define matching cuts
-                xtpix21056_->Fill(x56220, xboxtimetrack56);
+                xtpix21056_->Fill(x56, xboxtimetrack56);
 
                 // Histogram for radiography
-                dboxrad56_->Fill(x56220, y56220);
+                dboxrad56_->Fill(x56, y56);
 
-                if (fabs(x56220 - xboxtimetrack56) < 20)  // x-matching between pixel+time tracks for eff. numerator
-                  dboxeffnum56_->Fill(x56220, y56220);
+                if (fabs(x56 - xboxtimetrack56) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                  dboxeffnum56_->Fill(x56, y56);
               }
 
               nboxtimetrack56++;
@@ -342,15 +365,15 @@ void calculateAndSaveHistograms(int maxEvents_,
           /*
            *Histograms for anti-radiography: events with 1 track in pixels and none in the diamonds
            */
-          if (n45210 == 1 && n45220 == 1 && ntimetrack45 == 0)
-            dantirad45_->Fill(x45220, y45220);
-          if (n56210 == 1 && n56220 == 1 && ntimetrack56 == 0)
-            dantirad56_->Fill(x56220, y56220);
+          if (takePixelTrack45 && ntimetrack45 == 0)
+            dantirad45_->Fill(x45, y45);
+          if (takePixelTrack56 && ntimetrack56 == 0)
+            dantirad56_->Fill(x56, y56);
 
-          if (n45210 == 1 && n45220 == 1 && nboxtimetrack45 == 0)
-            dboxantirad45_->Fill(x45220, y45220);
-          if (n56210 == 1 && n56220 == 1 && nboxtimetrack56 == 0)
-            dboxantirad56_->Fill(x56220, y56220);
+          if (takePixelTrack45 && nboxtimetrack45 == 0)
+            dboxantirad45_->Fill(x45, y45);
+          if (takePixelTrack56 && nboxtimetrack56 == 0)
+            dboxantirad56_->Fill(x56, y56);
 
           /*
            * Now loop on Diamond rechits to do plane-by-plane efficiencies
@@ -375,138 +398,138 @@ void calculateAndSaveHistograms(int maxEvents_,
               float tot = rechit.toT();
 
               // Sector 45
-              if (station == 1 && plane == 0 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
+              if (station == 1 && plane == 0 && arm == 0 && takePixelTrack45 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x45 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45plane0_->Fill(x45220, y45220);
-                  tot45plane0_->Fill(x45220, y45220, tot);
+                  deffnum45plane0_->Fill(x45, y45);
+                  tot45plane0_->Fill(x45, y45, tot);
                 }
               }
-              if (station == 1 && plane == 1 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
+              if (station == 1 && plane == 1 && arm == 0 && takePixelTrack45 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x45 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45plane1_->Fill(x45220, y45220);
-                  tot45plane1_->Fill(x45220, y45220, tot);
+                  deffnum45plane1_->Fill(x45, y45);
+                  tot45plane1_->Fill(x45, y45, tot);
                 }
               }
-              if (station == 1 && plane == 2 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
+              if (station == 1 && plane == 2 && arm == 0 && takePixelTrack45 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x45 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45plane2_->Fill(x45220, y45220);
-                  tot45plane2_->Fill(x45220, y45220, tot);
+                  deffnum45plane2_->Fill(x45, y45);
+                  tot45plane2_->Fill(x45, y45, tot);
                 }
               }
-              if (station == 1 && plane == 3 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
+              if (station == 1 && plane == 3 && arm == 0 && takePixelTrack45 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x45 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45plane3_->Fill(x45220, y45220);
-                  tot45plane3_->Fill(x45220, y45220, tot);
+                  deffnum45plane3_->Fill(x45, y45);
+                  tot45plane3_->Fill(x45, y45, tot);
                 }
               }
 
               // Sector 56
-              if (station == 1 && plane == 0 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
+              if (station == 1 && plane == 0 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x56 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56plane0_->Fill(x56220, y56220);
-                  tot56plane0_->Fill(x56220, y56220, tot);
+                  deffnum56plane0_->Fill(x56, y56);
+                  tot56plane0_->Fill(x56, y56, tot);
                 }
               }
-              if (station == 1 && plane == 1 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
+              if (station == 1 && plane == 1 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x56 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56plane1_->Fill(x56220, y56220);
-                  tot56plane1_->Fill(x56220, y56220, tot);
+                  deffnum56plane1_->Fill(x56, y56);
+                  tot56plane1_->Fill(x56, y56, tot);
                 }
               }
-              if (station == 1 && plane == 2 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
+              if (station == 1 && plane == 2 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x56 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56plane2_->Fill(x56220, y56220);
-                  tot56plane2_->Fill(x56220, y56220, tot);
+                  deffnum56plane2_->Fill(x56, y56);
+                  tot56plane2_->Fill(x56, y56, tot);
                 }
               }
-              if (station == 1 && plane == 3 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
+              if (station == 1 && plane == 3 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x56 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56plane3_->Fill(x56220, y56220);
-                  tot56plane3_->Fill(x56220, y56220, tot);
+                  deffnum56plane3_->Fill(x56, y56);
+                  tot56plane3_->Fill(x56, y56, tot);
                 }
               }
 
               // Sector 45 box
-              if (station == 2 && plane == 0 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
+              if (station == 2 && plane == 0 && arm == 0 && takePixelTrack45 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x45 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45boxplane0_->Fill(x45220, y45220);
-                  tot45boxplane0_->Fill(x45220, y45220, tot);
+                  deffnum45boxplane0_->Fill(x45, y45);
+                  tot45boxplane0_->Fill(x45, y45, tot);
                 }
               }
-              if (station == 2 && plane == 1 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
+              if (station == 2 && plane == 1 && arm == 0 && takePixelTrack45 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x45 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45boxplane1_->Fill(x45220, y45220);
-                  tot45boxplane1_->Fill(x45220, y45220, tot);
+                  deffnum45boxplane1_->Fill(x45, y45);
+                  tot45boxplane1_->Fill(x45, y45, tot);
                 }
               }
-              if (station == 2 && plane == 2 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
+              if (station == 2 && plane == 2 && arm == 0 && takePixelTrack45 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x45 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45boxplane2_->Fill(x45220, y45220);
-                  tot45boxplane2_->Fill(x45220, y45220, tot);
+                  deffnum45boxplane2_->Fill(x45, y45);
+                  tot45boxplane2_->Fill(x45, y45, tot);
                 }
               }
-              if (station == 2 && plane == 3 && arm == 0 && n45220 == 1 && n45210 == 1 && tot >= totCut_) {
+              if (station == 2 && plane == 3 && arm == 0 && takePixelTrack45 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x45220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x45 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum45boxplane3_->Fill(x45220, y45220);
-                  tot45boxplane3_->Fill(x45220, y45220, tot);
+                  deffnum45boxplane3_->Fill(x45, y45);
+                  tot45boxplane3_->Fill(x45, y45, tot);
                 }
               }
 
               // Sector 56 box
-              if (station == 2 && plane == 0 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
+              if (station == 2 && plane == 0 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x56 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56boxplane0_->Fill(x56220, y56220);
-                  tot56boxplane0_->Fill(x56220, y56220, tot);
+                  deffnum56boxplane0_->Fill(x56, y56);
+                  tot56boxplane0_->Fill(x56, y56, tot);
                 }
               }
-              if (station == 2 && plane == 1 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
+              if (station == 2 && plane == 1 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x56 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56boxplane1_->Fill(x56220, y56220);
-                  tot56boxplane1_->Fill(x56220, y56220, tot);
+                  deffnum56boxplane1_->Fill(x56, y56);
+                  tot56boxplane1_->Fill(x56, y56, tot);
                 }
               }
-              if (station == 2 && plane == 2 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
+              if (station == 2 && plane == 2 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x56 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56boxplane2_->Fill(x56220, y56220);
-                  tot56boxplane2_->Fill(x56220, y56220, tot);
+                  deffnum56boxplane2_->Fill(x56, y56);
+                  tot56boxplane2_->Fill(x56, y56, tot);
                 }
               }
-              if (station == 2 && plane == 3 && arm == 1 && n56220 == 1 && n56210 == 1 && tot >= totCut_) {
+              if (station == 2 && plane == 3 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
                 numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56220 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
+                if (fabs(x56 - xrh) < 20)  //  x-matching between pixel+diamond rechits for eff. numerator
                 {
-                  deffnum56boxplane3_->Fill(x56220, y56220);
-                  tot56boxplane3_->Fill(x56220, y56220, tot);
+                  deffnum56boxplane3_->Fill(x56, y56);
+                  tot56boxplane3_->Fill(x56, y56, tot);
                 }
               }
             }
@@ -549,6 +572,11 @@ int main(int argc, char* argv[]) {
   parser.addOption("pickedBunchesCSV", CommandLineParser::kString, "Comma-separated list of picked bunches", "");
   parser.addOption("minimumToT", CommandLineParser::kDouble, "minimum ToT for rechits", -999.0);
   parser.addOption("mode", CommandLineParser::kInteger, "use AlCaPPS or PromptReco", 1);
+  parser.addOption("doNotTrust220",
+                   CommandLineParser::kInteger,
+                   "If 220 pixel has radiation damage, use only 210 to calculate denominators; 1 to use only 210 for "
+                   "judgement and 0 to use both",
+                   0);
 
   // parse arguments
   parser.parseArguments(argc, argv);
@@ -561,6 +589,11 @@ int main(int argc, char* argv[]) {
   std::string inputPathsCSV = parser.stringValue("inputPathsCSV");
   std::string pickedBunchesCSV = parser.stringValue("pickedBunchesCSV");
   int mode_ = parser.integerValue("mode");
+  bool doNotTrust220 = parser.integerValue("doNotTrust220") != 0;
+
+  if (doNotTrust220) {
+    edm::LogWarning("TimingEfficiencyRadiography") << "Tracks will be suggested by only pixel 210!";
+  }
 
   if (outputFileAllBunches_.empty() && outputFilePickedBunches_.empty()) {
     throw edm::Exception{edm::errors::NotFound}
@@ -677,8 +710,15 @@ int main(int argc, char* argv[]) {
                                   ", ")
         << "]";
 
-    calculateAndSaveHistograms(
-        maxEvents_, outputEvery_, totCut_, outputFilePickedBunches_, mode_, inFiles_, goodLumisections_, pickedBunches_);
+    calculateAndSaveHistograms(maxEvents_,
+                               outputEvery_,
+                               totCut_,
+                               outputFilePickedBunches_,
+                               mode_,
+                               inFiles_,
+                               doNotTrust220,
+                               goodLumisections_,
+                               pickedBunches_);
     edm::LogWarning("TimingEfficiencyRadiography") << "DONE Calculating histograms for picked bunches.";
   }
 
@@ -687,7 +727,7 @@ int main(int argc, char* argv[]) {
         << "outputFileAllBunches arguments provided. \nCalculating histograms for all bunches.";
 
     calculateAndSaveHistograms(
-        maxEvents_, outputEvery_, totCut_, outputFileAllBunches_, mode_, inFiles_, goodLumisections_);
+        maxEvents_, outputEvery_, totCut_, outputFileAllBunches_, mode_, inFiles_, doNotTrust220, goodLumisections_);
     edm::LogWarning("TimingEfficiencyRadiography") << "DONE Calculating histograms for all bunches.";
   }
 
