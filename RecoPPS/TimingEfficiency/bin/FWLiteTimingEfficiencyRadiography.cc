@@ -43,6 +43,15 @@ void calculateAndSaveHistograms(int maxEvents_,
                                 const std::vector<std::string>& inFiles_,
                                 std::optional<std::vector<std::pair<int, int>>> goodLumisections_ = std::nullopt,
                                 const std::set<int>& pickedBunches_ = {}) {
+
+  // ----------------------------------------------------------------------
+  // First Part:
+  //
+  //  * enable FWLite
+  //  * book the histograms of interest
+  //  * open the input file
+  // ----------------------------------------------------------------------
+
   // book a set of histograms
   fwlite::TFileService fs = fwlite::TFileService(outputFile_);
   TFileDirectory dir = fs.mkdir("diamondHistograms");
@@ -152,8 +161,9 @@ void calculateAndSaveHistograms(int maxEvents_,
           break;
 
         // simple event counter
-        if (outputEvery_ != 0 ? (ievt > 0 && ievt % outputEvery_ == 0) : false)
+        if (outputEvery_ > 0 && ievt > 0 && ievt % outputEvery_ == 0) {
           edm::LogWarning("TimingEfficiencyRadiography") << "processing event: " << ievt;
+        }
 
         // LumiSection
         lumiblock_ = ev.luminosityBlock();
@@ -334,7 +344,6 @@ void calculateAndSaveHistograms(int maxEvents_,
            */
           if (n45210 == 1 && n45220 == 1 && ntimetrack45 == 0)
             dantirad45_->Fill(x45220, y45220);
-
           if (n56210 == 1 && n56220 == 1 && ntimetrack56 == 0)
             dantirad56_->Fill(x56220, y56220);
 
@@ -521,14 +530,6 @@ int main(int argc, char* argv[]) {
   using optutl::CommandLineParser;
   using reco::Muon;
 
-  // ----------------------------------------------------------------------
-  // First Part:
-  //
-  //  * enable FWLite
-  //  * book the histograms of interest
-  //  * open the input file
-  // ----------------------------------------------------------------------
-
   // load framework libraries
   gSystem->Load("libFWCoreFWLite");
   FWLiteEnabler::enable();
@@ -568,7 +569,6 @@ int main(int argc, char* argv[]) {
 
   // AOD input files
   std::vector<std::string> inFiles_;
-
   {
     std::vector<std::string> tokens;
     boost::split(tokens, inputPathsCSV, boost::is_any_of(","));
