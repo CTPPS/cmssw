@@ -696,7 +696,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  if (outputFilePickedBunches_ > 0 && pickedBunches_.size() == 0) {
+  if (!outputFilePickedBunches_.empty() && pickedBunches_.size() == 0) {
     edm::LogWarning("TimingEfficiencyRadiography")
         << "outputFilePickedBunches argument provided but no bunches given in pickedBunchesCSV. Program will NOT "
            "run for picked bunches.";
