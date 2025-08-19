@@ -1002,11 +1002,10 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent, const edm::
     weight *= prescales.second; // Correct for the HLT prescale value
   }
 
-  // if (!validBunchArray_[iEvent.eventAuxiliary().bunchCrossing()])
-  // return;
+  if (!validBunchArray_[iEvent.eventAuxiliary().bunchCrossing()])
+  return;
   int bx = iEvent.eventAuxiliary().bunchCrossing();
-  if (validBunchArray_[bx])
-    h1BunchCrossing_->Fill(bx, weight);
+  h1BunchCrossing_->Fill(bx, weight);
 
 
   LHCInfoCombined lhcInfoCombined(iSetup, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_, useNewLHCInfo_);
