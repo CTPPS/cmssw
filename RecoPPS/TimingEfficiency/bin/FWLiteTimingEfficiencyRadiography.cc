@@ -61,67 +61,67 @@ void calculateAndSaveHistograms(int maxEvents_,
   TH2F* xtpix21056_ = dir.make<TH2F>("xtpix21056", "xtpix21056", 40, -10, 30, 40, -10, 30);
 
   // Denominator for all efficiencies
-  TH2F* deffden45_ = dir.make<TH2F>("deffden45", "deffden45", 200, -2, 20, 200, -8, 16);
-  TH2F* deffden56_ = dir.make<TH2F>("deffden56", "deffden56", 200, -2, 20, 200, -8, 16);
+  TH2F* deffden45_ = dir.make<TH2F>("deffden45", "deffden45", 220, -2, 20, 240, -8, 16);
+  TH2F* deffden56_ = dir.make<TH2F>("deffden56", "deffden56", 220, -2, 20, 240, -8, 16);
 
   // Numerator for per-arm/track efficiencies
-  TH2F* deffnum45_ = dir.make<TH2F>("deffnum45", "deffnum45", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum56_ = dir.make<TH2F>("deffnum56", "deffnum56", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45_ = dir.make<TH2F>("deffnum45", "deffnum45", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56_ = dir.make<TH2F>("deffnum56", "deffnum56", 220, -2, 20, 240, -8, 16);
 
-  TH2F* dboxeffnum45_ = dir.make<TH2F>("dboxeffnum45", "dboxeffnum45", 200, -2, 20, 200, -8, 16);
-  TH2F* dboxeffnum56_ = dir.make<TH2F>("dboxeffnum56", "dboxeffnum56", 200, -2, 20, 200, -8, 16);
+  TH2F* dboxeffnum45_ = dir.make<TH2F>("dboxeffnum45", "dboxeffnum45", 220, -2, 20, 240, -8, 16);
+  TH2F* dboxeffnum56_ = dir.make<TH2F>("dboxeffnum56", "dboxeffnum56", 220, -2, 20, 240, -8, 16);
 
   // Numerator for per-plane efficiencies, cylindrical RPs
-  TH2F* deffnum45plane0_ = dir.make<TH2F>("deffnum45plane0", "deffnum45plane0", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum56plane0_ = dir.make<TH2F>("deffnum56plane0", "deffnum56plane0", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum45plane1_ = dir.make<TH2F>("deffnum45plane1", "deffnum45plane1", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum56plane1_ = dir.make<TH2F>("deffnum56plane1", "deffnum56plane1", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum45plane2_ = dir.make<TH2F>("deffnum45plane2", "deffnum45plane2", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum56plane2_ = dir.make<TH2F>("deffnum56plane2", "deffnum56plane2", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum45plane3_ = dir.make<TH2F>("deffnum45plane3", "deffnum45plane3", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum56plane3_ = dir.make<TH2F>("deffnum56plane3", "deffnum56plane3", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45plane0_ = dir.make<TH2F>("deffnum45plane0", "deffnum45plane0", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56plane0_ = dir.make<TH2F>("deffnum56plane0", "deffnum56plane0", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45plane1_ = dir.make<TH2F>("deffnum45plane1", "deffnum45plane1", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56plane1_ = dir.make<TH2F>("deffnum56plane1", "deffnum56plane1", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45plane2_ = dir.make<TH2F>("deffnum45plane2", "deffnum45plane2", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56plane2_ = dir.make<TH2F>("deffnum56plane2", "deffnum56plane2", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45plane3_ = dir.make<TH2F>("deffnum45plane3", "deffnum45plane3", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56plane3_ = dir.make<TH2F>("deffnum56plane3", "deffnum56plane3", 220, -2, 20, 240, -8, 16);
 
   // Numerator for per-plane efficiencies, box RPs
-  TH2F* deffnum45boxplane0_ = dir.make<TH2F>("deffnum45boxplane0", "deffnum45boxplane0", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum56boxplane0_ = dir.make<TH2F>("deffnum56boxplane0", "deffnum56boxplane0", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum45boxplane1_ = dir.make<TH2F>("deffnum45boxplane1", "deffnum45boxplane1", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum56boxplane1_ = dir.make<TH2F>("deffnum56boxplane1", "deffnum56boxplane1", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum45boxplane2_ = dir.make<TH2F>("deffnum45boxplane2", "deffnum45boxplane2", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum56boxplane2_ = dir.make<TH2F>("deffnum56boxplane2", "deffnum56boxplane2", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum45boxplane3_ = dir.make<TH2F>("deffnum45boxplane3", "deffnum45boxplane3", 200, -2, 20, 200, -8, 16);
-  TH2F* deffnum56boxplane3_ = dir.make<TH2F>("deffnum56boxplane3", "deffnum56boxplane3", 200, -2, 20, 200, -8, 16);
+  TH2F* deffnum45boxplane0_ = dir.make<TH2F>("deffnum45boxplane0", "deffnum45boxplane0", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56boxplane0_ = dir.make<TH2F>("deffnum56boxplane0", "deffnum56boxplane0", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45boxplane1_ = dir.make<TH2F>("deffnum45boxplane1", "deffnum45boxplane1", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56boxplane1_ = dir.make<TH2F>("deffnum56boxplane1", "deffnum56boxplane1", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45boxplane2_ = dir.make<TH2F>("deffnum45boxplane2", "deffnum45boxplane2", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56boxplane2_ = dir.make<TH2F>("deffnum56boxplane2", "deffnum56boxplane2", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45boxplane3_ = dir.make<TH2F>("deffnum45boxplane3", "deffnum45boxplane3", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56boxplane3_ = dir.make<TH2F>("deffnum56boxplane3", "deffnum56boxplane3", 220, -2, 20, 240, -8, 16);
 
   // Average ToT, cylindrical RPs
-  TH2F* tot45plane0_ = dir.make<TH2F>("tot45plane0", "tot45plane0", 200, -2, 20, 200, -8, 16);
-  TH2F* tot56plane0_ = dir.make<TH2F>("tot56plane0", "tot56plane0", 200, -2, 20, 200, -8, 16);
-  TH2F* tot45plane1_ = dir.make<TH2F>("tot45plane1", "tot45plane1", 200, -2, 20, 200, -8, 16);
-  TH2F* tot56plane1_ = dir.make<TH2F>("tot56plane1", "tot56plane1", 200, -2, 20, 200, -8, 16);
-  TH2F* tot45plane2_ = dir.make<TH2F>("tot45plane2", "tot45plane2", 200, -2, 20, 200, -8, 16);
-  TH2F* tot56plane2_ = dir.make<TH2F>("tot56plane2", "tot56plane2", 200, -2, 20, 200, -8, 16);
-  TH2F* tot45plane3_ = dir.make<TH2F>("tot45plane3", "tot45plane3", 200, -2, 20, 200, -8, 16);
-  TH2F* tot56plane3_ = dir.make<TH2F>("tot56plane3", "tot56plane3", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45plane0_ = dir.make<TH2F>("tot45plane0", "tot45plane0", 220, -2, 20, 240, -8, 16);
+  TH2F* tot56plane0_ = dir.make<TH2F>("tot56plane0", "tot56plane0", 220, -2, 20, 240, -8, 16);
+  TH2F* tot45plane1_ = dir.make<TH2F>("tot45plane1", "tot45plane1", 220, -2, 20, 240, -8, 16);
+  TH2F* tot56plane1_ = dir.make<TH2F>("tot56plane1", "tot56plane1", 220, -2, 20, 240, -8, 16);
+  TH2F* tot45plane2_ = dir.make<TH2F>("tot45plane2", "tot45plane2", 220, -2, 20, 240, -8, 16);
+  TH2F* tot56plane2_ = dir.make<TH2F>("tot56plane2", "tot56plane2", 220, -2, 20, 240, -8, 16);
+  TH2F* tot45plane3_ = dir.make<TH2F>("tot45plane3", "tot45plane3", 220, -2, 20, 240, -8, 16);
+  TH2F* tot56plane3_ = dir.make<TH2F>("tot56plane3", "tot56plane3", 220, -2, 20, 240, -8, 16);
 
   // Average ToT, box RPs
-  TH2F* tot45boxplane0_ = dir.make<TH2F>("tot45boxplane0", "tot45boxplane0", 200, -2, 20, 200, -8, 16);
-  TH2F* tot56boxplane0_ = dir.make<TH2F>("tot56boxplane0", "tot56boxplane0", 200, -2, 20, 200, -8, 16);
-  TH2F* tot45boxplane1_ = dir.make<TH2F>("tot45boxplane1", "tot45boxplane1", 200, -2, 20, 200, -8, 16);
-  TH2F* tot56boxplane1_ = dir.make<TH2F>("tot56boxplane1", "tot56boxplane1", 200, -2, 20, 200, -8, 16);
-  TH2F* tot45boxplane2_ = dir.make<TH2F>("tot45boxplane2", "tot45boxplane2", 200, -2, 20, 200, -8, 16);
-  TH2F* tot56boxplane2_ = dir.make<TH2F>("tot56boxplane2", "tot56boxplane2", 200, -2, 20, 200, -8, 16);
-  TH2F* tot45boxplane3_ = dir.make<TH2F>("tot45boxplane3", "tot45boxplane3", 200, -2, 20, 200, -8, 16);
-  TH2F* tot56boxplane3_ = dir.make<TH2F>("tot56boxplane3", "tot56boxplane3", 200, -2, 20, 200, -8, 16);
+  TH2F* tot45boxplane0_ = dir.make<TH2F>("tot45boxplane0", "tot45boxplane0", 220, -2, 20, 240, -8, 16);
+  TH2F* tot56boxplane0_ = dir.make<TH2F>("tot56boxplane0", "tot56boxplane0", 220, -2, 20, 240, -8, 16);
+  TH2F* tot45boxplane1_ = dir.make<TH2F>("tot45boxplane1", "tot45boxplane1", 220, -2, 20, 240, -8, 16);
+  TH2F* tot56boxplane1_ = dir.make<TH2F>("tot56boxplane1", "tot56boxplane1", 220, -2, 20, 240, -8, 16);
+  TH2F* tot45boxplane2_ = dir.make<TH2F>("tot45boxplane2", "tot45boxplane2", 220, -2, 20, 240, -8, 16);
+  TH2F* tot56boxplane2_ = dir.make<TH2F>("tot56boxplane2", "tot56boxplane2", 220, -2, 20, 240, -8, 16);
+  TH2F* tot45boxplane3_ = dir.make<TH2F>("tot45boxplane3", "tot45boxplane3", 220, -2, 20, 240, -8, 16);
+  TH2F* tot56boxplane3_ = dir.make<TH2F>("tot56boxplane3", "tot56boxplane3", 220, -2, 20, 240, -8, 16);
 
   TH2F* numvsls_ = dir.make<TH2F>("numvsls_", "numvsls_", 1000, 0, 1000, 18, -2, 16);
 
   // Radiographies and anti-radiographies
-  TH2F* drad45_ = dir.make<TH2F>("drad45", "drad45", 200, -2, 20, 200, -8, 16);
-  TH2F* drad56_ = dir.make<TH2F>("drad56", "drad56", 200, -2, 20, 200, -8, 16);
-  TH2F* dantirad45_ = dir.make<TH2F>("dantirad45", "dantirad45", 200, -2, 20, 200, -8, 16);
-  TH2F* dantirad56_ = dir.make<TH2F>("dantirad56", "dantirad56", 200, -2, 20, 200, -8, 16);
-  TH2F* dboxrad45_ = dir.make<TH2F>("dboxrad45", "dboxrad45", 200, -2, 20, 200, -8, 16);
-  TH2F* dboxrad56_ = dir.make<TH2F>("dboxrad56", "dboxrad56", 200, -2, 20, 200, -8, 16);
-  TH2F* dboxantirad45_ = dir.make<TH2F>("dboxantirad45", "dboxantirad45", 200, -2, 20, 200, -8, 16);
-  TH2F* dboxantirad56_ = dir.make<TH2F>("dboxantirad56", "dboxantirad56", 200, -2, 20, 200, -8, 16);
+  TH2F* drad45_ = dir.make<TH2F>("drad45", "drad45", 220, -2, 20, 240, -8, 16);
+  TH2F* drad56_ = dir.make<TH2F>("drad56", "drad56", 220, -2, 20, 240, -8, 16);
+  TH2F* dantirad45_ = dir.make<TH2F>("dantirad45", "dantirad45", 220, -2, 20, 240, -8, 16);
+  TH2F* dantirad56_ = dir.make<TH2F>("dantirad56", "dantirad56", 220, -2, 20, 240, -8, 16);
+  TH2F* dboxrad45_ = dir.make<TH2F>("dboxrad45", "dboxrad45", 220, -2, 20, 240, -8, 16);
+  TH2F* dboxrad56_ = dir.make<TH2F>("dboxrad56", "dboxrad56", 220, -2, 20, 240, -8, 16);
+  TH2F* dboxantirad45_ = dir.make<TH2F>("dboxantirad45", "dboxantirad45", 220, -2, 20, 240, -8, 16);
+  TH2F* dboxantirad56_ = dir.make<TH2F>("dboxantirad56", "dboxantirad56", 220, -2, 20, 240, -8, 16);
 
   TH1F* ls_ = dir.make<TH1F>("ls", "ls", 2000, 0, 2000);
 
@@ -281,6 +281,8 @@ void calculateAndSaveHistograms(int maxEvents_,
           /*
            * Loop again to check time-tracks for the per-arm efficiency numerator
            */
+          bool deffnum45_changed_ = false, deffnum56_changed_ = false, dboxeffnum45_changed_ = false,
+               dboxeffnum56_changed = false;
           for (std::vector<CTPPSLocalTrackLite>::const_iterator track1 = ppstracks->begin(); track1 != ppstracks->end();
                ++track1) {
             if (track1->rpId() == 2054160384) {
@@ -293,8 +295,11 @@ void calculateAndSaveHistograms(int maxEvents_,
                 // Histogram for radiography
                 drad45_->Fill(x45220, y45220);
 
-                if (fabs(x45220 - xtimetrack45) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                if (!deffnum45_changed_ &&
+                    fabs(x45220 - xtimetrack45) < 20) {  // x-matching between pixel+time tracks for eff. numerator
                   deffnum45_->Fill(x45220, y45220);
+                  deffnum45_changed_ = true;
+                }
               }
 
               ntimetrack45++;
@@ -310,8 +315,11 @@ void calculateAndSaveHistograms(int maxEvents_,
                 // Histogram for radiography
                 drad56_->Fill(x56220, y56220);
 
-                if (fabs(x56220 - xtimetrack56) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                if (!deffnum56_changed_ &&
+                    fabs(x56220 - xtimetrack56) < 20) {  // x-matching between pixel+time tracks for eff. numerator
                   deffnum56_->Fill(x56220, y56220);
+                  deffnum56_changed_ = true;
+                }
               }
 
               ntimetrack56++;
@@ -326,8 +334,11 @@ void calculateAndSaveHistograms(int maxEvents_,
                 // Histogram for radiography
                 dboxrad45_->Fill(x45220, y45220);
 
-                if (fabs(x45220 - xboxtimetrack45) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                if (!dboxeffnum45_changed_ &&
+                    fabs(x45220 - xboxtimetrack45) < 20) {  // x-matching between pixel+time tracks for eff. numerator
                   dboxeffnum45_->Fill(x45220, y45220);
+                  dboxeffnum45_changed_ = true;
+                }
               }
 
               nboxtimetrack45++;
@@ -342,8 +353,11 @@ void calculateAndSaveHistograms(int maxEvents_,
                 // Histogram for radiography
                 dboxrad56_->Fill(x56220, y56220);
 
-                if (fabs(x56220 - xboxtimetrack56) < 20)  // x-matching between pixel+time tracks for eff. numerator
+                if (!dboxeffnum56_changed &&
+                    fabs(x56220 - xboxtimetrack56) < 20) {  // x-matching between pixel+time tracks for eff. numerator
                   dboxeffnum56_->Fill(x56220, y56220);
+                  dboxeffnum56_changed = true;
+                }
               }
 
               nboxtimetrack56++;
