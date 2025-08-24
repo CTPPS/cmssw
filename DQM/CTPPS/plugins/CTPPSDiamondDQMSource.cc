@@ -812,6 +812,11 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
       // to preprare correlation plot, we need to select tracks from nr_hr pot in 220m station
       const CTPPSDiamondDetId detId_220nr_hr(tracks_220nr_hr.detId());
 
+    // extract the rotation angle
+      auto cosRotAngle_220nr_hr = diamRotations_.at(detId_220nr_hr) * CTPPSGeometry::Vector(1, 0, 0);
+
+
+
       // selecting only tracks from 220nr station, realised as skipping tracks from 220cyl station
       if ((detId_220nr_hr.rp() == CTPPS_DIAMOND_CYL_RP_ID) &&
           (detId_220nr_hr.station() == CTPPS_DIAMOND_CYL_STATION_ID))
@@ -826,12 +831,13 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
           continue;
 
         // get the bins from per-pot plots
-        int startBin_220nr_hr = trackHistoInTimeTmp->FindBin(
-            track_220nr_hr.x0() - diamShifts_[detId_220nr_hr.rpId()].global - track_220nr_hr.x0Sigma());
+        auto localTrackX_220nr_hr = (track_220nr_hr.x0() - diamTranslations_.at(detId_220nr_hr).x() + diamHalfWidths_.at(detId_220nr_hr) - track_220nr_hr.x0Sigma()) / cosRotAngle_220nr_hr.x();
+        int startBin_220nr_hr = trackHistoInTimeTmp->FindBin(localTrackX_220nr_hr);
         int numOfBins_220nr_hr = 2 * track_220nr_hr.x0Sigma() * INV_DISPLAY_RESOLUTION_FOR_HITS_MM;
 
         for (const auto& tracks_220cyl : *diamondLocalTracks) {
           CTPPSDiamondDetId detId_220cyl(tracks_220cyl.detId());
+          auto cosRotAngle_220cyl = diamRotations_.at(detId_220cyl) * CTPPSGeometry::Vector(1, 0, 0);
 
           // select tracks in the same arm, but belonging to the cylindrical pot
           // that means skipping tracks from the opposite arm (skip if 220nr_hr.arm != 220cyl.arm)
@@ -849,8 +855,8 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
           for (const auto& track_220cyl : tracks_220cyl) {
             if (!track_220cyl.isValid())
               continue;
-            int startBin_220cyl = trackHistoTmpYAxis->FindBin(
-                track_220cyl.x0() - diamShifts_[detId_220cyl.rpId()].global - track_220cyl.x0Sigma());
+            auto localTrackX_220cyl = (track_220cyl.x0() - diamTranslations_.at(detId_220cyl).x() + diamHalfWidths_.at(detId_220cyl) - track_220cyl.x0Sigma()) / cosRotAngle_220cyl.x();
+            int startBin_220cyl = trackHistoTmpYAxis->FindBin(localTrackX_220cyl);
             int numOfBins_220cyl = 2 * track_220cyl.x0Sigma() * INV_DISPLAY_RESOLUTION_FOR_HITS_MM;
 
             // fill the correlation plot
@@ -1028,7 +1034,6 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
   // Using CTPPSDiamondLocalTrack
   for (const auto& tracks : *diamondLocalTracks) {
     const CTPPSDiamondDetId detId(tracks.detId()), detId_pot(detId.rpId());
-    const auto& x_shift = diamShifts_.at(detId_pot);
     // extract the rotation angle for the diamond pot
     auto cosRotAngle = diamRotations_.at(detId_pot) * CTPPSGeometry::Vector(1, 0, 0);
 
@@ -1042,9 +1047,11 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
       if (potPlots_.count(detId_pot) == 0)
         continue;
 
+      auto localTrackX = (track.x0() - diamTranslations_.at(detId_pot).x() + diamHalfWidths_.at(detId_pot) - track.x0Sigma()) / cosRotAngle.x();
+
       TH2F* trackHistoOOTTmp = potPlots_[detId_pot].trackDistributionOOT->getTH2F();
       TAxis* trackHistoOOTTmpYAxis = trackHistoOOTTmp->GetYaxis();
-      int startBin = trackHistoOOTTmpYAxis->FindBin(track.x0() - x_shift.global - track.x0Sigma());
+      int startBin = trackHistoOOTTmpYAxis->FindBin((localTrackX));
       int numOfBins = 2 * track.x0Sigma() * INV_DISPLAY_RESOLUTION_FOR_HITS_MM;
       for (int i = 0; i < numOfBins; ++i)
         trackHistoOOTTmp->Fill(track.ootIndex(), trackHistoOOTTmpYAxis->GetBinCenter(startBin + i));
@@ -1053,10 +1060,6 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
         TH1F* trackHistoInTimeTmp = potPlots_[detId_pot].trackDistribution->getTH1F();
 
         // X coordinate of the left edge of the track in the local coordinate system
-        auto localTrackX =
-            (track.x0() - diamTranslations_.at(detId_pot).x() + diamHalfWidths_.at(detId_pot) - track.x0Sigma()) /
-            cosRotAngle.x();
-
         int startBin = trackHistoInTimeTmp->FindBin((localTrackX));
         int numOfBins = 2 * track.x0Sigma() * INV_DISPLAY_RESOLUTION_FOR_HITS_MM;
         for (int i = 0; i < numOfBins; ++i)

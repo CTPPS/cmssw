@@ -24,6 +24,8 @@
 #include "DataFormats/CTPPSReco/interface/CTPPSDiamondLocalTrack.h"
 
 #include "RecoPPS/Local/interface/CTPPSDiamondTrackRecognition.h"
+#include "Geometry/Records/interface/VeryForwardRealGeometryRecord.h"
+#include "Geometry/VeryForwardGeometryBuilder/interface/CTPPSGeometry.h"
 
 class CTPPSDiamondLocalTrackFitter : public edm::stream::EDProducer<> {
 public:
@@ -37,21 +39,26 @@ private:
   edm::EDGetTokenT<edm::DetSetVector<CTPPSDiamondRecHit> > recHitsToken_;
   const edm::ParameterSet trk_algo_params_;
   std::unordered_map<CTPPSDetId, std::unique_ptr<CTPPSDiamondTrackRecognition> > trk_algo_;
+  edm::ESGetToken<CTPPSGeometry, VeryForwardRealGeometryRecord> ctppsGeometryEventToken_;
 };
 
 CTPPSDiamondLocalTrackFitter::CTPPSDiamondLocalTrackFitter(const edm::ParameterSet& iConfig)
     : recHitsToken_(
           consumes<edm::DetSetVector<CTPPSDiamondRecHit> >(iConfig.getParameter<edm::InputTag>("recHitsTag"))),
-      trk_algo_params_(iConfig.getParameter<edm::ParameterSet>("trackingAlgorithmParams")) {
+          trk_algo_params_(iConfig.getParameter<edm::ParameterSet>("trackingAlgorithmParams")),
+          ctppsGeometryEventToken_(esConsumes<CTPPSGeometry, VeryForwardRealGeometryRecord>()){
   produces<edm::DetSetVector<CTPPSDiamondLocalTrack> >();
 }
 
 void CTPPSDiamondLocalTrackFitter::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   // prepare the output
-  auto pOut = std::make_unique<edm::DetSetVector<CTPPSDiamondLocalTrack> >();
+  auto pOutLocal = std::make_unique<edm::DetSetVector<CTPPSDiamondLocalTrack> >();
+  auto pOutGlobal = std::make_unique<edm::DetSetVector<CTPPSDiamondLocalTrack> >();
 
   edm::Handle<edm::DetSetVector<CTPPSDiamondRecHit> > recHits;
   iEvent.getByToken(recHitsToken_, recHits);
+
+  const CTPPSGeometry* ctppsGeometry = &iSetup.getData(ctppsGeometryEventToken_);
 
   // clear all hits possibly inherited from previous event
   for (auto& algo_vs_id : trk_algo_)
@@ -65,17 +72,72 @@ void CTPPSDiamondLocalTrackFitter::produce(edm::Event& iEvent, const edm::EventS
       trk_algo_[detid] = std::make_unique<CTPPSDiamondTrackRecognition>(trk_algo_params_);
     for (const auto& hit : vec)
       // skip hits without a leading edge
-      if (hit.ootIndex() != CTPPSDiamondRecHit::TIMESLICE_WITHOUT_LEADING)
-        trk_algo_[detid]->addHit(hit);
+      if (hit.ootIndex() != CTPPSDiamondRecHit::TIMESLICE_WITHOUT_LEADING){
+
+        // create a copy of the hit to transform it to the local coordinates in X and Y
+        CTPPSDiamondRecHit hitCopy(hit);
+        auto localVector = CTPPSGeometry::Vector(hit.x(), hit.y(), hit.z());
+        const auto diam = ctppsGeometry->sensor(detid);
+        // do the global to local transformation
+        // Global = Rotation * Local + Translation
+        // Local = Rotation^-1 * (Global - Translation)
+        localVector -= diam->translation();
+        localVector = diam->rotation().Inverse() * localVector;
+        hitCopy.setX(localVector.x());
+        hitCopy.setY(localVector.y());
+        // print X,Y,Z coordinates before and after transformation
+        // std::cout << "Hit before transformation: X=" << hit.x() << ", Y=" << hit.y() << ", Z=" << hit.z() << std::endl;
+        // std::cout << "Hit after transformation: X=" << localVector.x() << std::endl;
+       
+        trk_algo_[detid]->addHit(hitCopy);
+      }
+        
   }
 
-  // build the tracks for all stations
+  // build the local tracks for all stations
   for (auto& algo_vs_id : trk_algo_) {
-    auto& tracks = pOut->find_or_insert(algo_vs_id.first);
+    auto& tracks = pOutLocal->find_or_insert(algo_vs_id.first);
     algo_vs_id.second->produceTracks(tracks);
   }
 
-  iEvent.put(std::move(pOut));
+  for (const auto& vec : *pOutLocal) {
+    const CTPPSDiamondDetId raw_detid(vec.detId()), detid(raw_detid.arm(), raw_detid.station(), raw_detid.rp());
+    const auto diam = ctppsGeometry->sensor(detid);
+    pOutGlobal->find_or_insert(detid);
+    for (const auto& track : vec) {
+      auto trackCopy = track; // make a copy of the track to transform it
+      auto globalVector = CTPPSGeometry::Vector(track.x0(), track.y0(), track.z0());
+
+      // do the global to local transformation, doing first the rotation and then the translation
+      globalVector = diam->rotation() * globalVector;
+      globalVector += diam->translation();
+      auto globalPoint =  math::XYZPoint(globalVector.x(), globalVector.y(), track.z0());
+
+      trackCopy.setPosition(globalPoint);
+      pOutGlobal->operator[](detid).push_back(trackCopy);
+    }
+  }
+
+  // // print the local tracks
+  // std::cout << "Local tracks for event " << iEvent.id() << ":" << std::endl;
+  // for (const auto& vec : *pOutLocal) {
+  //   const CTPPSDiamondDetId raw_detid(vec.detId()), detid(raw_detid.arm(), raw_detid.station(), raw_detid.rp());
+  //   std::cout << "  DetId: " << detid << std::endl;
+  //   for (const auto& track : vec) {
+  //     std::cout << "    Track: x0=" << track.x0() << ", y0=" << track.y0() << ", z0=" << track.z0() << std::endl;
+  //   }
+  // }
+  // // print the global tracks
+  // std::cout << "Global tracks for event " << iEvent.id() << ":" << std::endl;
+  // for (const auto& vec : *pOutGlobal) {
+  //   const CTPPSDiamondDetId raw_detid(vec.detId()), detid(raw_detid.arm(), raw_detid.station(), raw_detid.rp());
+  //   std::cout << "  DetId: " << detid << std::endl;
+  //   for (const auto& track : vec) {
+  //     std::cout << "    Track: x0=" << track.x0() << ", y0=" << track.y0() << ", z0=" << track.z0() << std::endl;
+  //   }
+  // }
+
+  iEvent.put(std::move(pOutGlobal));
 }
 
 void CTPPSDiamondLocalTrackFitter::fillDescriptions(edm::ConfigurationDescriptions& descr) {
