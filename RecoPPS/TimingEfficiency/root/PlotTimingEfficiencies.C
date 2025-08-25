@@ -85,13 +85,13 @@ void PlotTimingEfficiencies(TString infile = "timingHistograms.root")
 
   TCanvas *c3 = new TCanvas("c3","c3");
   c3->Divide(2,1);
-  c3->cd(1); num45->Draw("colz"); num45->SetTitle("45 time-tracks"); num45->SetStats(0); num45->SetMaximum(1);
-  c3->cd(2); num56->Draw("colz"); num56->SetTitle("56 time-tracks"); num56->SetStats(0); num56->SetMaximum(1);
+  c3->cd(1); num45->Draw("colz"); num45->SetTitle("45 cyl time-tracks"); num45->SetStats(0); num45->SetMaximum(1);
+  c3->cd(2); num56->Draw("colz"); num56->SetTitle("56 cyl time-tracks"); num56->SetStats(0); num56->SetMaximum(1);
 
   TCanvas *c4 = new TCanvas("c4","c4");
   c4->Divide(2,1);
-  c4->cd(1); boxnum45->Draw("colz"); boxnum45->SetTitle("45 time-tracks"); boxnum45->SetStats(0); boxnum45->SetMaximum(1);
-  c4->cd(2); boxnum56->Draw("colz"); boxnum56->SetTitle("56 time-tracks"); boxnum56->SetStats(0); boxnum56->SetMaximum(1);
+  c4->cd(1); boxnum45->Draw("colz"); boxnum45->SetTitle("45 box time-tracks"); boxnum45->SetStats(0); boxnum45->SetMaximum(1);
+  c4->cd(2); boxnum56->Draw("colz"); boxnum56->SetTitle("56 box time-tracks"); boxnum56->SetStats(0); boxnum56->SetMaximum(1);
 
   TObjArray *tx = infile.Tokenize(".");
   TString outplot = ((TObjString *)(tx->At(0)))->String();
