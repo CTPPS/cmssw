@@ -61,6 +61,7 @@ private:
   static constexpr int t2TE = 0, t2LE = 1, t2MT = 2, t2ML = 3;
 
   const unsigned int nbinsx_, nbinsy_;
+  const bool t2Plots_;
   const unsigned int windowsNum_;
 
   struct SectorPlots {
@@ -214,77 +215,85 @@ TotemT2DQMSource::TotemT2DQMSource(const edm::ParameterSet& iConfig)
     : digiToken_(consumes<edmNew::DetSetVector<TotemT2Digi>>(iConfig.getParameter<edm::InputTag>("digisTag"))),
       nbinsx_(iConfig.getParameter<unsigned int>("nbinsx")),
       nbinsy_(iConfig.getParameter<unsigned int>("nbinsy")),
+      t2Plots_(iConfig.getParameter<bool>("specialRunT2")),
       windowsNum_(iConfig.getParameter<unsigned int>("windowsNum")) {}
 
 void TotemT2DQMSource::dqmBeginRun(const edm::Run&, const edm::EventSetup&) {}
 
 void TotemT2DQMSource::bookHistograms(DQMStore::IBooker& ibooker, const edm::Run&, const edm::EventSetup& iSetup) {
-  ibooker.cd();
-  ibooker.setCurrentFolder("TotemT2");
+  if (t2Plots_) {
+    ibooker.cd();
+    ibooker.setCurrentFolder("TotemT2");
 
-  bookErrorFlagsHistogram(ibooker);
+    bookErrorFlagsHistogram(ibooker);
 
-  for (unsigned int arm = 0; arm <= CTPPSDetId::maxArm; ++arm) {
-    for (unsigned int pl = 0; pl <= TotemT2DetId::maxPlane; ++pl) {
-      const TotemT2DetId detid(arm, pl, 0);
-      const TotemT2DetId planeId(detid.planeId());
-      planePlots_[planeId] = PlanePlots(ibooker, planeId, nbinsx_, nbinsy_);
-      for (unsigned int ch = 0; ch <= TotemT2DetId::maxChannel; ++ch) {
-        const TotemT2DetId detidCh(arm, pl, ch);
-        channelPlots_[detidCh] = ChannelPlots(ibooker, detidCh, windowsNum_);
+    for (unsigned int arm = 0; arm <= CTPPSDetId::maxArm; ++arm) {
+      for (unsigned int pl = 0; pl <= TotemT2DetId::maxPlane; ++pl) {
+        const TotemT2DetId detid(arm, pl, 0);
+        const TotemT2DetId planeId(detid.planeId());
+        planePlots_[planeId] = PlanePlots(ibooker, planeId, nbinsx_, nbinsy_);
+        for (unsigned int ch = 0; ch <= TotemT2DetId::maxChannel; ++ch) {
+          const TotemT2DetId detidCh(arm, pl, ch);
+          channelPlots_[detidCh] = ChannelPlots(ibooker, detidCh, windowsNum_);
+        }
       }
+      const TotemT2DetId detid(arm, 0, 0);
+      const TotemT2DetId secId(detid.armId());
+      sectorPlots_[secId] = SectorPlots(ibooker, secId, nbinsx_, nbinsy_, windowsNum_);
     }
-    const TotemT2DetId detid(arm, 0, 0);
-    const TotemT2DetId secId(detid.armId());
-    sectorPlots_[secId] = SectorPlots(ibooker, secId, nbinsx_, nbinsy_, windowsNum_);
-  }
 
-  // build a segmentation helper for the size of histograms previously booked
-  segm_ = std::make_unique<TotemT2Segmentation>(nbinsx_, nbinsy_);
+    // build a segmentation helper for the size of histograms previously booked
+    segm_ = std::make_unique<TotemT2Segmentation>(nbinsx_, nbinsy_);
+  }
 }
 
 void TotemT2DQMSource::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup) {
-  // fill digis information
-  std::unordered_map<unsigned int, std::set<unsigned int>> planes;
+  if (t2Plots_) {
+    // fill digis information
+    std::unordered_map<unsigned int, std::set<unsigned int>> planes;
 
-  for (const auto& ds_digis : iEvent.get(digiToken_)) {
-    if (!ds_digis.empty()) {
-      const TotemT2DetId detid(ds_digis.detId());
-      const TotemT2DetId planeId(detid.planeId());
-      for (const auto& digi : ds_digis) {
-        if (digi.hasLE()) {
-          segm_->fill(planePlots_[planeId].digisMultiplicity->getTH2D(), detid);
-          if (digi.hasTE())
-            fillTriggerBitset(detid);
+    if (!iEvent.getHandle(digiToken_).isValid())
+      return;
+
+    for (const auto& ds_digis : iEvent.get(digiToken_)) {
+      if (!ds_digis.empty()) {
+        const TotemT2DetId detid(ds_digis.detId());
+        const TotemT2DetId planeId(detid.planeId());
+        for (const auto& digi : ds_digis) {
+          if (digi.hasLE()) {
+            segm_->fill(planePlots_[planeId].digisMultiplicity->getTH2D(), detid);
+            if (digi.hasTE())
+              fillTriggerBitset(detid);
+          }
+          fillErrorFlagsHistogram(digi, detid);
+          fillEdges(digi, detid);
+          fillToT(digi, detid);
+          fillFlags(digi, detid);
+          int bx = iEvent.bunchCrossing();
+          fillBX(digi, detid, bx);
+          if (digi.hasLE() && digi.hasTE())  //good digi
+            fillActivePlanes(planes, detid);
         }
-        fillErrorFlagsHistogram(digi, detid);
-        fillEdges(digi, detid);
-        fillToT(digi, detid);
-        fillFlags(digi, detid);
-        int bx = iEvent.bunchCrossing();
-        fillBX(digi, detid, bx);
-        if (digi.hasLE() && digi.hasTE())  //good digi
-          fillActivePlanes(planes, detid);
       }
     }
-  }
 
-  for (const auto& plt : sectorPlots_)
-    plt.second.activePlanesCount->Fill(planes[plt.first].size());
+    for (const auto& plt : sectorPlots_)
+      plt.second.activePlanesCount->Fill(planes[plt.first].size());
 
-  for (unsigned short arm = 0; arm <= CTPPSDetId::maxArm; ++arm)
-    for (unsigned short plane = 0; plane <= 1; ++plane)
-      for (unsigned short id = 0; id <= TotemT2DetId::maxChannel; ++id) {
-        const TotemT2DetId detid(arm, plane, id);
-        if (areChannelsTriggered(detid)) {
-          const TotemT2DetId secId(detid.armId());
-          segm_->fill(sectorPlots_[secId].triggerEmulator->getTH2D(), detid);
+    for (unsigned short arm = 0; arm <= CTPPSDetId::maxArm; ++arm)
+      for (unsigned short plane = 0; plane <= 1; ++plane)
+        for (unsigned short id = 0; id <= TotemT2DetId::maxChannel; ++id) {
+          const TotemT2DetId detid(arm, plane, id);
+          if (areChannelsTriggered(detid)) {
+            const TotemT2DetId secId(detid.armId());
+            segm_->fill(sectorPlots_[secId].triggerEmulator->getTH2D(), detid);
+          }
         }
-      }
 
-  // fill rechits information
+    // fill rechits information
 
-  clearTriggerBitset();
+    clearTriggerBitset();
+  }
 }
 
 void TotemT2DQMSource::fillActivePlanes(std::unordered_map<unsigned int, std::set<unsigned int>>& planes,
@@ -353,8 +362,8 @@ void TotemT2DQMSource::fillEdges(const TotemT2Digi& digi, const TotemT2DetId& de
 }
 
 void TotemT2DQMSource::fillBX(const TotemT2Digi& digi, const TotemT2DetId& detid, const int bx) {
-  const TotemT2DetId secId(detid.armId());
   if (digi.hasLE()) {
+    const TotemT2DetId secId(detid.armId());
     sectorPlots_[secId].activityPerBX->Fill(bx);
     channelPlots_[detid].activityPerBXCh->Fill(bx);
   }
