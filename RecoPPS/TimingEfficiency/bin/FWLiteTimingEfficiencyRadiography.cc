@@ -601,7 +601,7 @@ int main(int argc, char* argv[]) {
   std::string inputPathsCSV = parser.stringValue("inputPathsCSV");
   std::string pickedBunchesCSV = parser.stringValue("pickedBunchesCSV");
   int mode_ = parser.integerValue("mode");
-  int useOnlyPixelOn_ = parser.integerValue("doNotTrust210");
+  int useOnlyPixelOn_ = parser.integerValue("useOnlyPixelOn");
 
   if (useOnlyPixelOn_ == 220) {
     edm::LogWarning("TimingEfficiencyRadiography") << "Tracks will be suggested by only pixel 220!";
