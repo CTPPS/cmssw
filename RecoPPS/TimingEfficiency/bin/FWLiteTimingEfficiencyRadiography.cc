@@ -299,7 +299,7 @@ void calculateAndSaveHistograms(int maxEvents_,
             if (track1->rpId() == 2054160384) {
               xtimetrack45 = track1->x();
 
-              if (takePixelTrack45 && fabs(x45 - xtimetrack45) <= maxXDiff) {
+              if (takePixelTrack45 && fabs(x45 - xtimetrack45) <= maxXDiff) { // This condition was moved here for consistency of radiography with efficiency
                 // Pixel-diamond correlation to define matching cuts
                 xtpix21045_->Fill(x45, xtimetrack45);
 
