@@ -35,7 +35,8 @@
 #include "PhysicsTools/FWLite/interface/TFileService.h"
 #include "PhysicsTools/FWLite/interface/CommandLineParser.h"
 
-void calculateAndSaveHistograms(int maxEvents_,
+void calculateAndSaveHistograms(int runNumber,
+                                int maxEvents_,
                                 unsigned int outputEvery_,
                                 double totCut_,
                                 const std::string& outputFile_,
@@ -58,8 +59,10 @@ void calculateAndSaveHistograms(int maxEvents_,
   TFileDirectory dir = fs.mkdir("diamondHistograms");
 
   // Pixel-diamond x-correlation to define matching cuts
-  TH2F* xtpix21045_ = dir.make<TH2F>("xtpix21045", "xtpix21045; X Pixel [mm]; X Diamond [mm]", 40, -10, 30, 40, -10, 30);
-  TH2F* xtpix21056_ = dir.make<TH2F>("xtpix21056", "xtpix21056; X Pixel [mm]; X Diamond [mm]", 40, -10, 30, 40, -10, 30);
+  TH2F* xtpix21045_ =
+      dir.make<TH2F>("xtpix21045", "xtpix21045; X Pixel [mm]; X Diamond [mm]", 40, -10, 30, 40, -10, 30);
+  TH2F* xtpix21056_ =
+      dir.make<TH2F>("xtpix21056", "xtpix21056; X Pixel [mm]; X Diamond [mm]", 40, -10, 30, 40, -10, 30);
 
   // Denominator for all efficiencies
   TH2F* deffden45_ = dir.make<TH2F>("deffden45", "deffden45; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
@@ -73,24 +76,40 @@ void calculateAndSaveHistograms(int maxEvents_,
   TH2F* dboxeffnum56_ = dir.make<TH2F>("dboxeffnum56", "dboxeffnum56; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
 
   // Numerator for per-plane efficiencies, cylindrical RPs
-  TH2F* deffnum45plane0_ = dir.make<TH2F>("deffnum45plane0", "deffnum45plane0; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum56plane0_ = dir.make<TH2F>("deffnum56plane0", "deffnum56plane0; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum45plane1_ = dir.make<TH2F>("deffnum45plane1", "deffnum45plane1; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum56plane1_ = dir.make<TH2F>("deffnum56plane1", "deffnum56plane1; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum45plane2_ = dir.make<TH2F>("deffnum45plane2", "deffnum45plane2; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum56plane2_ = dir.make<TH2F>("deffnum56plane2", "deffnum56plane2; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum45plane3_ = dir.make<TH2F>("deffnum45plane3", "deffnum45plane3; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum56plane3_ = dir.make<TH2F>("deffnum56plane3", "deffnum56plane3; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45plane0_ =
+      dir.make<TH2F>("deffnum45plane0", "deffnum45plane0; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56plane0_ =
+      dir.make<TH2F>("deffnum56plane0", "deffnum56plane0; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45plane1_ =
+      dir.make<TH2F>("deffnum45plane1", "deffnum45plane1; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56plane1_ =
+      dir.make<TH2F>("deffnum56plane1", "deffnum56plane1; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45plane2_ =
+      dir.make<TH2F>("deffnum45plane2", "deffnum45plane2; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56plane2_ =
+      dir.make<TH2F>("deffnum56plane2", "deffnum56plane2; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45plane3_ =
+      dir.make<TH2F>("deffnum45plane3", "deffnum45plane3; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56plane3_ =
+      dir.make<TH2F>("deffnum56plane3", "deffnum56plane3; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
 
   // Numerator for per-plane efficiencies, box RPs
-  TH2F* deffnum45boxplane0_ = dir.make<TH2F>("deffnum45boxplane0", "deffnum45boxplane0; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum56boxplane0_ = dir.make<TH2F>("deffnum56boxplane0", "deffnum56boxplane0; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum45boxplane1_ = dir.make<TH2F>("deffnum45boxplane1", "deffnum45boxplane1; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum56boxplane1_ = dir.make<TH2F>("deffnum56boxplane1", "deffnum56boxplane1; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum45boxplane2_ = dir.make<TH2F>("deffnum45boxplane2", "deffnum45boxplane2; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum56boxplane2_ = dir.make<TH2F>("deffnum56boxplane2", "deffnum56boxplane2; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum45boxplane3_ = dir.make<TH2F>("deffnum45boxplane3", "deffnum45boxplane3; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
-  TH2F* deffnum56boxplane3_ = dir.make<TH2F>("deffnum56boxplane3", "deffnum56boxplane3; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45boxplane0_ =
+      dir.make<TH2F>("deffnum45boxplane0", "deffnum45boxplane0; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56boxplane0_ =
+      dir.make<TH2F>("deffnum56boxplane0", "deffnum56boxplane0; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45boxplane1_ =
+      dir.make<TH2F>("deffnum45boxplane1", "deffnum45boxplane1; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56boxplane1_ =
+      dir.make<TH2F>("deffnum56boxplane1", "deffnum56boxplane1; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45boxplane2_ =
+      dir.make<TH2F>("deffnum45boxplane2", "deffnum45boxplane2; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56boxplane2_ =
+      dir.make<TH2F>("deffnum56boxplane2", "deffnum56boxplane2; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum45boxplane3_ =
+      dir.make<TH2F>("deffnum45boxplane3", "deffnum45boxplane3; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
+  TH2F* deffnum56boxplane3_ =
+      dir.make<TH2F>("deffnum56boxplane3", "deffnum56boxplane3; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
 
   // Average ToT, cylindrical RPs
   TH2F* tot45plane0_ = dir.make<TH2F>("tot45plane0", "tot45plane0; X [mm]; Y [mm]", 220, -2, 20, 240, -8, 16);
@@ -133,6 +152,8 @@ void calculateAndSaveHistograms(int maxEvents_,
   int ievt = 0;
 
   int lumiblock_ = -99;
+
+  bool runInEndOf2024 = (381592 <= runNumber && runNumber <= 386951);
 
   for (unsigned int iFile = 0; iFile < inFiles_.size(); ++iFile) {
     // open input file (can be located on castor)
@@ -299,7 +320,9 @@ void calculateAndSaveHistograms(int maxEvents_,
             if (track1->rpId() == 2054160384) {
               xtimetrack45 = track1->x();
 
-              if (takePixelTrack45 && fabs(x45 - xtimetrack45) <= maxXDiff) { // This condition was moved here for consistency of radiography with efficiency
+              if (takePixelTrack45 &&
+                  fabs(x45 - xtimetrack45) <=
+                      maxXDiff) {  // This condition was moved here for consistency of radiography with efficiency
                 // Pixel-diamond correlation to define matching cuts
                 xtpix21045_->Fill(x45, xtimetrack45);
 
@@ -317,8 +340,11 @@ void calculateAndSaveHistograms(int maxEvents_,
             if (track1->rpId() == 2070937600) {
               xtimetrack56 = track1->x();
 
+              if (runInEndOf2024 && xtimetrack56 < 8) {
+                continue;  // One of the pixels in the end of 2024 not fully inserted, first diamond shouldn't be considered
+              }
+
               if (takePixelTrack56 && fabs(x56 - xtimetrack56) <= maxXDiff) {
-                /* Place where runs should be filtered out based on xtimetrack56 >= 8 if runs are from the end of 2024 */
                 // Pixel-diamond correlation to define matching cuts
                 xtpix21056_->Fill(x56, xtimetrack56);
 
@@ -354,8 +380,11 @@ void calculateAndSaveHistograms(int maxEvents_,
             if (track1->rpId() == 2073034752) {
               xboxtimetrack56 = track1->x();
 
+              if (runInEndOf2024 && xboxtimetrack56 < 8) {
+                continue;  // One of the pixels in the end of 2024 not fully inserted, first diamond shouldn't be considered
+              }
+
               if (takePixelTrack56 && fabs(x56 - xboxtimetrack56) < maxXDiff) {
-                /* Place where runs should be filtered out based on xboxtimetrack56 >= 8 if runs are from the end of 2024 */
                 // Pixel-diamond correlation to define matching cuts
                 xtpix21056_->Fill(x56, xboxtimetrack56);
 
@@ -438,36 +467,39 @@ void calculateAndSaveHistograms(int maxEvents_,
               }
 
               // Sector 56
-              if (station == 1 && plane == 0 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
-                numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
-                {
-                  deffnum56plane0_->Fill(x56, y56);
-                  tot56plane0_->Fill(x56, y56, tot);
+              if (!runInEndOf2024 || xrh >= 8) {
+                // One of the pixels in the end of 2024 not fully inserted, in this period first diamond shouldn't be considered
+                if (station == 1 && plane == 0 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
+                  numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                  if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
+                  {
+                    deffnum56plane0_->Fill(x56, y56);
+                    tot56plane0_->Fill(x56, y56, tot);
+                  }
                 }
-              }
-              if (station == 1 && plane == 1 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
-                numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
-                {
-                  deffnum56plane1_->Fill(x56, y56);
-                  tot56plane1_->Fill(x56, y56, tot);
+                if (station == 1 && plane == 1 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
+                  numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                  if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
+                  {
+                    deffnum56plane1_->Fill(x56, y56);
+                    tot56plane1_->Fill(x56, y56, tot);
+                  }
                 }
-              }
-              if (station == 1 && plane == 2 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
-                numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
-                {
-                  deffnum56plane2_->Fill(x56, y56);
-                  tot56plane2_->Fill(x56, y56, tot);
+                if (station == 1 && plane == 2 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
+                  numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                  if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
+                  {
+                    deffnum56plane2_->Fill(x56, y56);
+                    tot56plane2_->Fill(x56, y56, tot);
+                  }
                 }
-              }
-              if (station == 1 && plane == 3 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
-                numvsls_->Fill(lumiblock_, plane + (arm * 4));
-                if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
-                {
-                  deffnum56plane3_->Fill(x56, y56);
-                  tot56plane3_->Fill(x56, y56, tot);
+                if (station == 1 && plane == 3 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
+                  numvsls_->Fill(lumiblock_, plane + (arm * 4));
+                  if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
+                  {
+                    deffnum56plane3_->Fill(x56, y56);
+                    tot56plane3_->Fill(x56, y56, tot);
+                  }
                 }
               }
 
@@ -506,36 +538,39 @@ void calculateAndSaveHistograms(int maxEvents_,
               }
 
               // Sector 56 box
-              if (station == 2 && plane == 0 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
-                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
-                {
-                  deffnum56boxplane0_->Fill(x56, y56);
-                  tot56boxplane0_->Fill(x56, y56, tot);
+              if (!runInEndOf2024 || xrh >= 8) {
+                // One of the pixels in the end of 2024 not fully inserted, in this period first diamond shouldn't be considered
+                if (station == 2 && plane == 0 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
+                  numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                  if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
+                  {
+                    deffnum56boxplane0_->Fill(x56, y56);
+                    tot56boxplane0_->Fill(x56, y56, tot);
+                  }
                 }
-              }
-              if (station == 2 && plane == 1 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
-                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
-                {
-                  deffnum56boxplane1_->Fill(x56, y56);
-                  tot56boxplane1_->Fill(x56, y56, tot);
+                if (station == 2 && plane == 1 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
+                  numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                  if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
+                  {
+                    deffnum56boxplane1_->Fill(x56, y56);
+                    tot56boxplane1_->Fill(x56, y56, tot);
+                  }
                 }
-              }
-              if (station == 2 && plane == 2 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
-                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
-                {
-                  deffnum56boxplane2_->Fill(x56, y56);
-                  tot56boxplane2_->Fill(x56, y56, tot);
+                if (station == 2 && plane == 2 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
+                  numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                  if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
+                  {
+                    deffnum56boxplane2_->Fill(x56, y56);
+                    tot56boxplane2_->Fill(x56, y56, tot);
+                  }
                 }
-              }
-              if (station == 2 && plane == 3 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
-                numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
-                if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
-                {
-                  deffnum56boxplane3_->Fill(x56, y56);
-                  tot56boxplane3_->Fill(x56, y56, tot);
+                if (station == 2 && plane == 3 && arm == 1 && takePixelTrack56 && tot >= totCut_) {
+                  numvsls_->Fill(lumiblock_, plane + (arm * 4) + 8);
+                  if (fabs(x56 - xrh) <= maxXDiff)  //  x-matching between pixel+diamond rechits for eff. numerator
+                  {
+                    deffnum56boxplane3_->Fill(x56, y56);
+                    tot56boxplane3_->Fill(x56, y56, tot);
+                  }
                 }
               }
             }
@@ -626,7 +661,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  std::optional<std::vector<std::pair<int, int>>> goodLumisections_ = std::nullopt;
+  int runNumber_ = 0;
   {
     auto firstNonemptyFileIt =
         std::find_if(inFiles_.begin(), inFiles_.end(), [](const std::string& s) { return !s.empty(); });
@@ -634,6 +669,19 @@ int main(int argc, char* argv[]) {
       throw edm::Exception{edm::errors::FileOpenError} << "No input file provided: " << inFiles_.front() << std::endl;
     }
 
+    TFile* file = TFile::Open(firstNonemptyFileIt->c_str());
+    if (!file || file->IsZombie()) {
+      throw edm::Exception{edm::errors::FileOpenError} << "Failed to open ROOT file: " << inFiles_.front() << std::endl;
+    }
+
+    fwlite::Event event(file);
+    event.to(0);
+    runNumber_ = event.eventAuxiliary().run();
+    file->Close();
+  }
+
+  std::optional<std::vector<std::pair<int, int>>> goodLumisections_ = std::nullopt;
+  {
     if (!certificationJSONPath_.empty()) {
       boost::property_tree::ptree root;
 
@@ -645,20 +693,9 @@ int main(int argc, char* argv[]) {
             << e.what() << "\n";
       }
 
-      TFile* file = TFile::Open(firstNonemptyFileIt->c_str());
-      if (!file || file->IsZombie()) {
-        throw edm::Exception{edm::errors::FileOpenError} << "Failed to open ROOT file: " << inFiles_.front()
-                                                         << std::endl;
-      }
-
-      fwlite::Event event(file);
-      event.to(0);
-      int runNumber = event.eventAuxiliary().run();
-      file->Close();
-
       for (const auto& item : root) {
         int key = std::stoi(item.first);
-        if (key != runNumber) {
+        if (key != runNumber_) {
           continue;
         }
 
@@ -691,7 +728,7 @@ int main(int argc, char* argv[]) {
             << "]";
       } else {
         edm::LogWarning("TimingEfficiencyRadiography")
-            << "Currently processed run (" << runNumber
+            << "Currently processed run (" << runNumber_
             << ") not found in the provided certification JSON! Processing ALL lumisections...";
       }
     }
@@ -726,7 +763,8 @@ int main(int argc, char* argv[]) {
                                   ", ")
         << "]";
 
-    calculateAndSaveHistograms(maxEvents_,
+    calculateAndSaveHistograms(runNumber_,
+                               maxEvents_,
                                outputEvery_,
                                totCut_,
                                outputFilePickedBunches_,
@@ -743,7 +781,8 @@ int main(int argc, char* argv[]) {
     edm::LogWarning("TimingEfficiencyRadiography")
         << "outputFileAllBunches arguments provided. \nCalculating histograms for all bunches.";
 
-    calculateAndSaveHistograms(maxEvents_,
+    calculateAndSaveHistograms(runNumber_,
+                               maxEvents_,
                                outputEvery_,
                                totCut_,
                                outputFileAllBunches_,
