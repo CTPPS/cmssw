@@ -54,8 +54,8 @@ x = [int(k) for k in sorted_keys]
 x_positions = range(len(sorted_keys))
 
 num_of_diams = {
-    45: max(len(data[k][45]) for k in sorted_keys),
-    56: max(len(data[k][56]) for k in sorted_keys),
+    "45": max(len(data[k]["45"][j]) for k in sorted_keys for j in ["box", "cyl"]),
+    "56": max(len(data[k]["56"][j]) for k in sorted_keys for j in ["box", "cyl"]),
 }
 
 
@@ -89,8 +89,8 @@ def plot_group(step, type_key):
         axs[i].set_ylabel(f"Diam {i+1} efficiency")
         axs[i].set_ylim(0, 1.05)
         axs[i].grid(True)
-
-    axs[2].set_xlabel("Run", labelpad=15)
+        
+    axs[num_of_diams[step]-1].set_xlabel("Run", labelpad=15)
     plt.tight_layout(rect=[0, 0, 1, 0.96])
 
     # Save the figure as PNG
