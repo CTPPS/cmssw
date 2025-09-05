@@ -285,7 +285,7 @@ std::vector<std::vector<TVector2>> approximateDiamondShape(Coords coords,
     ret.push_back({coords.topLeftPoint + 3 * (diamondRight),
                    coords.topLeftPoint + 3 * (diamondRight) + diamondRight,
                    coords.topLeftPoint + 3 * (diamondRight) + diamondDown,
-                   coords.topLeftPoint + 3 * (diamondRight) + diamondDown + diamondRight})
+                   coords.topLeftPoint + 3 * (diamondRight) + diamondDown + diamondRight});
   }
 
   return ret;

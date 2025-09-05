@@ -87,6 +87,7 @@ def plot_group(step, type_key):
         axs[i].set_xticks(x_positions[:: args.n])
         axs[i].set_xticklabels(sorted_keys[:: args.n], rotation=45, ha="right")
         axs[i].set_ylabel(f"Diam {i+1} efficiency")
+        axs[i].set_ylim(0, 1.05)
         axs[i].grid(True)
 
     axs[2].set_xlabel("Run", labelpad=15)
