@@ -13,7 +13,7 @@ import argparse
 # GLOBAL CONSTANT VARIABLES
 # fiducial variables restrict the area to analyze 
 # the current parameters cover the whole possible area
-fiducialXLow = [0,0,0,0]
+fiducialXLow = [-5.,-5.,-5.,-5.]
 fiducialYLow = [-99.,-99.,-99.,-99.]
 fiducialYHigh = [99.,99.,99.,99.]
 
