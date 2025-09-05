@@ -254,7 +254,8 @@ struct Coords {
 std::vector<std::vector<TVector2>> approximateDiamondShape(Coords coords,
                                                            double sizeX = 4.5,
                                                            double sizeY = 4.5,
-                                                           double shiftSize = 0.2) {  // diamondAngle in radians
+                                                           double shiftSize = 0.2,
+                                                           bool fourth_diam = false) {  // diamondAngle in radians
 
   TVector2 diamondRight(sizeX, 0), diamondDown(0, -sizeY), diamondShift(0, shiftSize * coords.shiftNumber);
 
@@ -266,18 +267,28 @@ std::vector<std::vector<TVector2>> approximateDiamondShape(Coords coords,
 
   coords.topLeftPoint -= diamondShift;
 
-  return std::vector<std::vector<TVector2>>{{coords.topLeftPoint,
-                                             coords.topLeftPoint + diamondRight,
-                                             coords.topLeftPoint + diamondDown,
-                                             coords.topLeftPoint + diamondDown + diamondRight},
-                                            {coords.topLeftPoint + diamondRight,
-                                             coords.topLeftPoint + diamondRight + diamondRight,
-                                             coords.topLeftPoint + diamondDown + diamondRight,
-                                             coords.topLeftPoint + diamondRight + diamondRight + diamondDown},
-                                            {coords.topLeftPoint + 2 * (diamondRight),
-                                             coords.topLeftPoint + 2 * (diamondRight) + diamondRight,
-                                             coords.topLeftPoint + 2 * (diamondRight) + diamondDown,
-                                             coords.topLeftPoint + 2 * (diamondRight) + diamondDown + diamondRight}};
+  auto ret =
+      std::vector<std::vector<TVector2>>{{coords.topLeftPoint,
+                                          coords.topLeftPoint + diamondRight,
+                                          coords.topLeftPoint + diamondDown,
+                                          coords.topLeftPoint + diamondDown + diamondRight},
+                                         {coords.topLeftPoint + diamondRight,
+                                          coords.topLeftPoint + diamondRight + diamondRight,
+                                          coords.topLeftPoint + diamondDown + diamondRight,
+                                          coords.topLeftPoint + diamondRight + diamondRight + diamondDown},
+                                         {coords.topLeftPoint + 2 * (diamondRight),
+                                          coords.topLeftPoint + 2 * (diamondRight) + diamondRight,
+                                          coords.topLeftPoint + 2 * (diamondRight) + diamondDown,
+                                          coords.topLeftPoint + 2 * (diamondRight) + diamondDown + diamondRight}};
+
+  if (fourth_diam) {
+    ret.push_back({coords.topLeftPoint + 3 * (diamondRight),
+                   coords.topLeftPoint + 3 * (diamondRight) + diamondRight,
+                   coords.topLeftPoint + 3 * (diamondRight) + diamondDown,
+                   coords.topLeftPoint + 3 * (diamondRight) + diamondDown + diamondRight})
+  }
+
+  return ret;
 }
 
 using json = nlohmann::json;
@@ -440,7 +451,8 @@ std::map<std::string, Coords> readCoordsJson(std::string coordsJson, int targetR
 void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
                                 TString coordsJson = "coords.json",
                                 TString outputJson = "defficiency.json",
-                                TString runNumber = "000000") {
+                                TString runNumber = "000000",
+                                TString fourthDiamondIn56 = "0") {
   gStyle->SetPalette(kBird);
 
   TFile *f = TFile::Open(infile);
@@ -464,6 +476,8 @@ void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
 
   auto coords = readCoordsJson(std::string(coordsJson.Data()), std::stoi(runNumber.Data()));
 
+  bool thereIsFourthDiamondIn56 = std::stoi(fourthDiamondIn56.Data()) == 1;
+
   std::vector<std::string> keys = {"45cyl", "45box", "56cyl", "56box"};
   bool containsAll = std::all_of(
       keys.begin(), keys.end(), [&coords](const std::string &key) { return coords.find(key) != coords.end(); });
@@ -483,7 +497,7 @@ void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
       "56 box time-tracks efficiency per diamond",
       boxnum56,
       den56,
-      approximateDiamondShape(coords["56box"], diamondSizeX, diamondSizeY, diamondShiftSize));
+      approximateDiamondShape(coords["56box"], diamondSizeX, diamondSizeY, diamondShiftSize, thereIsFourthDiamondIn56));
 
   TCanvas *c1 = new TCanvas("c1", "c1");
   c1->Divide(2, 1);
@@ -500,7 +514,7 @@ void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
       "56 cylindrical time-tracks efficiency per diamond",
       num56,
       den56,
-      approximateDiamondShape(coords["56cyl"], diamondSizeX, diamondSizeY, diamondShiftSize));
+      approximateDiamondShape(coords["56cyl"], diamondSizeX, diamondSizeY, diamondShiftSize, thereIsFourthDiamondIn56));
 
   TCanvas *c2 = new TCanvas("c2", "c2");
   c2->Divide(2, 1);
