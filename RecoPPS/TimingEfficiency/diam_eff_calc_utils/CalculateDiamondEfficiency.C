@@ -357,7 +357,7 @@ std::map<std::string, Coords> readCoordsJson(std::string coordsJson, int targetR
 
   auto ret = std::map<std::string, Coords>{{"45box", {}}, {"56box", {}}, {"45cyl", {}}, {"56cyl", {}}};
 
-  if (candidateShiftNum != -1) {
+  if (candidateShiftNum != -1 && candidateShiftNum > candidateCoordsNum) {
     auto shiftRunData = data[std::to_string(candidateShiftNum)];
     if (shiftRunData.count("45") > 0) {
       if (shiftRunData["45"].count("boxShift") > 0) {
