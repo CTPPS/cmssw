@@ -452,7 +452,7 @@ void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
                                 TString coordsJson = "coords.json",
                                 TString outputJson = "defficiency.json",
                                 TString runNumber = "000000",
-                                TString fourthDiamondIn56 = "0") {
+                                TString fourthDiamondInCyl = "0") {
   gStyle->SetPalette(kBird);
 
   TFile *f = TFile::Open(infile);
@@ -476,7 +476,7 @@ void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
 
   auto coords = readCoordsJson(std::string(coordsJson.Data()), std::stoi(runNumber.Data()));
 
-  bool thereIsFourthDiamondIn56 = std::stoi(fourthDiamondIn56.Data()) == 1;
+  bool thereIsFourthDiamondInCyl = std::stoi(fourthDiamondInCyl.Data()) == 1;
 
   std::vector<std::string> keys = {"45cyl", "45box", "56cyl", "56box"};
   bool containsAll = std::all_of(
@@ -497,7 +497,7 @@ void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
       "56 box time-tracks efficiency per diamond",
       boxnum56,
       den56,
-      approximateDiamondShape(coords["56box"], diamondSizeX, diamondSizeY, diamondShiftSize, thereIsFourthDiamondIn56));
+      approximateDiamondShape(coords["56box"], diamondSizeX, diamondSizeY, diamondShiftSize));
 
   TCanvas *c1 = new TCanvas("c1", "c1");
   c1->Divide(2, 1);
@@ -508,13 +508,15 @@ void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
       "45 cylindrical time-tracks efficiency per diamond",
       num45,
       den45,
-      approximateDiamondShape(coords["45cyl"], diamondSizeX, diamondSizeY, diamondShiftSize));
+      approximateDiamondShape(
+          coords["45cyl"], diamondSizeX, diamondSizeY, diamondShiftSize, thereIsFourthDiamondInCyl));
 
   TimingEfficiencyPerRP cylindrical56efficiency(
       "56 cylindrical time-tracks efficiency per diamond",
       num56,
       den56,
-      approximateDiamondShape(coords["56cyl"], diamondSizeX, diamondSizeY, diamondShiftSize, thereIsFourthDiamondIn56));
+      approximateDiamondShape(
+          coords["56cyl"], diamondSizeX, diamondSizeY, diamondShiftSize, thereIsFourthDiamondInCyl));
 
   TCanvas *c2 = new TCanvas("c2", "c2");
   c2->Divide(2, 1);
