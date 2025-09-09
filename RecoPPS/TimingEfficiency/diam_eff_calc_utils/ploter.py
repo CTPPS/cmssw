@@ -54,8 +54,12 @@ x = [int(k) for k in sorted_keys]
 x_positions = range(len(sorted_keys))
 
 num_of_diams = {
-    "45": max(len(data[k]["45"][j]) for k in sorted_keys for j in ["box", "cyl"]),
-    "56": max(len(data[k]["56"][j]) for k in sorted_keys for j in ["box", "cyl"]),
+    "box": max(
+        max(len(data[k]["45"]["box"]), len(data[k]["56"]["box"])) for k in sorted_keys
+    ),
+    "cyl": max(
+        max(len(data[k]["45"]["cyl"]), len(data[k]["56"]["cyl"])) for k in sorted_keys
+    ),
 }
 
 
@@ -65,7 +69,7 @@ num_of_diams = {
 def extract_values(step, type_key):
     return [
         [data[k][step][type_key][i] for k in sorted_keys]
-        for i in range(num_of_diams[step])
+        for i in range(num_of_diams[type_key])
     ]
 
 
@@ -75,22 +79,22 @@ def extract_values(step, type_key):
 def plot_group(step, type_key):
     values = extract_values(step, type_key)
     fig, axs = plt.subplots(
-        num_of_diams[step],
+        num_of_diams[type_key],
         1,
-        figsize=(args.width, 3.5 * num_of_diams[step]),
+        figsize=(args.width, 3.5 * num_of_diams[type_key]),
         sharex=True,
     )
     fig.suptitle(f"{step} {type_key}")
 
-    for i in range(num_of_diams[step]):
+    for i in range(num_of_diams[type_key]):
         axs[i].scatter(x_positions, values[i], marker="o")
         axs[i].set_xticks(x_positions[:: args.n])
         axs[i].set_xticklabels(sorted_keys[:: args.n], rotation=45, ha="right")
         axs[i].set_ylabel(f"Diam {i+1} efficiency")
         axs[i].set_ylim(0, 1.05)
         axs[i].grid(True)
-        
-    axs[num_of_diams[step]-1].set_xlabel("Run", labelpad=15)
+
+    axs[num_of_diams[type_key] - 1].set_xlabel("Run", labelpad=15)
     plt.tight_layout(rect=[0, 0, 1, 0.96])
 
     # Save the figure as PNG
