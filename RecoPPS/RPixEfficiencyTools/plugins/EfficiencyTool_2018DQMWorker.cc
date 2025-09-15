@@ -810,7 +810,7 @@ void EfficiencyTool_2018DQMWorker::bookHistograms(DQMStore::IBooker &ibooker,
                           mapYmax);
       h2InterPotEfficiencyMapMultiRP_[pixelDetId] =
           ibooker.book2DD(Form("h2InterPotEfficiencyMapMultiRP_arm%i", arm_Probe),
-                          Form("h2InterPotEfficiencyMapMultiRP_arm%i;x (mm);y (mm)", rp_Probe),
+                          Form("h2InterPotEfficiencyMapMultiRP_arm%i;x (mm);y (mm)", arm_Probe),
                           mapXbins,
                           mapXmin_,
                           mapXmax_,
