@@ -1,0 +1,83 @@
+#!/bin/bash
+
+set -ex
+
+CLUSTERID=${1}
+JOBID=${2}
+INFILE=${3}
+TASK=${4}
+EOSDIR=${5}
+WDIR=${6}
+GT=${7}
+
+trap 'echo "Error occurred during script execution"; ecalautomation.py $TASK jobctrl --id $JOBID --failed; exit' SIGKILL SIGTERM ERR
+
+source /home/ppsgit/setup.sh
+
+export HOME=/afs/cern.ch/user/p/ppsgit/
+
+# Setup CMSSW and move back to the running dir
+
+source /cvmfs/cms.cern.ch/cmsset_default.sh
+
+set -E
+
+cd $WDIR
+eval $(scram runtime -sh)
+cd -
+
+# Set the job as running in the DB
+ecalautomation.py $TASK jobctrl --id $JOBID --running --fields "htc-id:${CLUSTERID}"
+
+# Get the run number from the script arguments
+run_number=$(echo "$TASK" | grep -oP "(?<=run_number:)\d+")
+
+# Get the DB and campaign names
+DB=$(echo "$TASK" | grep -oP "(?<=--db )[\w-_]+")
+CAMPAIGN=$(echo "$TASK" | grep -oP "(?<=-c )[\w-_]+")
+
+# Get the filling scheme name
+filling_scheme_name=$(python3 $WDIR/src/RecoPPS/TimingEfficiency/tools/get_runs_filling_scheme_name.py --run "$run_number")
+
+# Get the picked bunches numbers (first in train bunch crossing num of each train)
+inj_scheme_file="/eos/cms/store/group/dpg_ctpps/comm_ctpps/BunchesSelection/bunches_${filling_scheme_name}.json"
+
+picked_bunches=$(cat "$inj_scheme_file" | python3 -c "import sys, json; print(','.join(map(str, json.load(sys.stdin)['first_in_train'])))")
+
+# Run the job
+ofile_prefix=outputTimingEfficiencyWorker_${run_number}
+ofile_all_bunches_path=${ofile_prefix}_all_bunches.root
+ofile_picked_bunches_path=${ofile_prefix}_picked_bunches.root
+
+$WDIR/bin/el8_amd64_gcc12/FWLiteTimingEfficiencyRadiography inputPathsCSV=$INFILE outputFileAllBunches=$ofile_all_bunches_path outputFilePickedBunches=$ofile_picked_bunches_path pickedBunchesCSV=$picked_bunches
+
+root -l -b -q "$WDIR/src/RecoPPS/TimingEfficiency/root/PlotTimingEfficiencies.C(\"${ofile_all_bunches_path}\")"
+root -l -b -q "$WDIR/src/RecoPPS/TimingEfficiency/root/PlotTimingEfficiencies.C(\"${ofile_picked_bunches_path}\")"
+
+# move output files into eosdir (.root and pdfs)
+mkdir -p $EOSDIR/all_bunches $EOSDIR/picked_bunches
+find . -maxdepth 1 -type f -name "*_all_bunches.*" -exec sh -c 'mv ${@:2} "${1}/all_bunches"' sh $EOSDIR {} +
+find . -maxdepth 1 -type f -name "*_picked_bunches.*" -exec sh -c 'mv ${@:2} "${1}/picked_bunches"' sh $EOSDIR {} +
+
+### temporary to check new bunch picking schemes
+
+second_in_train_bunches=$(cat "$inj_scheme_file" | python3 -c "import sys, json; print(','.join(map(str, json.load(sys.stdin)['second_in_train'])))")
+last_in_train_bunches=$(cat "$inj_scheme_file" | python3 -c "import sys, json; print(','.join(map(str, json.load(sys.stdin)['last_in_train'])))")
+
+ofile_second_in_train_bunches_path=${ofile_prefix}_second_in_train_bunches.root
+ofile_last_in_train_bunches_path=${ofile_prefix}_last_in_train_bunches.root
+
+$WDIR/bin/el8_amd64_gcc12/FWLiteTimingEfficiencyRadiography inputPathsCSV=$INFILE outputFilePickedBunches=$ofile_second_in_train_bunches_path pickedBunchesCSV=$second_in_train_bunches
+$WDIR/bin/el8_amd64_gcc12/FWLiteTimingEfficiencyRadiography inputPathsCSV=$INFILE outputFilePickedBunches=$ofile_last_in_train_bunches_path pickedBunchesCSV=$last_in_train_bunches
+
+root -l -b -q "$WDIR/src/RecoPPS/TimingEfficiency/root/PlotTimingEfficiencies.C(\"${ofile_second_in_train_bunches_path}\")"
+root -l -b -q "$WDIR/src/RecoPPS/TimingEfficiency/root/PlotTimingEfficiencies.C(\"${ofile_last_in_train_bunches_path}\")"
+
+mkdir -p $EOSDIR/second_in_train $EOSDIR/last_in_train
+find . -maxdepth 1 -type f -name "*_second_in_train.*" -exec sh -c 'mv ${@:2} "${1}/second_in_train"' sh $EOSDIR {} +
+find . -maxdepth 1 -type f -name "*_last_in_train.*" -exec sh -c 'mv ${@:2} "${1}/last_in_train"' sh $EOSDIR {} +
+
+###
+
+ecalautomation.py $TASK jobctrl --id $JOBID --done
+
