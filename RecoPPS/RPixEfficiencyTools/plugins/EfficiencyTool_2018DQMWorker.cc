@@ -1003,7 +1003,7 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent, const edm::
   }
 
   if (!validBunchArray_[iEvent.eventAuxiliary().bunchCrossing()])
-  return;
+    return;
   int bx = iEvent.eventAuxiliary().bunchCrossing();
   h1BunchCrossing_->Fill(bx, weight);
 
