@@ -448,14 +448,37 @@ std::map<std::string, Coords> readCoordsJson(std::string coordsJson, int targetR
   return ret;
 }
 
+std::string inPathPrefix = "/eos/cms/store/group/dpg_ctpps/comm_ctpps/pps-automation";
+
 void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
                                 TString coordsJson = "coords.json",
-                                TString outputJson = "defficiency.json",
                                 TString runNumber = "000000",
-                                TString fourthDiamondInCyl = "0") {
+                                TString fourthDiamondInCyl = "0",
+                                TString outputPath = "") {
+
+  std::string outDir;
+  if (outputPath.IsNull() || outputPath == "") {
+      const char* pwd = gSystem->pwd();
+      if (!pwd) {
+          Fatal("CalculateDiamondEfficiency", "Could not determine current working directory (PWD)");
+          return;
+      }
+      outDir = std::string(pwd) + "/" + std::string(runNumber.Data());
+  } else {
+      outDir = std::string(outputPath.Data());
+  }
+
+  gSystem->mkdir(outDir.c_str(), kTRUE);
+                                
   gStyle->SetPalette(kBird);
 
-  TFile *f = TFile::Open(infile);
+  std::string fullInfile = inPathPrefix + "/" + std::string(infile.Data());
+
+  TFile *f = TFile::Open(fullInfile.c_str());
+  if (!f || f->IsZombie()) {
+      Fatal("CalculateDiamondEfficiency", "Cannot open input file: %s", fullInfile.c_str());
+      return;
+  }
 
   TH2F *den45 = (TH2F *)f->Get("diamondHistograms/deffden45");
   TH2F *den56 = (TH2F *)f->Get("diamondHistograms/deffden56");
@@ -523,15 +546,19 @@ void CalculateDiamondEfficiency(TString infile = "timingHistograms.root",
   auto cylindrical45efficiencyEffV = cylindrical45efficiency.draw(c2, 1, drawNumbers, drawPolygons, maskOut);
   auto cylindrical56efficiencyEffV = cylindrical56efficiency.draw(c2, 2, drawNumbers, drawPolygons, maskOut);
 
-  TObjArray *tx = infile.Tokenize(".");
+  TString baseName = gSystem->BaseName(fullInfile.c_str());
+  TObjArray *tx = baseName.Tokenize(".");
   TString outplot = ((TObjString *)(tx->At(0)))->String();
-  c1->SaveAs("BoxTrackPerDiamondEfficiency_" + outplot + ".pdf");
-  c2->SaveAs("CylindricalTrackPerDiamondEfficiency_" + outplot + ".pdf");
+
+  
+
+  c1->SaveAs(outDir + "/BoxTrackPerDiamondEfficiency_" + outplot + ".pdf");
+  c2->SaveAs(outDir + "/CylindricalTrackPerDiamondEfficiency_" + outplot + ".pdf");
 
   // save efficiency to JSON:
   json j;
   std::string runStr = std::string(runNumber.Data());
-  std::string outputJsonStr = std::string(outputJson.Data());
+  std::string outputJsonStr = outDir + "/efficiency.json";
 
   j[runStr]["45"]["box"] = box45efficiencyEffV;
   j[runStr]["45"]["cyl"] = cylindrical45efficiencyEffV;
