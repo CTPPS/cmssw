@@ -85,7 +85,8 @@ process.GlobalTag = GlobalTag(process.GlobalTag, gt)
 # )
 
 if len(options.inputFiles) != 0:
-    inputFiles = cms.untracked.vstring(options.inputFiles)
+    fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:') or f.startswith('root:')) else f for f in options.inputFiles]
+    inputFiles = cms.untracked.vstring(fileList)
 else:
     # Example input file
     inputFiles = cms.untracked.vstring(
