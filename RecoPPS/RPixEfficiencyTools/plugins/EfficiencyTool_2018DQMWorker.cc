@@ -302,6 +302,7 @@ private:
   bool usePrescales_;
   std::string processName_, triggerPattern_, hltName_;
   HLTPrescaleProvider hltPrescaleProvider_;
+  uint32_t forcePrescale_;
 };
 
 EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterSet &iConfig)
@@ -395,6 +396,10 @@ EfficiencyTool_2018DQMWorker::EfficiencyTool_2018DQMWorker(const edm::ParameterS
   usePrescales_ = iConfig.getParameter<bool>("usePrescales");
   processName_ = iConfig.getParameter<std::string>("processName");
   triggerPattern_ = iConfig.getParameter<std::string>("triggerPattern");
+  forcePrescale_ = iConfig.getParameter<uint32_t>("forcePrescale");
+  if (forcePrescale_ > 0) {
+    edm::LogWarning("PPS") << "Forcing prescale to " << forcePrescale_;
+  }
 }
 
 EfficiencyTool_2018DQMWorker::~EfficiencyTool_2018DQMWorker() {}
@@ -919,7 +924,6 @@ void EfficiencyTool_2018DQMWorker::setGlobalBinSizes(CTPPSPixelDetId &rpId) {
 
 void EfficiencyTool_2018DQMWorker::dqmBeginRun(edm::Run const & iRun, edm::EventSetup const & iSetup) {
   bool changed(true);
-
   if (!usePrescales_)
     return;
   // Only prescale stuff below
@@ -930,6 +934,13 @@ void EfficiencyTool_2018DQMWorker::dqmBeginRun(edm::Run const & iRun, edm::Event
     // Do the matching to find out the HLT name
     if (edm::is_glob(triggerPattern_)) {  // handle triggerPattern_ with wildcards (*,?)
       std::vector<std::vector<std::string>::const_iterator> matches = edm::regexMatch(triggerNames, triggerPattern_);
+      // Print all matches
+      if (debug_) {
+        edm::LogInfo("PPS") << "Available HLT paths matching pattern [" << triggerPattern_ << "]:";
+        for (const auto &match : matches) {
+          edm::LogInfo("PPS") << "\t" << *match;
+        }
+      }
       if (matches.empty()) {
         throw cms::Exception("PPS") 
           << "requested trigger pattern [" << triggerPattern_ << "] does not match any HLT paths";
@@ -940,7 +951,7 @@ void EfficiencyTool_2018DQMWorker::dqmBeginRun(edm::Run const & iRun, edm::Event
       }
       hltName_ = *matches[0];
       if(debug_)
-        std::cout << "Matched HLT path name: " << hltName_ << std::endl;
+        edm::LogInfo("PPS") << "Matched HLT path name: " << hltName_;
       
     } else {  // take full HLT path name given
       hltName_ = triggerPattern_;
@@ -949,12 +960,13 @@ void EfficiencyTool_2018DQMWorker::dqmBeginRun(edm::Run const & iRun, edm::Event
     if (changed) {
       edm::LogInfo("PPS") << "HLT configuration changed between runs";
       const unsigned int n(hltConfig.size());
-      const unsigned int triggerIndex(hltConfig.triggerIndex(triggerPattern_));
+      const unsigned int triggerIndex(hltConfig.triggerIndex(hltName_));
       if (triggerIndex >= n) {
-        edm::LogInfo("PPS") << "EfficiencyTool_2018DQMWorker::dqmBeginRun:"
-                       << " TriggerName " << triggerPattern_ << " not available in (new) config!" << endl;
-        edm::LogInfo("PPS") << "Available TriggerNames are: " << endl;
-        hltConfig.dump("Triggers");
+        edm::LogError("PPS") << "Trigger pattern [" << triggerPattern_ << "] not found in the (new) config!"
+          << " Available triggers are:";
+          hltConfig.dump("Triggers");
+        throw cms::Exception("PPS") 
+          << "requested trigger pattern [" << triggerPattern_ << "] not found in HLT config";
       }
     }
   } else {
@@ -965,13 +977,15 @@ void EfficiencyTool_2018DQMWorker::dqmBeginRun(edm::Run const & iRun, edm::Event
 
 void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent, const edm::EventSetup &iSetup) {
   using namespace edm;
+  if (debug_)
+    edm::LogInfo("PPS") << "EfficiencyTool_2018DQMWorker::analyze called";
 
   Handle<edm::DetSetVector<CTPPSPixelLocalTrack>> pixelLocalTracks;
   iEvent.getByToken(pixelLocalTrackToken_, pixelLocalTracks);
 
   int ls = iEvent.getLuminosityBlock().id().luminosityBlock();
   double weight = 1.;
- 
+
   if (usePrescales_){ 
     const auto prescales(hltPrescaleProvider_.prescaleValuesInDetail<double,double>(iEvent, iSetup, hltName_));
 
@@ -998,8 +1012,14 @@ void EfficiencyTool_2018DQMWorker::analyze(const edm::Event &iEvent, const edm::
       return;
     }
 
-    h1HLTPrescale_->Fill(ls,prescales.second);
-    weight *= prescales.second; // Correct for the HLT prescale value
+    if (forcePrescale_ > 0){
+      h1HLTPrescale_->Fill(ls, forcePrescale_);
+      weight *= forcePrescale_; // Correct for the forced HLT prescale value
+    }
+    else{
+      h1HLTPrescale_->Fill(ls,prescales.second);
+      weight *= prescales.second; // Correct for the HLT prescale value
+    }
   }
 
   if (!validBunchArray_[iEvent.eventAuxiliary().bunchCrossing()])
@@ -1505,6 +1525,8 @@ void EfficiencyTool_2018DQMWorker::fillDescriptions(edm::ConfigurationDescriptio
     ->setComment("Input tag for the L1 algorithm block");
   desc.add<edm::InputTag>("l1tExtBlkInputTag", edm::InputTag("gtStage2Digis"))
     ->setComment("Input tag for the L1 extension block");
+  desc.add<uint32_t>("forcePrescale", 0)
+    ->setComment("If different from 0, forces a given prescale value");
 
   descriptions.add("EfficiencyTool_2018DQMWorker",desc);
 }
