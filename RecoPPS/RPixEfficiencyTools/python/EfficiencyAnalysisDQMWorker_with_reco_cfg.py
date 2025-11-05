@@ -150,7 +150,7 @@ process.MessageLogger = cms.Service("MessageLogger",
     cout = cms.untracked.PSet( 
         optionalPSet = cms.untracked.bool(True),
         INFO = cms.untracked.PSet(
-            limit = cms.untracked.int32(0)
+            limit = cms.untracked.int32(-1)
         ),
         noTimeStamps = cms.untracked.bool(False),
         FwkReport = cms.untracked.PSet(
@@ -161,10 +161,18 @@ process.MessageLogger = cms.Service("MessageLogger",
         default = cms.untracked.PSet(
             limit = cms.untracked.int32(10000000)
         ),
+        CondDBESSource = cms.untracked.PSet(
+            limit = cms.untracked.int32(0)
+        ),
+        CTPPSPixelLocalTrackProducer = cms.untracked.PSet(
+            limit = cms.untracked.int32(0)
+        ),
         threshold = cms.untracked.string('INFO')
     ),
     categories = cms.untracked.vstring(
-        "FwkReport"
+        "FwkReport",
+        "CondDBESSource",
+        "CTPPSPixelLocalTrackProducer"
     ),
 )
 
@@ -204,20 +212,6 @@ if options.InjSchemeName != '':
 else:
     print("No injection scheme name provided, using all bunches.")
     selected_bxs_list = list(range(3564))   
-
-
-
-
-
-process.GlobalTag.toGet.append(
-    cms.PSet(
-    record = cms.string("LHCInfoPerLSRcd"),
-    tag = cms.string("LHCInfoPerLS_endFill_Run3_v2"),
-    label = cms.untracked.string(""),
-    connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-    )
-)
-# End of patch
 
 #SETUP INPUT
 process.source = cms.Source("PoolSource",
@@ -273,14 +267,18 @@ else:
 
 #SETUP TRACK AND PROTON TAGS TO RUN ON ALCARECO
 trackTag = ('ctppsPixelLocalTracksAlCaRecoProducer','','EfficiencyAnalysisDQMWorker')
-protonTag = 'ctppsProtonsAlCaRecoProducer'
+protonTag = ('ctppsProtonsAlCaRecoProducer','','EfficiencyAnalysisDQMWorker')
+
+#SETUP TRACK AND PROTON TAGS TO RUN ON RECO
+# trackTag = ('ctppsPixelLocalTracks','','RECO')
+# protonTag = ('ctppsProtonsAlCaRecoProducer','','RECO')
+
+
+singleRPprotonTag = (protonTag[0], "singleRP", protonTag[2])
+multiRPprotonTag = (protonTag[0], "multiRP", protonTag[2])
 print('Using track InputTag:',trackTag)
-print('Using proton InputTag:',protonTag)
-
-
-
-
-
+print('Using singleRP proton InputTag:',singleRPprotonTag)
+print('Using singleRP proton InputTag:',multiRPprotonTag)
 
 #SETUP WORKER
 process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
@@ -303,8 +301,8 @@ process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     detectorRotationAngle=cms.untracked.double(-8),
 
     #FOR INTERPORT EFFICIENCY
-    tagProtonsSingleRP=cms.untracked.InputTag(protonTag, "singleRP", "EfficiencyAnalysisDQMWorker"),
-    tagProtonsMultiRP=cms.untracked.InputTag(protonTag, "multiRP", "EfficiencyAnalysisDQMWorker"),
+    tagProtonsSingleRP=cms.untracked.InputTag(singleRPprotonTag),
+    tagProtonsMultiRP=cms.untracked.InputTag(multiRPprotonTag),
     maxChi2Prob=cms.untracked.double(options.maxChi2Prob),
     maxTracksInProbePot=cms.untracked.int32(options.maxTracksInProbePot),    
     minTracksInProbePot=cms.untracked.int32(options.minTracksInProbePot),    
@@ -326,7 +324,8 @@ process.worker = DQMEDAnalyzer('EfficiencyTool_2018DQMWorker',
     # l1tAlgBlkInputTag = cms.InputTag('hltGtStage2ObjectMap'),
     # l1tExtBlkInputTag = cms.InputTag('hltGtStage2ObjectMap')
     l1tAlgBlkInputTag = cms.InputTag('gtStage2Digis'),
-    l1tExtBlkInputTag = cms.InputTag('gtStage2Digis')
+    l1tExtBlkInputTag = cms.InputTag('gtStage2Digis'),
+    forcePrescale = cms.uint32(12)
 )
 
 #SETUP OUTPUT
