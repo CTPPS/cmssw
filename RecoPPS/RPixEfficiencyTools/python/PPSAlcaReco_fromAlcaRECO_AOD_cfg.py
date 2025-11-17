@@ -18,16 +18,21 @@ options.register('outputFileName',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.string,
                 "output ROOT file name")
-options.register('useJsonFile',
-                '',
-                VarParsing.VarParsing.multiplicity.singleton,
-                VarParsing.VarParsing.varType.bool,
-                "Do not use JSON file")
 options.register('jsonFileName',
                 '',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.string,
                 "JSON file list name")
+options.register('alignmentXMLName',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.string,
+                "Alignment XML file name")
+options.register('alignmentDBName',
+                '',
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.string,
+                "Alignmend DB file name")
 options.register('globalTag',
                 '',
                 VarParsing.VarParsing.multiplicity.singleton,
@@ -61,7 +66,7 @@ process.MessageLogger = cms.Service("MessageLogger",
 
 
 #CONFIGURE PROCESS
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 #SETUP GLOBAL TAG
 if options.globalTag != '':
@@ -74,40 +79,58 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 print('Using GT:',gt)
 process.GlobalTag = GlobalTag(process.GlobalTag, gt)
 
-# Manually add local alignment from sqlite file
-# process.GlobalTag.toGet = cms.VPSet(
-#     cms.PSet(
-#         record = cms.string('RPRealAlignmentRecord'),
-#         tag = cms.string("CTPPSRPAlignment_real"),
-#         label = cms.untracked.string(""),
-#         connect = cms.string("sqlite_file:/eos/cms/store/group/phys_pps/reconstruction/alignment/2023/CTPPSRPAlignment_reference.db")
-#         )
-# )
+# Handle alignment inputs
+if options.alignmentXMLName and options.alignmentDBName:
+    print('ERROR: Both alignment XML and DB files specified. Please specify only one.')
+    sys.exit(1)
+
+if options.alignmentXMLName:
+    # Load alignments from XML  
+    print('Loading alignment from XML file:', options.alignmentXMLName)
+    process.load("CalibPPS.ESProducers.ctppsRPAlignmentCorrectionsDataESSourceXML_cfi")
+    process.ctppsRPAlignmentCorrectionsDataESSourceXML.RealFiles = cms.vstring(options.alignmentXMLName)
+    process.esPreferLocalAlignment = cms.ESPrefer("CTPPSRPAlignmentCorrectionsDataESSourceXML", "ctppsRPAlignmentCorrectionsDataESSourceXML")
+elif options.alignmentDBName:
+    # Load alignments from DB file
+    print('Loading alignment from DB file:', options.alignmentDBName)
+    from CondCore.CondDB.CondDB_cfi import *
+    ppsAlignmentDB = CondDB.clone()
+    ppsAlignmentDB.connect = cms.string("sqlite_file:"+options.alignmentDBName)
+    process.ppsAlignment = cms.ESSource("PoolDBESSource",ppsAlignmentDB,
+        toGet = cms.VPSet(
+            cms.PSet(
+            record = cms.string("RPRealAlignmentRecord"),
+            tag = cms.string("CTPPSRPAlignment_real"),
+            label = cms.untracked.string("")
+            )
+        )
+    )
+    process.es_prefer_ppsAlignment = cms.ESPrefer("PoolDBESSource","ppsAlignment")
+else: 
+    print('Using alignment from GT.')
 
 if len(options.inputFiles) != 0:
     fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:') or f.startswith('root:')) else f for f in options.inputFiles]
     inputFiles = cms.untracked.vstring(fileList)
 else:
     # Example input file
-    inputFiles = cms.untracked.vstring(
-        [
-            '/store/data/Run2023C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v3/000/367/696/00000/10d6bcd2-a5eb-4fd3-bc30-daeae548887e.root',
-        ]
-    )
-    
-#SETUP INPUT
+    inputFiles = cms.untracked.vstring('/store/data/Run2023C/AlCaPPSPrompt/ALCARECO/PPSCalMaxTracks-PromptReco-v3/000/367/696/00000/10d6bcd2-a5eb-4fd3-bc30-daeae548887e.root')
 print('Input files:\n',inputFiles, sep='')
+
+#SETUP INPUT
 process.source = cms.Source("PoolSource",
     fileNames = inputFiles,
     # Drop everything from the prompt alcareco besides the digis at input
     inputCommands = cms.untracked.vstring(
         'keep *',
         'drop *_*_*_RECO',
+        'keep *_hltGtStage2Digis_*_*',
+        'keep *_gtStage2Digis_*_*',
         'keep *_*Digi*_*_RECO'
     )
 )
 
-if options.useJsonFile == True:
+if options.jsonFileName:
     import FWCore.PythonUtilities.LumiList as LumiList
     jsonFileName = options.jsonFileName
     print("Using JSON file:",jsonFileName)
@@ -118,7 +141,9 @@ process.output = cms.OutputModule("PoolOutputModule",
     # Keep only the new products
     outputCommands = cms.untracked.vstring(
         "keep *",
-        "drop *_*_*_RECO"
+        "drop *_*_*_RECO",
+        'keep *_hltGtStage2Digis_*_*',
+        'keep *_gtStage2Digis_*_*',
     )
 )
 
