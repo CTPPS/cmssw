@@ -203,9 +203,10 @@ if options.InjSchemeName != '':
     else:    
         with open(bunches_json_path, "r") as f:
             bunches_data = json.load(f)
-    
+
         selected_bxs_list = bunches_data.get("first_in_train", [])
-        
+        print(f"Selected only first bunches in trains from injection scheme")
+
         if not selected_bxs_list:
             print("No Selected bunches found in JSON, using all bunches.")
             selected_bxs_list = list(range(3564))   # Default to all bunch crossings in a 25ns LHC fill 

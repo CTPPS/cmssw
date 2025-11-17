@@ -32,7 +32,6 @@ options.register('alignmentDBName',
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.string,
                 "Alignmend DB file name")
-
 options.register('globalTag',
                 '',
                 VarParsing.VarParsing.multiplicity.singleton,
@@ -80,25 +79,6 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 print('Using GT:',gt)
 process.GlobalTag = GlobalTag(process.GlobalTag, gt)
 
-# Patch for LHCInfo not in GT
-# process.GlobalTag.toGet.append(
-#     cms.PSet(
-#     record = cms.string("LHCInfoPerFillRcd"),
-#     tag = cms.string("LHCInfoPerFill_endFill_Run3_v1"),
-#     label = cms.untracked.string(""),
-#     connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-#     )
-# )
-# process.GlobalTag.toGet.append(
-#     cms.PSet(
-#     record = cms.string("LHCInfoPerLSRcd"),
-#     tag = cms.string("LHCInfoPerLS_endFill_Run3_v2"),
-#     label = cms.untracked.string(""),
-#     connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-#     )
-# )
-# End of patch
-
 # Handle alignment inputs
 if options.alignmentXMLName and options.alignmentDBName:
     print('ERROR: Both alignment XML and DB files specified. Please specify only one.')
@@ -130,12 +110,10 @@ else:
     print('Using alignment from GT.')
 
 if len(options.inputFiles) != 0:
-    # Add 'file:' in front of file names
-    inputFiles = []
-    for file_name in options.inputFiles:
-        inputFiles.append('file:'+file_name)
-    inputFiles = cms.untracked.vstring(inputFiles) 
+    fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:') or f.startswith('root:')) else f for f in options.inputFiles]
+    inputFiles = cms.untracked.vstring(fileList)
 else:
+    # Example input file
     inputFiles = cms.untracked.vstring('/store/data/Run2023C/ZeroBias/AOD/PromptReco-v4/000/368/454/00000/3581759b-c29a-4422-ac31-7a14c172846f.root')
 print('Input files:\n',inputFiles, sep='')
 
