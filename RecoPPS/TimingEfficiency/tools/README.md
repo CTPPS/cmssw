@@ -60,3 +60,10 @@ for scheme in "all_bunches" "picked_bunches"; do
     fi
 done
 ```
+
+What happens in the script:
+- we define path to a folder with root files produced by automation (we divide it between prefix and suffix because root macro `CalculateDiamondEfficiency.C` takes path relative to `/eos/cms/store/group/dpg_ctpps/comm_ctpps/pps-automation` folder).
+- Then we iterate over the structure of the folder with automation outputs and for the runs we want, we run the `CalculateDiamondEfficiency.C` macro, which produces output JSONs based on the root files and coords.json (which is the file with coordinates of diamonds in time).
+- After all output JSONs have been computed we merge them in the next loop. 
+- In the end we produce plots.
+
