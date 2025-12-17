@@ -41,54 +41,78 @@
 
 //----------------------------------------------------------------------------------------------------
 
+bool channelAlignedWithTrackOld(const CTPPSGeometry* geom,
+                                const CTPPSDiamondDetId& detid,
+                                const CTPPSDiamondLocalTrack& localTrack,
+                                const float tolerance = 1) {
+  const DetGeomDesc* det = geom->sensor(detid);
+  const float x_pos = det->translation().x(),
+              x_width = 2.0 * det->getDiamondDimensions().xHalfWidth;  // parameters stand for half the size
+  return ((x_pos + 0.5 * x_width > localTrack.x0() - localTrack.x0Sigma() - tolerance &&
+           x_pos + 0.5 * x_width < localTrack.x0() + localTrack.x0Sigma() + tolerance) ||
+          (x_pos - 0.5 * x_width > localTrack.x0() - localTrack.x0Sigma() - tolerance &&
+           x_pos - 0.5 * x_width < localTrack.x0() + localTrack.x0Sigma() + tolerance) ||
+          (x_pos - 0.5 * x_width < localTrack.x0() - localTrack.x0Sigma() - tolerance &&
+           x_pos + 0.5 * x_width > localTrack.x0() + localTrack.x0Sigma() + tolerance));
+}
+
 // Utility for efficiency computations
+// NOTE: "CTPPSDiamondLocalTrack" refers to "local reconstruction", NOT coordinate system!
+// - track.x0() is in GLOBAL coordinates (output from CTPPSDiamondLocalTrackFitter)
+// - track.x0Sigma() is in LOCAL coordinates (track width)
+// - det->translation() is in GLOBAL coordinates (channel center)
+// - det->getDiamondDimensions() are in LOCAL coordinates
 bool channelAlignedWithTrack(const CTPPSGeometry* geom,
                              const CTPPSDiamondDetId& detid,
-                             const CTPPSDiamondLocalTrack& trackLocal,
+                             const CTPPSDiamondLocalTrack& track,
                              const float tolerance = 1) {
   const DetGeomDesc* det = geom->sensor(detid);
   const auto& rot = det->rotation();
   const auto& trans = det->translation();
   
-  // Get local dimensions
+  // Channel dimensions in LOCAL coordinates
   const float x_half_width_local = det->getDiamondDimensions().xHalfWidth;
+  const float channel_x_min_local = -x_half_width_local;
+  const float channel_x_max_local = +x_half_width_local;
   
-  // Transform the channel corners from local to global to find the effective X range  
-  auto leftEdgeLocal = CTPPSGeometry::Vector(-x_half_width_local, 0, 0);
-  auto rightEdgeLocal = CTPPSGeometry::Vector(+x_half_width_local, 0, 0);
+  // Transform track position from GLOBAL to LOCAL coordinates of this channel
+  auto trackGlobal = CTPPSGeometry::Vector(track.x0(), track.y0(), track.z0());
+  auto trackLocal = rot.Inverse() * (trackGlobal - trans);
   
-  // Transform to global: Global = Rotation * Local + Translation
-  auto leftEdgeGlobal = rot * leftEdgeLocal + trans;
-  auto rightEdgeGlobal = rot * rightEdgeLocal + trans;
-  
-  // Get the X range in global coordinates
-  const float x_min_global = std::min(leftEdgeGlobal.x(), rightEdgeGlobal.x());
-  const float x_max_global = std::max(leftEdgeGlobal.x(), rightEdgeGlobal.x());
-  
-  // Track position and sigma in global coordinates
-  const float track_x = trackLocal.x0();
-  const float track_x_sigma = trackLocal.x0Sigma();
-  const float track_x_min = track_x - track_x_sigma - tolerance;
-  const float track_x_max = track_x + track_x_sigma + tolerance;
+  // Now track position is in local coordinates
+  const float track_x_local = trackLocal.x();
+  const float track_x_sigma = track.x0Sigma(); // already in local coordinates
+  const float track_x_min_local = track_x_local - track_x_sigma - tolerance;
+  const float track_x_max_local = track_x_local + track_x_sigma + tolerance;
 
-  bool overlaps = !(x_max_global < track_x_min || x_min_global > track_x_max);
+  // Check overlap in LOCAL coordinates (new method)
+  bool overlaps = (channel_x_min_local <= track_x_max_local) && (track_x_min_local <= channel_x_max_local);
   
-  // Debug output
-  double rot_xx, rot_xy, rot_xz, rot_yx, rot_yy, rot_yz, rot_zx, rot_zy, rot_zz;
-  rot.GetComponents(rot_xx, rot_xy, rot_xz, rot_yx, rot_yy, rot_yz, rot_zx, rot_zy, rot_zz);
-  double angle_z = std::atan2(rot_yx, rot_xx) * 180.0 / M_PI;
-  
-  std::cout << "=== channelAlignedWithTrack DEBUG ===" << std::endl;
-  std::cout << "DetId: arm=" << detid.arm() << " station=" << detid.station() 
-            << " rp=" << detid.rp() << " plane=" << detid.plane() 
-            << " channel=" << detid.channel() << std::endl;
-  std::cout << "Rotation around Z axis: " << angle_z << std::endl;
-  std::cout << "Local dimensions: xHalfWidth=" << x_half_width_local << std::endl;
-  std::cout << "Channel global X range: [" << x_min_global << ", " << x_max_global << "]" << std::endl;
-  std::cout << "Track global X range:   [" << track_x_min << ", " << track_x_max << "]" << std::endl;
-  
-  std::cout << "Condition result: " << (overlaps ? "TRUE" : "FALSE") << std::endl;
-  std::cout << "========================================" << std::endl;
+  // Compare with old method and print debug info only when results differ
+  if (true) {
+    bool overlapsOld = channelAlignedWithTrackOld(geom, detid, track, tolerance);
+    
+    if (overlaps != overlapsOld) {
+      double rot_xx, rot_xy, rot_xz, rot_yx, rot_yy, rot_yz, rot_zx, rot_zy, rot_zz;
+      rot.GetComponents(rot_xx, rot_xy, rot_xz, rot_yx, rot_yy, rot_yz, rot_zx, rot_zy, rot_zz);
+      double angle_z = std::atan2(rot_yx, rot_xx) * 180.0 / M_PI;
+      
+      std::cout << "=== channelAlignedWithTrack ===" << std::endl;
+      std::cout << "DetId: arm=" << detid.arm() << " station=" << detid.station() << " rp=" << detid.rp() << " plane=" << detid.plane() << " channel=" << detid.channel() << std::endl;
+      std::cout << "Channel position (GLOBAL): " << trans.x() << " mm" << std::endl;
+      std::cout << "Channel half-width (LOCAL): " << x_half_width_local << " mm" << std::endl;
+      std::cout << "Rotation around Z axis: " << angle_z << " degrees" << std::endl;
+      std::cout << "Track GLOBAL: x=" << track.x0() << ", x0sigma=" << track.x0Sigma() << std::endl;
+      std::cout << "Track LOCAL (after transform): x=" << track_x_local << std::endl;
+      std::cout << "Channel LOCAL X range: [" << channel_x_min_local << ", " << channel_x_max_local << "]" << std::endl;
+      std::cout << "Track LOCAL X range:   [" << track_x_min_local << ", " << track_x_max_local << "]" << std::endl;
+      std::cout << "Track X range OLD:   [" <<  track.x0() - track.x0Sigma() - tolerance << ", " << track.x0() + track.x0Sigma() + tolerance << "]" << std::endl;
+      std::cout << "Channel X range OLD: [" << trans.x() - x_half_width_local << ", " << trans.x() + x_half_width_local << "]" << std::endl;
+      std::cout << "NEW method result: " << (overlaps ? "TRUE" : "FALSE") << std::endl;
+      std::cout << "OLD method result: " << (overlapsOld ? "TRUE" : "FALSE") << std::endl;
+      std::cout << "==========================================" << std::endl;
+    }
+  }
 
   return overlaps;
 }
