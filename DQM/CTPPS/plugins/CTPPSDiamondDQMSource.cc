@@ -89,7 +89,6 @@ bool channelAlignedWithTrack(const CTPPSGeometry* geom,
   // std::cout << "Track X range OLD:   [" <<  track.x0() - track.x0Sigma() - tolerance << ", " << track.x0() + track.x0Sigma() + tolerance << "]" << std::endl;
   // std::cout << "Channel X range OLD: [" << trans.x() - x_half_width_local << ", " << trans.x() + x_half_width_local << "]" << std::endl;
   // std::cout << "NEW method result: " << (overlaps ? "TRUE" : "FALSE") << std::endl;
-  // std::cout << "OLD method result: " << (overlapsOld ? "TRUE" : "FALSE") << std::endl;
   // std::cout << "==========================================" << std::endl;
 
   return overlaps;
