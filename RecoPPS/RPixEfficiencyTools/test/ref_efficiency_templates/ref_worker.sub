@@ -1,0 +1,8 @@
+executable			= ref_worker.sh
+arguments  			= CMSSW_BASE $(ProcId) $(input_file) EFFICIENCY_FILE OUTPUT_DIR
+output 				= CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LOGDIR/LOGFILE_$(ProcId).out
+error 				= CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LOGDIR/LOGFILE_$(ProcId).err
+log 				= CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LOGDIR/LOGFILE_$(ProcId).log
++JobFlavour = "longlunch"
+getenv = True
+queue input_file from INPUT_FILE_LIST

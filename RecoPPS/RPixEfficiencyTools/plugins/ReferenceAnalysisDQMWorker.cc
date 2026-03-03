@@ -459,9 +459,11 @@ void ReferenceAnalysisDQMWorker::analyze(const edm::Event &iEvent, const edm::Ev
           uint32_t xBin = h2PlaneEfficiencyMap_[planeId]->GetXaxis()->FindBin(hitX0);
           uint32_t yBin = h2PlaneEfficiencyMap_[planeId]->GetYaxis()->FindBin(hitY0);
           planeEfficiency[plane] = h2PlaneEfficiencyMap_[planeId]->GetBinContent(xBin, yBin);
-          if (debug_)
-            std::cout << "Hit coordinates: (" << hitX0 << "," << hitY0 << ")\n Hit bins (" << xBin << "." << yBin << ")"
+          if (debug_){
+            std::cout << planeId << std::endl;
+            std::cout << "Hit coordinates: (" << hitX0 << "," << hitY0 << ")\n Hit bins (" << xBin << "," << yBin << ")"
                       << std::endl;
+          }
         }  // for each hit
       }    // for each hit collection
       for (const auto &plane : listOfPlanes_) {
