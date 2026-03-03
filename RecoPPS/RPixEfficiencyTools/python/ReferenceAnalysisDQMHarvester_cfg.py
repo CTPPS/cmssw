@@ -87,14 +87,13 @@ process.GlobalTag = GlobalTag(process.GlobalTag, gt)
 # Pass input files as a comma-separated list of files. Since the output is local by definition, the 
 # 'file:' prefix is automatically added
 if len(options.inputFiles) != 0:
-    # Add 'file:' in front of file names
-    inputFiles = []
-    for file_name in options.inputFiles:
-        inputFiles.append('file:'+file_name)
-    inputFiles = cms.untracked.vstring(inputFiles) 
+    fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:') or f.startswith('root:')) else f for f in options.inputFiles]
+    inputFiles = cms.untracked.vstring(fileList)
+    print('Input files:')
+    print(inputFiles)
 else:
     inputFiles = cms.untracked.vstring('file:outputReferenceAnalysisDQMWorker.root')
-print('Input files:\n',inputFiles, sep='')
+    print('Input files:\n',inputFiles, sep='')
 
 process.source = cms.Source("DQMRootSource",
     fileNames = cms.untracked.vstring(inputFiles),

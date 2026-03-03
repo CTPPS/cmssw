@@ -1,0 +1,8 @@
+# Fan-out layer
+JOB FIRST ref_worker.sub
+
+# Fan-in job
+JOB SECOND ref_harvester.sub
+
+# Dependency: SECOND waits for ALL FIRST jobs
+PARENT FIRST CHILD SECOND

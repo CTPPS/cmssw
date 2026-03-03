@@ -1,0 +1,8 @@
+executable			= ref_harvester.sh
+arguments  			= CMSSW_BASE INPUT_FILES OUTPUT_FILES
+output 				= CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LOGDIR/LOGFILE_$(ProcId).out
+error 				= CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LOGDIR/LOGFILE_$(ProcId).err
+log 				= CMSSW_BASE/src/RecoPPS/RPixEfficiencyTools/test/LOGDIR/LOGFILE_$(ProcId).log
++JobFlavour = "longlunch"
+getenv = True
+queue

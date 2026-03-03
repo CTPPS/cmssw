@@ -60,7 +60,10 @@ options.parseArguments()
 
 # Prefer input from files over source
 if len(options.inputFiles) != 0:
-    inputFiles = cms.untracked.vstring(options.inputFiles)
+    fileList = [f'file:{f}' if not (f.startswith('/store/') or f.startswith('file:') or f.startswith('root:')) else f for f in options.inputFiles]
+    inputFiles = cms.untracked.vstring(fileList)
+    print('Input files:')
+    print(inputFiles)
 elif options.sourceFileList != '':
     import FWCore.Utilities.FileUtils as FileUtils
     print('Taking input from:',options.sourceFileList)
