@@ -29,11 +29,13 @@ fi
 
 RET=$(echo "$RETCMSSW+$RETCOPY" | bc)
 
-# if [ "$RET" == "0" ]
-# then
-#     ecalautomation.py $TASK jobctrl --id $JOBID --done --fields "output:${EOSDIR}/${OFILE}"
-# else
-#     ecalautomation.py $TASK jobctrl --id $JOBID --failed
-# fi
+if [ "$RET" == "0" ]
+then
+    # Delete the input files, which are comma-separated
+    IFS=',' read -ra FILES <<< "$INFILE"
+    for FILE in "${FILES[@]}"; do
+        rm -f "$FILE"
+    done
+fi
 
 exit $RET
