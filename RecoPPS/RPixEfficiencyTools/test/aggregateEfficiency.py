@@ -218,27 +218,12 @@ with open(os.path.join(submit_files_dir, 'ref_harvester.sub'), 'w') as f:
     f.write(content)
 
 # Use the dag submission file to submit the jobs
-dag_cmd = [
-    'cd',
-    submit_files_dir,
-    '&&',
-    'condor_submit_dag',
-    'workflow.dag',
-    '&&',
-    'cd',
-    '-'
-]
-dag_cmd = [os.path.expandvars(c) for c in dag_cmd]
-logging.info('Running command: {}'.format(' '.join(dag_cmd)))
-
 ans = ask_user('This will submit the reference efficiency worker and harvester jobs to HTCondor. Do you want to proceed?')
 if ans == 'yes':
     logging.info('Submitting jobs to HTCondor')
     result = subprocess.run(
-        dag_cmd,
-        env=os.environ.copy(),
-        # capture_output=True,
-        # text=True    
+        ['condor_submit_dag','workflow.dag'],
+        cwd=submit_files_dir,
     )
     # Check the result of the command
     if result.returncode != 0:
