@@ -2,16 +2,16 @@
 
 ### Setup
 
-Setup with the following command, tuned to the desired CMSSW version (check that the corresponding rolling-calib branch exists)
+Setup with the following command, tuned to the desired CMSSW version (check that the corresponding pps-automation branch exists)
 
 ```
-cmssw_version=15_0_6
+cmssw_version=16_0_2_patch1
 cmsrel CMSSW_$cmssw_version
 cd CMSSW_$cmssw_version/src
 cmsenv
 scram-venv
 cmsenv
-git cms-merge-topic CTPPS:rolling-calib-tracking-efficiency-$cmssw_version # tracking-efficiency
+git cms-merge-topic CTPPS:pps-automation-$cmssw_version # tracking-efficiency
 scram b -j10
 
 # Need SSH key uploaded to gitlab for the following command to work
