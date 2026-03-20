@@ -167,7 +167,7 @@ process.MessageLogger = cms.Service("MessageLogger",
         CTPPSPixelLocalTrackProducer = cms.untracked.PSet(
             limit = cms.untracked.int32(0)
         ),
-        threshold = cms.untracked.string('INFO')
+        threshold = cms.untracked.string('WARNING')
     ),
     categories = cms.untracked.vstring(
         "FwkReport",
