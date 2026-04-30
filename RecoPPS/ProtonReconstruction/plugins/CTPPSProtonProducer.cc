@@ -209,6 +209,13 @@ void CTPPSProtonProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSe
     // get conditions
     LHCInfoCombined lhcInfoCombined(iSetup, lhcInfoPerLSToken_, lhcInfoPerFillToken_, lhcInfoToken_, useNewLHCInfo_);
 
+    edm::LogInfo("PPS") << "Reconstructing with LHCInfo: beam energy = " << lhcInfoCombined.energy
+                                         << " GeV, beta* x = " << lhcInfoCombined.betaStarX
+                                         << " m, beta* y = " << lhcInfoCombined.betaStarY
+                                         << " m, crossing angle = " << lhcInfoCombined.crossingAngleX 
+                                         << " urad, crossing angle y = " << lhcInfoCombined.crossingAngleY
+                                         << " urad";
+
     edm::ESHandle<LHCInterpolatedOpticalFunctionsSetCollection> hOpticalFunctions =
         iSetup.getHandle(opticalFunctionsToken_);
 
