@@ -7,7 +7,7 @@ profile_base = cms.PSet(
         xangle = cms.double(-1.),
         betaStar = cms.double(-1.),
         beamEnergy = cms.double(6.8e3),
-        xangleBetaStarHistogramFile = cms.string("CalibPPS/ESProducers/data/xangle_beta_distributions/version1.root"),
+        xangleBetaStarHistogramFile = cms.string("CalibPPS/ESProducers/data/xangle_beta_distributions/version2.root"),
         xangleBetaStarHistogramObject = cms.string("")
     ),
     # optics
