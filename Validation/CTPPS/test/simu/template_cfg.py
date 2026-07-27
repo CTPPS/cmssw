@@ -82,6 +82,7 @@ process.schedule = cms.Schedule(
 from SimPPS.Configuration.Utils import setupPPSDirectSim
 setupPPSDirectSim(process)
 
+process.ctppsCompositeESSource.seed = 12345 # This shall be set randomly for each production
 process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetX45 = 0.
 process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetY45 = 0.
 process.ctppsBeamParametersFromLHCInfoESSource.vtxOffsetZ45 = 0.
