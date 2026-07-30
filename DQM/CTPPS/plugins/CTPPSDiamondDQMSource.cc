@@ -42,19 +42,56 @@
 //----------------------------------------------------------------------------------------------------
 
 // Utility for efficiency computations
+// NOTE: "CTPPSDiamondLocalTrack" refers to "local reconstruction", NOT coordinate system!
+// - track.x0() is in GLOBAL coordinates (output from CTPPSDiamondLocalTrackFitter)
+// - track.x0Sigma() is in LOCAL coordinates (track width)
+// - det->translation() is in GLOBAL coordinates (channel center)
+// - det->getDiamondDimensions() are in LOCAL coordinates
 bool channelAlignedWithTrack(const CTPPSGeometry* geom,
                              const CTPPSDiamondDetId& detid,
-                             const CTPPSDiamondLocalTrack& localTrack,
+                             const CTPPSDiamondLocalTrack& track,
                              const float tolerance = 1) {
   const DetGeomDesc* det = geom->sensor(detid);
-  const float x_pos = det->translation().x(),
-              x_width = 2.0 * det->getDiamondDimensions().xHalfWidth;  // parameters stand for half the size
-  return ((x_pos + 0.5 * x_width > localTrack.x0() - localTrack.x0Sigma() - tolerance &&
-           x_pos + 0.5 * x_width < localTrack.x0() + localTrack.x0Sigma() + tolerance) ||
-          (x_pos - 0.5 * x_width > localTrack.x0() - localTrack.x0Sigma() - tolerance &&
-           x_pos - 0.5 * x_width < localTrack.x0() + localTrack.x0Sigma() + tolerance) ||
-          (x_pos - 0.5 * x_width < localTrack.x0() - localTrack.x0Sigma() - tolerance &&
-           x_pos + 0.5 * x_width > localTrack.x0() + localTrack.x0Sigma() + tolerance));
+  const auto& rot = det->rotation();
+  const auto& trans = det->translation();
+  
+  // Channel dimensions in LOCAL coordinates
+  const float x_half_width_local = det->getDiamondDimensions().xHalfWidth;
+  const float channel_x_min_local = -x_half_width_local;
+  const float channel_x_max_local = +x_half_width_local;
+  
+  // Transform track position from GLOBAL to LOCAL coordinates of this channel
+  auto trackGlobal = CTPPSGeometry::Vector(track.x0(), track.y0(), track.z0());
+  auto trackLocal = rot.Inverse() * (trackGlobal - trans);
+  
+  // Now track position is in local coordinates
+  const float track_x_local = trackLocal.x();
+  const float track_x_sigma = track.x0Sigma(); // already in local coordinates
+  const float track_x_min_local = track_x_local - track_x_sigma - tolerance;
+  const float track_x_max_local = track_x_local + track_x_sigma + tolerance;
+
+  // Check overlap in LOCAL coordinates (new method)
+  bool overlaps = (channel_x_min_local <= track_x_max_local) && (track_x_min_local <= channel_x_max_local);
+  
+  // double rot_xx, rot_xy, rot_xz, rot_yx, rot_yy, rot_yz, rot_zx, rot_zy, rot_zz;
+  // rot.GetComponents(rot_xx, rot_xy, rot_xz, rot_yx, rot_yy, rot_yz, rot_zx, rot_zy, rot_zz);
+  // double angle_z = std::atan2(rot_yx, rot_xx) * 180.0 / M_PI;
+  
+  // std::cout << "=== channelAlignedWithTrack ===" << std::endl;
+  // std::cout << "DetId: arm=" << detid.arm() << " station=" << detid.station() << " rp=" << detid.rp() << " plane=" << detid.plane() << " channel=" << detid.channel() << std::endl;
+  // std::cout << "Channel position (GLOBAL): " << trans.x() << " mm" << std::endl;
+  // std::cout << "Channel half-width (LOCAL): " << x_half_width_local << " mm" << std::endl;
+  // std::cout << "Rotation around Z axis: " << angle_z << " degrees" << std::endl;
+  // std::cout << "Track GLOBAL: x=" << track.x0() << ", x0sigma=" << track.x0Sigma() << std::endl;
+  // std::cout << "Track LOCAL (after transform): x=" << track_x_local << std::endl;
+  // std::cout << "Channel LOCAL X range: [" << channel_x_min_local << ", " << channel_x_max_local << "]" << std::endl;
+  // std::cout << "Track LOCAL X range:   [" << track_x_min_local << ", " << track_x_max_local << "]" << std::endl;
+  // std::cout << "Track X range OLD:   [" <<  track.x0() - track.x0Sigma() - tolerance << ", " << track.x0() + track.x0Sigma() + tolerance << "]" << std::endl;
+  // std::cout << "Channel X range OLD: [" << trans.x() - x_half_width_local << ", " << trans.x() + x_half_width_local << "]" << std::endl;
+  // std::cout << "NEW method result: " << (overlaps ? "TRUE" : "FALSE") << std::endl;
+  // std::cout << "==========================================" << std::endl;
+
+  return overlaps;
 }
 
 namespace dds {
@@ -812,6 +849,11 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
       // to preprare correlation plot, we need to select tracks from nr_hr pot in 220m station
       const CTPPSDiamondDetId detId_220nr_hr(tracks_220nr_hr.detId());
 
+    // extract the rotation angle
+      auto cosRotAngle_220nr_hr = diamRotations_.at(detId_220nr_hr) * CTPPSGeometry::Vector(1, 0, 0);
+
+
+
       // selecting only tracks from 220nr station, realised as skipping tracks from 220cyl station
       if ((detId_220nr_hr.rp() == CTPPS_DIAMOND_CYL_RP_ID) &&
           (detId_220nr_hr.station() == CTPPS_DIAMOND_CYL_STATION_ID))
@@ -826,12 +868,13 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
           continue;
 
         // get the bins from per-pot plots
-        int startBin_220nr_hr = trackHistoInTimeTmp->FindBin(
-            track_220nr_hr.x0() - diamShifts_[detId_220nr_hr.rpId()].global - track_220nr_hr.x0Sigma());
+        auto localTrackX_220nr_hr = (track_220nr_hr.x0() - diamTranslations_.at(detId_220nr_hr).x() + diamHalfWidths_.at(detId_220nr_hr) - track_220nr_hr.x0Sigma()) / cosRotAngle_220nr_hr.x();
+        int startBin_220nr_hr = trackHistoInTimeTmp->FindBin(localTrackX_220nr_hr);
         int numOfBins_220nr_hr = 2 * track_220nr_hr.x0Sigma() * INV_DISPLAY_RESOLUTION_FOR_HITS_MM;
 
         for (const auto& tracks_220cyl : *diamondLocalTracks) {
           CTPPSDiamondDetId detId_220cyl(tracks_220cyl.detId());
+          auto cosRotAngle_220cyl = diamRotations_.at(detId_220cyl) * CTPPSGeometry::Vector(1, 0, 0);
 
           // select tracks in the same arm, but belonging to the cylindrical pot
           // that means skipping tracks from the opposite arm (skip if 220nr_hr.arm != 220cyl.arm)
@@ -849,8 +892,8 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
           for (const auto& track_220cyl : tracks_220cyl) {
             if (!track_220cyl.isValid())
               continue;
-            int startBin_220cyl = trackHistoTmpYAxis->FindBin(
-                track_220cyl.x0() - diamShifts_[detId_220cyl.rpId()].global - track_220cyl.x0Sigma());
+            auto localTrackX_220cyl = (track_220cyl.x0() - diamTranslations_.at(detId_220cyl).x() + diamHalfWidths_.at(detId_220cyl) - track_220cyl.x0Sigma()) / cosRotAngle_220cyl.x();
+            int startBin_220cyl = trackHistoTmpYAxis->FindBin(localTrackX_220cyl);
             int numOfBins_220cyl = 2 * track_220cyl.x0Sigma() * INV_DISPLAY_RESOLUTION_FOR_HITS_MM;
 
             // fill the correlation plot
@@ -1028,7 +1071,6 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
   // Using CTPPSDiamondLocalTrack
   for (const auto& tracks : *diamondLocalTracks) {
     const CTPPSDiamondDetId detId(tracks.detId()), detId_pot(detId.rpId());
-    const auto& x_shift = diamShifts_.at(detId_pot);
     // extract the rotation angle for the diamond pot
     auto cosRotAngle = diamRotations_.at(detId_pot) * CTPPSGeometry::Vector(1, 0, 0);
 
@@ -1042,9 +1084,11 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
       if (potPlots_.count(detId_pot) == 0)
         continue;
 
+      auto localTrackX = (track.x0() - diamTranslations_.at(detId_pot).x() + diamHalfWidths_.at(detId_pot) - track.x0Sigma()) / cosRotAngle.x();
+
       TH2F* trackHistoOOTTmp = potPlots_[detId_pot].trackDistributionOOT->getTH2F();
       TAxis* trackHistoOOTTmpYAxis = trackHistoOOTTmp->GetYaxis();
-      int startBin = trackHistoOOTTmpYAxis->FindBin(track.x0() - x_shift.global - track.x0Sigma());
+      int startBin = trackHistoOOTTmpYAxis->FindBin((localTrackX));
       int numOfBins = 2 * track.x0Sigma() * INV_DISPLAY_RESOLUTION_FOR_HITS_MM;
       for (int i = 0; i < numOfBins; ++i)
         trackHistoOOTTmp->Fill(track.ootIndex(), trackHistoOOTTmpYAxis->GetBinCenter(startBin + i));
@@ -1053,10 +1097,6 @@ void CTPPSDiamondDQMSource::analyze(const edm::Event& event, const edm::EventSet
         TH1F* trackHistoInTimeTmp = potPlots_[detId_pot].trackDistribution->getTH1F();
 
         // X coordinate of the left edge of the track in the local coordinate system
-        auto localTrackX =
-            (track.x0() - diamTranslations_.at(detId_pot).x() + diamHalfWidths_.at(detId_pot) - track.x0Sigma()) /
-            cosRotAngle.x();
-
         int startBin = trackHistoInTimeTmp->FindBin((localTrackX));
         int numOfBins = 2 * track.x0Sigma() * INV_DISPLAY_RESOLUTION_FOR_HITS_MM;
         for (int i = 0; i < numOfBins; ++i)

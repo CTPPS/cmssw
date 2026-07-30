@@ -372,23 +372,50 @@ void CTPPSProtonProducer::produce(edm::Event &iEvent, const edm::EventSetup &iSe
               if (timing_RP_track_multiplicity[tr_ti.rpId()] > max_n_timing_tracks_)
                 continue;
 
-              // interpolation from tracking RPs
+              // Interpolation in GLOBAL coordinates from tracking RPs (pixels)
               const double z_ti = hGeometry->rpTranslation(tr_ti.rpId()).z();
               const double f_i = (z_ti - z_j) / (z_i - z_j), f_j = (z_i - z_ti) / (z_i - z_j);
-              const double x_inter = f_i * tr_i.x() + f_j * tr_j.x();
+              const double x_inter_global = f_i * tr_i.x() + f_j * tr_j.x();
+              const double y_inter_global = f_i * tr_i.y() + f_j * tr_j.y();
               const double x_inter_unc_sq =
                   f_i * f_i * tr_i.xUnc() * tr_i.xUnc() + f_j * f_j * tr_j.xUnc() * tr_j.xUnc();
 
-              const double de_x = tr_ti.x() - x_inter;
-              const double de_x_unc = sqrt(tr_ti.xUnc() * tr_ti.xUnc() + x_inter_unc_sq);
+              // Get timing detector geometry for coordinate transformation
+              const DetGeomDesc* det = hGeometry->sensor(tr_ti.rpId());
+              const auto& rot = det->rotation();
+              const auto& trans = det->translation();
+
+              // Transform interpolated point from GLOBAL to LOCAL coordinates of timing (diamond) detector
+              auto interGlobal = CTPPSGeometry::Vector(x_inter_global, y_inter_global, z_ti);
+              auto interLocal = rot.Inverse() * (interGlobal - trans);
+              const double x_inter_local = interLocal.x();
+
+              // Transform timing track from GLOBAL to LOCAL coordinates
+              auto trackGlobal = CTPPSGeometry::Vector(tr_ti.x(), tr_ti.y(), z_ti);
+              auto trackLocal = rot.Inverse() * (trackGlobal - trans);
+              const double x_ti_local = trackLocal.x();
+
+              // Compare in LOCAL coordinates (both now in same rotated frame)
+              const double de_x = x_ti_local - x_inter_local;
+              
+              // The track uncertainty tr_ti.xUnc() is already in LOCAL coordinates
+              const double x_inter_unc_local = sqrt(x_inter_unc_sq);
+              const double de_x_unc = sqrt(tr_ti.xUnc() * tr_ti.xUnc() + x_inter_unc_local * x_inter_unc_local);
               const double r = (de_x_unc > 0.) ? de_x / de_x_unc : 1E100;
 
               const bool matching = (ac.getTiTrMin() < r && r < ac.getTiTrMax());
 
-              if (verbosity_)
-                ssLog << "ti=" << ti << ", i=" << i << ", j=" << j << " | z_ti=" << z_ti << ", z_i=" << z_i
-                      << ", z_j=" << z_j << " | x_ti=" << tr_ti.x() << ", x_inter=" << x_inter << ", de_x=" << de_x
-                      << ", de_x_unc=" << de_x_unc << ", matching=" << matching << std::endl;
+              if (verbosity_) {
+                double rot_xx, rot_xy, rot_xz, rot_yx, rot_yy, rot_yz, rot_zx, rot_zy, rot_zz;
+                rot.GetComponents(rot_xx, rot_xy, rot_xz, rot_yx, rot_yy, rot_yz, rot_zx, rot_zy, rot_zz);
+                double angle_z = std::atan2(rot_yx, rot_xx) * 180.0 / M_PI;
+                ssLog << "ti=" << ti << ", i=" << i << ", j=" << j 
+                          << " | angle_z=" << angle_z << " deg"
+                          << " | x_ti_global=" << tr_ti.x() << ", x_ti_local=" << x_ti_local
+                          << " | x_inter_global=" << x_inter_global << ", x_inter_local=" << x_inter_local
+                          << " | de_x=" << de_x << ", de_x_unc=" << de_x_unc 
+                          << ", r=" << r << ", matching=" << matching << std::endl;
+              }
 
               if (!matching)
                 continue;
