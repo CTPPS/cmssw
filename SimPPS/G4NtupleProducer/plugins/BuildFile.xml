@@ -1,0 +1,21 @@
+<use name="FWCore/Framework"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/Utilities"/>
+<use name="FWCore/ServiceRegistry"/>
+<use name="FWCore/MessageLogger"/>
+<use name="CommonTools/UtilAlgos"/>
+<use name="DataFormats/Common"/>
+<use name="DataFormats/CTPPSReco"/>
+<use name="DataFormats/CTPPSDetId"/>
+<use name="DataFormats/GeometrySurface"/>
+<use name="DataFormats/GeometryVector"/>
+<use name="SimDataFormats/GeneratorProducts"/>
+<use name="Geometry/VeryForwardGeometryBuilder"/>
+<use name="Geometry/Records"/>
+<use name="CondFormats/PPSObjects"/>
+<use name="CondFormats/DataRecord"/>
+<use name="rootcore"/>
+<use name="roothistmatrix"/>
+<library name="SimPPSG4NtupleProducerPlugins" file="*.cc">
+  <flags EDM_PLUGIN="1"/>
+</library>
