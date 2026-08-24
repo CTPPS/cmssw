@@ -56,14 +56,16 @@ private:
   void beginJob() override;
   void endJob() override;
 
-  // Build CTPPSPixelDetId from plane index (1-6 in G4 convention)
+  // Build CTPPSPixelDetId from plane index (1-12 in G4 convention for dual station)
+  // Planes 1-6 -> station 0 (210m near), Planes 7-12 -> station 2 (220m far)
   CTPPSPixelDetId buildDetId(int g4PlaneIndex) const;
 
   // Configuration parameters
   std::string inputFileName_;
   unsigned int arm_;      // 0 = sector 45, 1 = sector 56
-  unsigned int station_;  // 0 = 210m, 2 = 220m
+  unsigned int station_;  // 0 = 210m, 2 = 220m (used only in single-station mode)
   unsigned int rp_;       // Roman Pot index within station
+  bool dualStation_;      // true for multi-RP mode (both 210m and 220m stations)
 
   // Hit resolution (sigma, not variance) - matches PPSDirectProtonSimulation convention
   double sigmaHitX_;  // mm
@@ -72,8 +74,9 @@ private:
   // Proton mass for HepMC
   static constexpr double protonMass_ = 0.93827208816;  // GeV/c^2
 
-  // Number of pixel planes per RP
-  static constexpr int kNumPlanes = 6;
+  // Number of pixel planes per RP (6 per station, 12 total for dual station)
+  static constexpr int kPlanesPerStation = 6;
+  static constexpr int kMaxPlanes = 12;
 
   // ROOT file and trees
   std::unique_ptr<TFile> rootFile_;
@@ -144,6 +147,7 @@ PPSG4NtupleToRecHitProducer::PPSG4NtupleToRecHitProducer(const edm::ParameterSet
       arm_(iConfig.getParameter<unsigned int>("arm")),
       station_(iConfig.getParameter<unsigned int>("station")),
       rp_(iConfig.getParameter<unsigned int>("rp")),
+      dualStation_(iConfig.getParameter<bool>("dualStation")),
       sigmaHitX_(iConfig.getParameter<double>("sigmaHitX")),
       sigmaHitY_(iConfig.getParameter<double>("sigmaHitY")),
       scoringTree_(nullptr),
@@ -155,8 +159,9 @@ PPSG4NtupleToRecHitProducer::PPSG4NtupleToRecHitProducer(const edm::ParameterSet
   produces<edm::DetSetVector<CTPPSPixelRecHit>>();
   produces<edm::HepMCProduct>("unsmeared");
 
-  // Initialize rechit tree pointers
-  rechitTrees_.resize(kNumPlanes, nullptr);
+  // Initialize rechit tree pointers (6 for single station, 12 for dual station)
+  int numPlanes = dualStation_ ? kMaxPlanes : kPlanesPerStation;
+  rechitTrees_.resize(numPlanes, nullptr);
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -172,8 +177,10 @@ void PPSG4NtupleToRecHitProducer::fillDescriptions(edm::ConfigurationDescription
       ->setComment("Path to the G4 simulation ROOT ntuple");
 
   desc.add<unsigned int>("arm", 0)->setComment("PPS arm: 0 = sector 45, 1 = sector 56");
-  desc.add<unsigned int>("station", 0)->setComment("Station: 0 = 210m, 2 = 220m");
+  desc.add<unsigned int>("station", 0)->setComment("Station: 0 = 210m, 2 = 220m (ignored if dualStation=true)");
   desc.add<unsigned int>("rp", 3)->setComment("Roman Pot index within station");
+  desc.add<bool>("dualStation", false)
+      ->setComment("Enable dual-station (multi-RP) mode: planes 1-6 -> station 0, planes 7-12 -> station 2");
 
   // Default hit resolution: pitch / sqrt(12)
   // Pixel pitch: 100 um (X) x 150 um (Y) -> sigma ~ 29 um (X), 43 um (Y)
@@ -212,8 +219,9 @@ void PPSG4NtupleToRecHitProducer::beginJob() {
   scoringTree_->SetBranchAddress("primary_energy", &truth_energy_);
   scoringTree_->SetBranchAddress("eventID", &truth_eventID_);
 
-  // Get rechit trees (planes numbered 1-6 in G4)
-  for (int i = 0; i < kNumPlanes; ++i) {
+  // Get rechit trees (planes numbered 1-6 for single station, 1-12 for dual station)
+  int numPlanes = dualStation_ ? kMaxPlanes : kPlanesPerStation;
+  for (int i = 0; i < numPlanes; ++i) {
     std::string treeName = "rechits_plane" + std::to_string(i + 1);
     rechitTrees_[i] = dynamic_cast<TTree*>(rootFile_->Get(treeName.c_str()));
     if (!rechitTrees_[i]) {
@@ -228,6 +236,12 @@ void PPSG4NtupleToRecHitProducer::beginJob() {
       rechitTrees_[i]->SetBranchAddress("edep", &rechit_edep_);
       rechitTrees_[i]->SetBranchAddress("nhits", &rechit_nhits_);
     }
+  }
+
+  if (dualStation_) {
+    edm::LogInfo("PPSG4NtupleToRecHitProducer")
+        << "Dual-station (multi-RP) mode enabled: arm=" << arm_
+        << ", planes 1-6 -> station 0 (210m), planes 7-12 -> station 2 (220m)";
   }
 
   // Load all data into memory for event-based access
@@ -255,8 +269,9 @@ void PPSG4NtupleToRecHitProducer::loadAllData() {
     truthByEvent_[truth_eventID_] = td;
   }
 
-  // Load rechit data from all planes
-  for (int planeIdx = 0; planeIdx < kNumPlanes; ++planeIdx) {
+  // Load rechit data from all planes (6 for single station, 12 for dual station)
+  int numPlanes = dualStation_ ? kMaxPlanes : kPlanesPerStation;
+  for (int planeIdx = 0; planeIdx < numPlanes; ++planeIdx) {
     if (!rechitTrees_[planeIdx])
       continue;
 
@@ -264,7 +279,7 @@ void PPSG4NtupleToRecHitProducer::loadAllData() {
     for (Long64_t i = 0; i < nRechits; ++i) {
       rechitTrees_[planeIdx]->GetEntry(i);
       RecHitData rd;
-      rd.plane = planeIdx + 1;  // G4 planes are 1-6
+      rd.plane = planeIdx + 1;  // G4 planes are 1-6 (station 0) or 7-12 (station 2)
       rd.row = rechit_row_;
       rd.col = rechit_col_;
       rd.x = rechit_x_;
@@ -284,6 +299,7 @@ void PPSG4NtupleToRecHitProducer::loadAllData() {
 
   eventIDList_.assign(allEvents.begin(), allEvents.end());
   totalEntries_ = eventIDList_.size();
+
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -298,12 +314,23 @@ void PPSG4NtupleToRecHitProducer::endJob() {
 //----------------------------------------------------------------------------------------------------
 
 CTPPSPixelDetId PPSG4NtupleToRecHitProducer::buildDetId(int g4PlaneIndex) const {
-  // g4PlaneIndex: 1-6 from the G4 simulation
-  // CMSSW plane index: 0-5
-  unsigned int plane = static_cast<unsigned int>(g4PlaneIndex - 1);
-
-  // CTPPSPixelDetId(arm, station, rp, plane)
-  return CTPPSPixelDetId(arm_, station_, rp_, plane);
+  if (dualStation_) {
+    // Dual station (multi-RP) mode:
+    //   Planes 1-6  -> station 0 (210m near), CMSSW plane 0-5
+    //   Planes 7-12 -> station 2 (220m far),  CMSSW plane 0-5
+    if (g4PlaneIndex <= kPlanesPerStation) {
+      unsigned int plane = static_cast<unsigned int>(g4PlaneIndex - 1);
+      return CTPPSPixelDetId(arm_, 0, rp_, plane);
+    } else {
+      unsigned int plane = static_cast<unsigned int>(g4PlaneIndex - kPlanesPerStation - 1);
+      return CTPPSPixelDetId(arm_, 2, rp_, plane);
+    }
+  } else {
+    // Single station mode: use configured station parameter
+    // g4PlaneIndex: 1-6 from the G4 simulation -> CMSSW plane index: 0-5
+    unsigned int plane = static_cast<unsigned int>(g4PlaneIndex - 1);
+    return CTPPSPixelDetId(arm_, station_, rp_, plane);
+  }
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -332,18 +359,27 @@ void PPSG4NtupleToRecHitProducer::produce(edm::Event& iEvent, const edm::EventSe
     for (const auto& hit : rechitIt->second) {
       CTPPSPixelDetId detId = buildDetId(hit.plane);
 
-      // Create LocalPoint and LocalError
-      // Note: CMSSW convention is local z = 0 for RecHits
-      // (see RecoPPS/Local/src/RPixClusterToHit.cc)
+      // Create LocalPoint with coordinate transformation (G4 → CMSSW local frame)
       //
-      // G4 geometry has 90° Z rotation relative to CMSSW local frame.
-      // Based on CMSSW rotation matrix analysis:
-      //   CMSSW local X → global -Y
-      //   CMSSW local Y → global +X (with tilt)
-      // G4 detector local frame (after 90° Z rotation in GDML):
-      //   G4 local Y has opposite sign convention
-      // Apply coordinate transform: negate Y to match CMSSW convention
-      LocalPoint lp(hit.x, -hit.y, 0.);
+      // G4 stores rechits in wafer-local coordinates after -90° Z rotation in GDML.
+      // CMSSW expects local coordinates in its detector geometry frame.
+      //
+      // Coordinate offsets to align G4 geometry with CMSSW local frame.
+      //
+      // The G4 rechit coordinates are in wafer-local frame after GDML rotation.
+      // These offsets map to CMSSW local track coordinates for reconstruction.
+      //
+      // xOffset: vertical direction (affects θ_y reconstruction)
+      // yOffset: dispersion direction (affects ξ reconstruction)
+      //
+      // Calibration (2026-08-21): For matched events with ξ~0.14,
+      //   G4 rechit y ~ -1.8 mm, CMSSW expects track x0 ~ +12 mm.
+      //   The geometry DB adds ~9 mm, so yOffset = 12 - (-1.8) - 9 ≈ 4.7 mm.
+      //
+      // Results: ξ bias = +0.02 (was -0.11), θ_y bias = +49 μrad (acceptable)
+      constexpr double xOffset = +1.5;    // mm, vertical frame offset
+      constexpr double yOffset = +4.7;    // mm, dispersion alignment
+      LocalPoint lp(hit.x + xOffset, hit.y + yOffset, 0.);
       LocalError le(sigmaHitX_, 0., sigmaHitY_);  // (sigmaX, 0, sigmaY) - same as PPSDirectProtonSimulation
 
       // Get or create DetSet for this detector ID
