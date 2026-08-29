@@ -68,6 +68,7 @@ private:
   std::vector<int> valid_;       // validity flag
   std::vector<int> method_;      // 0=invalid, 1=singleRP, 2=multiRP
   std::vector<int> arm_;         // 0=sector45, 1=sector56
+  std::vector<int> station_;     // 0=210m (near), 2=220m (far)
 };
 
 PPSProtonDumper::PPSProtonDumper(const edm::ParameterSet& iConfig)
@@ -117,6 +118,7 @@ void PPSProtonDumper::beginJob() {
   tree_->Branch("valid", &valid_);
   tree_->Branch("method", &method_);   // 1=singleRP, 2=multiRP
   tree_->Branch("arm", &arm_);         // 0=sector45, 1=sector56
+  tree_->Branch("station", &station_); // 0=210m (near), 2=220m (far)
 }
 
 void PPSProtonDumper::analyze(const edm::Event& iEvent, const edm::EventSetup&) {
@@ -133,6 +135,7 @@ void PPSProtonDumper::analyze(const edm::Event& iEvent, const edm::EventSetup&) 
   valid_.clear();
   method_.clear();
   arm_.clear();
+  station_.clear();
 
   // Get G4 event ID from HepMC (set by PPSG4NtupleToRecHitProducer)
   edm::Handle<edm::HepMCProduct> hepMC;
@@ -161,20 +164,24 @@ void PPSProtonDumper::analyze(const edm::Event& iEvent, const edm::EventSetup&) 
       valid_.push_back(proton.validFit() ? 1 : 0);
       method_.push_back(methodFlag);
 
-      // Determine arm from contributing tracks
+      // Determine arm and station from contributing tracks
       // For single-RP, there's one track; for multi-RP, check first track
       int armVal = -1;
+      int stationVal = -1;
       const auto& tracks = proton.contributingLocalTracks();
       if (!tracks.empty()) {
         const auto& trackRef = tracks[0];
         if (trackRef.isNonnull()) {
-          // CTPPSDetId arm is encoded in the detector ID
+          // CTPPSDetId encodes arm, station, rp
           // arm = 0 for sector 45, arm = 1 for sector 56
+          // station = 0 for 210m (near), station = 2 for 220m (far)
           CTPPSDetId detId(trackRef->rpId());
           armVal = detId.arm();
+          stationVal = detId.station();
         }
       }
       arm_.push_back(armVal);
+      station_.push_back(stationVal);
 
       nProtons_++;
     }
