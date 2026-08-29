@@ -359,27 +359,64 @@ void PPSG4NtupleToRecHitProducer::produce(edm::Event& iEvent, const edm::EventSe
     for (const auto& hit : rechitIt->second) {
       CTPPSPixelDetId detId = buildDetId(hit.plane);
 
-      // Create LocalPoint with coordinate transformation (G4 → CMSSW local frame)
+      // Apply coordinate corrections to align G4 geometry with CMSSW geometry.
       //
-      // G4 stores rechits in wafer-local coordinates after -90° Z rotation in GDML.
-      // CMSSW expects local coordinates in its detector geometry frame.
+      // G4 rechit coordinates are "wafer-centered, world-aligned":
+      //   hit.x = dispersion direction (varies with ξ)
+      //   hit.y = vertical direction (~0 when θ_y=0)
       //
-      // Coordinate offsets to align G4 geometry with CMSSW local frame.
+      // CMSSW local frame has a 90° rotation relative to G4:
+      //   local_x → track_y0 (vertical)
+      //   local_y → track_x0 (dispersion, used for ξ reconstruction)
       //
-      // The G4 rechit coordinates are in wafer-local frame after GDML rotation.
-      // These offsets map to CMSSW local track coordinates for reconstruction.
+      // Therefore we must swap: local_x = hit.y, local_y = -hit.x
       //
-      // xOffset: vertical direction (affects θ_y reconstruction)
-      // yOffset: dispersion direction (affects ξ reconstruction)
+      // Additionally, station 0 (210m) has an 8° physical tilt in CMSSW geometry
+      // that requires a rotation correction.
+
+      double lp_x, lp_y;
+
+      // CMSSW geometry: local_y → track_x0, local_x → track_y0
+      // We need: rechit_x (dispersion) → track_x0 for single-RP ξ reco
       //
-      // Calibration (2026-08-21): For matched events with ξ~0.14,
-      //   G4 rechit y ~ -1.8 mm, CMSSW expects track x0 ~ +12 mm.
-      //   The geometry DB adds ~9 mm, so yOffset = 12 - (-1.8) - 9 ≈ 4.7 mm.
+      // Station 0 (210m) has 8° physical tilt encoded in CMSSW geometry.
+      // When CMSSW transforms local → global, it applies +8° rotation.
+      // We must PRE-apply -8° rotation to compensate, so that:
+      //   final track_y0 = hit.y (vertical, not mixed with dispersion)
+      //   final track_x0 ∝ hit.x (dispersion)
       //
-      // Results: ξ bias = +0.02 (was -0.11), θ_y bias = +49 μrad (acceptable)
-      constexpr double xOffset = +1.5;    // mm, vertical frame offset
-      constexpr double yOffset = +4.7;    // mm, dispersion alignment
-      LocalPoint lp(hit.x + xOffset, hit.y + yOffset, 0.);
+      // Station 2 (220m) has no tilt - just apply the 90° swap.
+
+      if (hit.plane <= kPlanesPerStation) {
+        // Station 0 (210m): pre-rotate by -8° to counteract CMSSW's +8° rotation
+        constexpr double cos8 = 0.99027;  // cos(8°)
+        constexpr double sin8 = 0.13917;  // sin(8°)
+        constexpr double st0_y_offset = +1.40;  // mm, align y0 with station 2
+
+        // After swapping: local_x = hit.y (vert), local_y = hit.x (disp)
+        // CMSSW applies +8°: track_y0 = cos8*lp_x - sin8*lp_y
+        //                    track_x0 = sin8*lp_x + cos8*lp_y
+        //
+        // We want: track_y0 = hit.y, track_x0 ∝ hit.x
+        // Pre-apply -8° rotation: lp_x' = cos8*lp_x + sin8*lp_y
+        //                         lp_y' = -sin8*lp_x + cos8*lp_y
+        //
+        // After CMSSW's +8°: track_y0 = cos8*(cos8*lp_x + sin8*lp_y) - sin8*(-sin8*lp_x + cos8*lp_y)
+        //                             = (cos²8 + sin²8)*lp_x = lp_x = hit.y ✓
+
+        double swapped_x = hit.y;  // vertical → local_x before pre-rotation
+        double swapped_y = hit.x;  // dispersion → local_y before pre-rotation
+
+        // Pre-rotate by -8° and add y0 alignment offset
+        lp_x =  cos8 * swapped_x + sin8 * swapped_y + st0_y_offset;
+        lp_y = -sin8 * swapped_x + cos8 * swapped_y;
+      } else {
+        // Station 2 (220m): no tilt, just swap
+        lp_x = hit.y;   // vertical → local_x → track_y0
+        lp_y = hit.x;   // dispersion → local_y → track_x0
+      }
+
+      LocalPoint lp(lp_x, lp_y, 0.);
       LocalError le(sigmaHitX_, 0., sigmaHitY_);  // (sigmaX, 0, sigmaY) - same as PPSDirectProtonSimulation
 
       // Get or create DetSet for this detector ID
