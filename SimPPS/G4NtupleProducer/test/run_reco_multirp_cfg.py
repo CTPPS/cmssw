@@ -93,9 +93,9 @@ process.ppsAssociationCutsESSource = _ppsAssociationCutsESSource.clone(
                 # Xi cut: allow up to 0.1 difference
                 xi_cut_mean = cms.string("0.0"),
                 xi_cut_threshold = cms.string("0.1"),
-                # Theta_y cut: allow up to 1 mrad difference
+                # Theta_y cut: allow up to 100 mrad difference (very relaxed for G4 sim)
                 th_y_cut_mean = cms.string("0.0"),
-                th_y_cut_threshold = cms.string("0.001"),
+                th_y_cut_threshold = cms.string("0.1"),
                 # Timing-tracking association (not used for pixel-only)
                 ti_tr_min = cms.double(-100.0),
                 ti_tr_max = cms.double(100.0),
@@ -109,7 +109,7 @@ process.ppsAssociationCutsESSource = _ppsAssociationCutsESSource.clone(
                 xi_cut_mean = cms.string("0.0"),
                 xi_cut_threshold = cms.string("0.1"),
                 th_y_cut_mean = cms.string("0.0"),
-                th_y_cut_threshold = cms.string("0.001"),
+                th_y_cut_threshold = cms.string("0.1"),
                 ti_tr_min = cms.double(-100.0),
                 ti_tr_max = cms.double(100.0),
             ),
