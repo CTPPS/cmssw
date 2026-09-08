@@ -89,14 +89,16 @@ void PPSOpticsDumper::analyze(const edm::Event&, const edm::EventSetup& iSetup) 
         if (!fcnVals.empty()) std::cout << " x " << fcnVals[0].size();
         std::cout << "\n";
 
-        // Try TRANSPOSED access: fcnVals[fcn_index][xi_index]
+        // Access ALL xi points: fcnVals[fcn_index][xi_index]
         // fcn indices: evx=0, eLx=1, e14=2, exd=3, evpx=4, eLpx=5, e24=6, expd=7
         //              e32=8, evy=9, eLy=10, eyd=11, e42=12, evpy=13, eLpy=14, eypd=15
-        if (fcnVals.size() >= 12) {
-          std::vector<size_t> testIndices = {4, 10, 20, 30, 40};  // xi ~ 0.02, 0.05, 0.10, 0.15, 0.20
+        if (fcnVals.size() >= 12 && !xiVals.empty()) {
+          // Print summary for console (every 10th point to keep output manageable)
+          std::cout << "  Dumping " << xiVals.size() << " xi points to CSV...\n";
 
-          for (size_t xi_idx : testIndices) {
-            if (xi_idx >= xiVals.size() || xi_idx >= fcnVals[0].size()) continue;
+          // Output ALL points to CSV
+          for (size_t xi_idx = 0; xi_idx < xiVals.size(); ++xi_idx) {
+            if (xi_idx >= fcnVals[0].size()) continue;
             double xi = xiVals[xi_idx];
 
             // Transposed access: fcnVals[fcn][xi]
@@ -105,18 +107,28 @@ void PPSOpticsDumper::analyze(const edm::Event&, const edm::EventSetup& iSetup) 
             double x_D = fcnVals[3][xi_idx];   // exd (m)
             double v_y = fcnVals[9][xi_idx];   // evy
             double L_y = fcnVals[10][xi_idx];  // eLy (m)
+            double y_D = fcnVals[11][xi_idx];  // eyd (m)
 
-            std::cout << "  xi=" << std::fixed << std::setprecision(3) << xi << ": ";
-            std::cout << "x_D=" << std::setw(8) << std::setprecision(4) << x_D * 100 << " cm, ";
-            std::cout << "L_x=" << std::setw(9) << std::setprecision(1) << L_x * 100 << " cm, ";
-            std::cout << "L_y=" << std::setw(9) << std::setprecision(1) << L_y * 100 << " cm, ";
-            std::cout << "v_y=" << std::setw(7) << std::setprecision(3) << v_y << "\n";
+            // Print every 10th point to console for verification
+            // Note: CMSSW stores optical functions in cm (per LHCOpticalFunctionsSet.h)
+            if (xi_idx % 10 == 0) {
+              std::cout << "  xi=" << std::fixed << std::setprecision(4) << xi << ": ";
+              std::cout << "x_D=" << std::setw(8) << std::setprecision(4) << x_D << " cm, ";
+              std::cout << "L_x=" << std::setw(9) << std::setprecision(1) << L_x << " cm, ";
+              std::cout << "L_y=" << std::setw(9) << std::setprecision(1) << L_y << " cm, ";
+              std::cout << "v_y=" << std::setw(7) << std::setprecision(3) << v_y << "\n";
+            }
 
-            // Write to CSV
+            // Write ALL points to CSV (units: cm, same as stored in CMSSW conditions)
             csv << xangle << "," << rpId << "," << arm << "," << station << "," << rp << ","
-                << scoringPlaneZ << "," << xi << ","
-                << v_x << "," << L_x * 100 << "," << x_D * 100 << ","
-                << v_y << "," << L_y * 100 << "," << 0 << "\n";
+                << std::fixed << std::setprecision(6) << scoringPlaneZ << ","
+                << std::setprecision(6) << xi << ","
+                << std::setprecision(6) << v_x << ","
+                << std::setprecision(6) << L_x << ","
+                << std::setprecision(6) << x_D << ","
+                << std::setprecision(6) << v_y << ","
+                << std::setprecision(6) << L_y << ","
+                << std::setprecision(6) << y_D << "\n";
           }
         }
 

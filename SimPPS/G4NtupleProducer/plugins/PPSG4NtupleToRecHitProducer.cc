@@ -388,32 +388,26 @@ void PPSG4NtupleToRecHitProducer::produce(edm::Event& iEvent, const edm::EventSe
       // Station 2 (220m) has no tilt - just apply the 90° swap.
 
       if (hit.plane <= kPlanesPerStation) {
-        // Station 0 (210m): pre-rotate by -8° to counteract CMSSW's +8° rotation
+        // Station 0 (210m): pre-rotate by -8° around WAFER CENTER to counteract
+        // CMSSW's +8° rotation (which is around the local detector origin).
+        // hit.x, hit.y are wafer-centered, so rotation around (0,0) = wafer center.
         constexpr double cos8 = 0.99027;  // cos(8°)
         constexpr double sin8 = 0.13917;  // sin(8°)
-        constexpr double st0_y_offset = +1.40;  // mm, align y0 with station 2
+        constexpr double st0_y_offset = +1.40;  // mm, y0 alignment offset
 
-        // After swapping: local_x = hit.y (vert), local_y = hit.x (disp)
-        // CMSSW applies +8°: track_y0 = cos8*lp_x - sin8*lp_y
-        //                    track_x0 = sin8*lp_x + cos8*lp_y
-        //
-        // We want: track_y0 = hit.y, track_x0 ∝ hit.x
-        // Pre-apply -8° rotation: lp_x' = cos8*lp_x + sin8*lp_y
-        //                         lp_y' = -sin8*lp_x + cos8*lp_y
-        //
-        // After CMSSW's +8°: track_y0 = cos8*(cos8*lp_x + sin8*lp_y) - sin8*(-sin8*lp_x + cos8*lp_y)
-        //                             = (cos²8 + sin²8)*lp_x = lp_x = hit.y ✓
+        // Swap axes first (CMSSW convention: lp_x=vertical, lp_y=dispersion)
+        double swapped_x = hit.y;  // vertical
+        double swapped_y = hit.x;  // dispersion
 
-        double swapped_x = hit.y;  // vertical → local_x before pre-rotation
-        double swapped_y = hit.x;  // dispersion → local_y before pre-rotation
-
-        // Pre-rotate by -8° and add y0 alignment offset
+        // Rotate -8° around wafer center (origin in wafer-centered coords)
         lp_x =  cos8 * swapped_x + sin8 * swapped_y + st0_y_offset;
         lp_y = -sin8 * swapped_x + cos8 * swapped_y;
       } else {
         // Station 2 (220m): no tilt, just swap
-        lp_x = hit.y;   // vertical → local_x → track_y0
-        lp_y = hit.x;   // dispersion → local_y → track_x0
+        // θ_x calibration offset: +0.20 mm (balances θ_x and ξ biases)
+        constexpr double st2_x_offset = +0.20;  // mm, θ_x calibration
+        lp_x = hit.y;                     // vertical → local_x → track_y0
+        lp_y = hit.x + st2_x_offset;      // dispersion → local_y → track_x0
       }
 
       LocalPoint lp(lp_x, lp_y, 0.);
