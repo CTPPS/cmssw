@@ -336,10 +336,17 @@ CTPPSPixelDetId PPSG4NtupleToRecHitProducer::buildDetId(int g4PlaneIndex) const 
 //----------------------------------------------------------------------------------------------------
 
 void PPSG4NtupleToRecHitProducer::produce(edm::Event& iEvent, const edm::EventSetup&) {
-  // Check if we have more events to process
+  // Check if we have more events to process - return empty event if exhausted
   if (currentEventIndex_ >= eventIDList_.size()) {
-    throw cms::Exception("EndOfFile")
-        << "Ran out of events in G4 ntuple after " << currentEventIndex_ << " events";
+    // EOF guard: return empty collections instead of throwing
+    auto pixelRecHits = std::make_unique<edm::DetSetVector<CTPPSPixelRecHit>>();
+    auto hepMCProduct = std::make_unique<edm::HepMCProduct>();
+    auto* genEvent = new HepMC::GenEvent(HepMC::Units::GEV, HepMC::Units::MM);
+    genEvent->set_event_number(iEvent.id().event());
+    hepMCProduct->addHepMCData(genEvent);
+    iEvent.put(std::move(pixelRecHits));
+    iEvent.put(std::move(hepMCProduct), "unsmeared");
+    return;
   }
 
   int eventID = eventIDList_[currentEventIndex_];
