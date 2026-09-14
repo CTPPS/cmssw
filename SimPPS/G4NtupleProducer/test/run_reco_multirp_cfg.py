@@ -23,11 +23,18 @@ options.register('arm', 0, VarParsing.multiplicity.singleton, VarParsing.varType
 options.register('rp', 3, VarParsing.multiplicity.singleton, VarParsing.varType.int,
                  'Roman Pot index')
 options.register('verbosity', 0, VarParsing.multiplicity.singleton, VarParsing.varType.int, '')
+options.register('nThreads', 1, VarParsing.multiplicity.singleton, VarParsing.varType.int,
+                 'Number of threads for multi-threaded processing')
 options.parseArguments()
 
 # Process
 from Configuration.Eras.Era_Run3_cff import Run3
 process = cms.Process('PPSRecoMultiRP', Run3)
+
+# Multi-threading
+if options.nThreads > 1:
+    process.options.numberOfThreads = cms.untracked.uint32(options.nThreads)
+    process.options.numberOfStreams = cms.untracked.uint32(options.nThreads)
 
 # Message logger
 process.load('FWCore.MessageService.MessageLogger_cfi')
@@ -172,6 +179,7 @@ print(f"Input:  {options.inputFile}")
 print(f"Output: {options.recoFile}")
 print(f"Tracks: {options.trackDumpFile}")
 print(f"Events: {options.maxEvents}")
+print(f"Threads: {options.nThreads}")
 print(f"Detector: arm={options.arm}, rp={options.rp}")
 print(f"Stations: 0 (210m near) + 2 (220m far) - dual station mode")
 print(f"Reconstruction: single-RP + multi-RP")
