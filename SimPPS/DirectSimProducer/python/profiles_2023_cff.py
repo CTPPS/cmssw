@@ -9,8 +9,8 @@ _base_2023 = _base.clone(
         scoringPlanes = _optics.scoringPlanes,
     ),
     ctppsDirectSimuData = _base.ctppsDirectSimuData.clone(
-        empiricalAperture45 = "1.e3*([xi] - 0.20)",
-        empiricalAperture56 = "1.e3*([xi] - 0.20)"
+        empiricalAperture45 = "(1.0509e-07*[xangle]+-2.8678e-05)+(([xi]<(0.00035092*[xangle]+0.10406))*(-6.0606e-07*[xangle]+-0.0042798)+([xi]>=(0.00035092*[xangle]+0.10406))*(5.93568e-05*[xangle]+-0.016018))*([xi]-(0.00035092*[xangle]+0.10406))",
+        empiricalAperture56 = "(-1.8215e-07*[xangle]+1.5374e-05)+(([xi]<(0.00030184*[xangle]+0.10506))*(3.9308e-06*[xangle]+-0.0053814)+([xi]>=(0.00030184*[xangle]+0.10506))*(4.3242e-05*[xangle]+-0.013780))*([xi]-(0.00030184*[xangle]+0.10506))"
     )
 )
 
