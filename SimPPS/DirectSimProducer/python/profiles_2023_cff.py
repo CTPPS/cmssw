@@ -15,7 +15,7 @@ _base_2023 = _base.clone(
 )
 
 profile_2023_PreTS1A = _base_2023.clone(
-    L_int = 1.,
+    L_int = 7.599473874,
     ctppsLHCInfo = _base_2023.ctppsLHCInfo.clone(
         xangleBetaStarHistogramObject = "2023/h2_betaStar_vs_xangle"
     ),
@@ -30,7 +30,7 @@ profile_2023_PreTS1A = _base_2023.clone(
 )
 
 profile_2023_PreTS1B = _base_2023.clone(
-    L_int = 1.,
+    L_int = 8.815992386,
     ctppsLHCInfo = _base_2023.ctppsLHCInfo.clone(
         xangleBetaStarHistogramObject = "2023/h2_betaStar_vs_xangle"
     ),
@@ -45,7 +45,7 @@ profile_2023_PreTS1B = _base_2023.clone(
 )
 
 profile_2023_PostTS1 = _base_2023.clone(
-    L_int = 1.,
+    L_int = 9.682846668,
     ctppsLHCInfo = _base_2023.ctppsLHCInfo.clone(
         xangleBetaStarHistogramObject = "2023/h2_betaStar_vs_xangle"
     ),
