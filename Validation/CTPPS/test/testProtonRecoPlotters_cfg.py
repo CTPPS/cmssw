@@ -53,6 +53,11 @@ options.register('crab',
 options.register('nanoOutputFilename', 'PPSNanoAOD.root',
                   VarParsing.VarParsing.multiplicity.singleton,
                   VarParsing.VarParsing.varType.string, "nanoAOD output file name")
+options.register('miniOutputFilename',
+                 'PPSMiniAOD.root',
+                 VarParsing.VarParsing.multiplicity.singleton,
+                 VarParsing.VarParsing.varType.string,
+                 "MiniAOD output file name")
 options.parseArguments()
 
 # Limit the number of events
@@ -115,6 +120,31 @@ else:
             'keep *_*Digi*_*_RECO',)
     )
 
+# Temporarily manually implement the association cuts
+pAssociationCuts = cms.PSet(
+    validityRange=cms.EventRange("343890:min - 999999:max"),
+    association_cuts_45=cms.PSet(
+    # Filled from the latest analyzer output by update_assocuts_from_analyze.py.
+        x_cut_mean=cms.string("- ( (0.1886599004902902+-0.019563398876999507 * [x_near]+0.0007653309974208171 * [x_near] * [x_near]) - (-0.028450862819029463+0.6299345376251246/[x_near]) * abs([y_near]) )"),
+        x_cut_threshold=cms.string("1.5 * ( (0.3336556715260207+-0.00019050370618842877 * [x_near]) + (0.008737264460198742) * [y_near] * [y_near] )"),
+        y_cut_mean=cms.string("- ( (3.826046933499323+-23.167508663013848/[x_near]) * TMath::Erf([y_near]/(-54.51529256817561+8.090154229044156 * [x_near])) )"),
+        y_cut_threshold=cms.string("1.5 * ( (0.18530153234402777+2.2258475043878354/[x_near]/[x_near]) + (0.042701028234240955+91.33855712506406/pow([x_near],5)) * abs([y_near]) )"),
+        ti_tr_min=cms.double(-1.5), 
+        ti_tr_max=cms.double(2.0),
+    ),
+    association_cuts_56=cms.PSet(
+        x_cut_mean=cms.string("- ( (0.06371888416162158+-0.019570009647643494 * [x_near]+0.0006094070505282202 * [x_near] * [x_near]) - (-0.028531198571901506+0.7118042948348349/[x_near]) * abs([y_near]) )"),
+        x_cut_threshold=cms.string("1.5 * ( (0.2018301706199127+0.007529857241629447 * [x_near]) + (0.008666130062040476) * [y_near] * [y_near] )"),
+        y_cut_mean=cms.string("- ( (1.68211583240235+-7.853516816096297/[x_near]) * TMath::Erf([y_near]/(-9.83022170905736+2.1434461875569877 * [x_near])) )"),
+        y_cut_threshold=cms.string("1.5 * ( (0.15517271960650353+0.5811217032099263/[x_near]/[x_near]) + (0.017920830203140732+128.60886741524922/pow([x_near],5)) * abs([y_near]) )"),
+        ti_tr_min=cms.double(-1.5), 
+        ti_tr_max=cms.double(2.0),
+    ),
+)
+process.load("CalibPPS.ESProducers.ppsAssociationCutsESSource_cfi")
+process.ppsAssociationCutsESSource.configuration.append(pAssociationCuts)
+process.es_prefer_ppsAssociationCutsESSource = cms.ESPrefer("PPSAssociationCutsESSource", "ppsAssociationCutsESSource")
+
 # Load PPS AlcaReco to run re-reco
 process.load("Calibration.PPSAlCaRecoProducer.ALCARECOPPSCalMaxTracks_cff")
 process.recoPPSSequenceAlCaRecoProducer.remove(process.diamondSampicLocalReconstructionTaskAlCaRecoProducer)
@@ -147,7 +177,7 @@ process.load('PhysicsTools.NanoAOD.protons_cff')
 process.protonTable = process.protonTable.clone(
     tagRecoProtonsSingle = cms.InputTag("ctppsProtonsAlCaRecoProducer", "singleRP","ProtonRecoPlotter"),
     tagRecoProtonsMulti  = cms.InputTag("ctppsProtonsAlCaRecoProducer", "multiRP","ProtonRecoPlotter"),
-    tagTrackLite          = cms.InputTag("ctppsLocalTrackLiteProducerAlCaRecoProducer","","ProtonRecoPlotter"),
+    tagTrackLite         = cms.InputTag("ctppsLocalTrackLiteProducerAlCaRecoProducer","","ProtonRecoPlotter"),
 )
 process.multiRPTable = process.multiRPTable.clone(
     src = cms.InputTag("ctppsProtonsAlCaRecoProducer", "multiRP","ProtonRecoPlotter"),
@@ -184,6 +214,23 @@ else:
                          process.protonTablesTask 
     )
 
+# MiniAOD output
+process.load("Calibration.PPSAlCaRecoProducer.ALCARECOPPSCalMaxTracks_Output_cff")
+
+process.MINIAODoutput = cms.OutputModule("PoolOutputModule",
+    fileName = cms.untracked.string(options.miniOutputFilename),
+    outputCommands = process.OutALCARECOPPSCalMaxTracks.outputCommands,
+    SelectEvents = cms.untracked.PSet(
+        SelectEvents = cms.vstring("p")
+    ),
+    compressionLevel = cms.untracked.int32(9),
+    compressionAlgorithm = cms.untracked.string("LZMA"),
+    dataset = cms.untracked.PSet(
+        filterName = cms.untracked.string(""),
+        dataTier = cms.untracked.string("MINIAOD")
+    )
+)
+
 # nanoAOD output
 process.load('PhysicsTools.NanoAOD.NanoAODEDMEventContent_cff')
 process.NANOAODoutput = cms.OutputModule("NanoAODOutputModule",
@@ -192,6 +239,13 @@ process.NANOAODoutput = cms.OutputModule("NanoAODOutputModule",
     SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring('p')),
     compressionLevel = cms.untracked.int32(9),
     compressionAlgorithm = cms.untracked.string("LZMA"),
+    dataset = cms.untracked.PSet(
+        filterName = cms.untracked.string(""),
+        dataTier = cms.untracked.string("NANOAOD")
+    )
 )
 
-process.o = cms.EndPath(process.NANOAODoutput)
+process.o = cms.EndPath(
+    process.MINIAODoutput +
+    process.NANOAODoutput
+)

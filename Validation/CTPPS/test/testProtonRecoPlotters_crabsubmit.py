@@ -29,19 +29,19 @@ datasets = [
     
     # AlCaPPS dataset
     "/AlCaPPSPrompt/Run2023B-PPSCalMaxTracks-PromptReco-v1/ALCARECO",
-    # "/AlCaPPSPrompt/Run2023C-PPSCalMaxTracks-PromptReco-v1/ALCARECO",
-    # "/AlCaPPSPrompt/Run2023C-PPSCalMaxTracks-PromptReco-v2/ALCARECO",
-    # "/AlCaPPSPrompt/Run2023C-PPSCalMaxTracks-PromptReco-v3/ALCARECO",
-    # "/AlCaPPSPrompt/Run2023C-PPSCalMaxTracks-PromptReco-v4/ALCARECO",
-    # "/AlCaPPSPrompt/Run2023D-PPSCalMaxTracks-PromptReco-v1/ALCARECO",
-    # "/AlCaPPSPrompt/Run2023D-PPSCalMaxTracks-PromptReco-v2/ALCARECO",
+    "/AlCaPPSPrompt/Run2023C-PPSCalMaxTracks-PromptReco-v1/ALCARECO",
+    "/AlCaPPSPrompt/Run2023C-PPSCalMaxTracks-PromptReco-v2/ALCARECO",
+    "/AlCaPPSPrompt/Run2023C-PPSCalMaxTracks-PromptReco-v3/ALCARECO",
+    "/AlCaPPSPrompt/Run2023C-PPSCalMaxTracks-PromptReco-v4/ALCARECO",
+    "/AlCaPPSPrompt/Run2023D-PPSCalMaxTracks-PromptReco-v1/ALCARECO",
+    "/AlCaPPSPrompt/Run2023D-PPSCalMaxTracks-PromptReco-v2/ALCARECO",
 ]
 
 for ds in datasets:
     cfg = config()
 
     # General configuration
-    cfg.General.requestName = 'ProtonRecoPlotters' +ds.replace('/','_')+'_xangle_159_161'
+    cfg.General.requestName = 'ProtonRecoPlotters' + ds.replace('/','_') + '_v2'
     cfg.General.workArea = 'crab_projects'
     cfg.General.transferOutputs = True
     cfg.General.transferLogs = True
@@ -56,8 +56,8 @@ for ds in datasets:
         # 'hltPath=HLT_ZeroBias_v*',
         # 'hltPath=HLT_Ele32_WPTight_Gsf_v*',
         'hltPath=HLT_PPSMaxTracksPerRP4_v*',
-        'minCrossingAngle=159',
-        'maxCrossingAngle=161',
+        # 'minCrossingAngle=159',
+        # 'maxCrossingAngle=161',
         'crab=True'
     ]
 
@@ -72,11 +72,14 @@ for ds in datasets:
 
     # This ensures lumi filtering consistency with your cfg
     cfg.Data.lumiMask = '/eos/project-c/ctpps/Operations/DataExternalConditions/2023/PPS-July2023_track_only_AND_CMS_Golden.json'
-    cfg.Data.outLFNDirBase = '/store/group/phys_pps/abellora/dirsim/2023_protonreco'
+    cfg.Data.outLFNDirBase = '/store/group/phys_pps/abellora/dirsim/2023_private_remininano'
     cfg.Data.publication = False
     
     # Site configuration
     cfg.Site.storageSite = 'T2_CH_CERN' 
+    # # Temporarily, send jobs to Torino and read from Cyfronet T2
+    # cfg.Site.ignoreGlobalBlacklist = True
+    # cfg.Site.whitelist = ['T1_IT_CNAF']    
     
     # Submit the job
     crabCommand('submit', config=cfg)
