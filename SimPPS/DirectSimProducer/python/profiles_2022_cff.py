@@ -21,8 +21,8 @@ profile_2022_default = _base_2022.clone(
         xangleBetaStarHistogramObject = "2021/h2_betaStar_vs_xangle"
     ),
     ctppsRPAlignmentCorrectionsDataXML = _base_2022.ctppsRPAlignmentCorrectionsDataXML.clone(
-        MisalignedFiles = ["Validation/CTPPS/alignment/alignment_2022.xml"],
-        RealFiles = ["Validation/CTPPS/alignment/alignment_2022.xml"]
+        MisalignedFiles = ["Validation/CTPPS/alignment/2022.xml"],
+        RealFiles = ["Validation/CTPPS/alignment/2022.xml"]
     ),
     ctppsDirectSimuData = _base_2022.ctppsDirectSimuData.clone(
         timeResolutionDiamonds45 = "0.200",

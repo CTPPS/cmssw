@@ -418,7 +418,7 @@ void PPSDirectProtonSimulation::processProton(
 
     if (th_x_th > th_x_phys) {
       if (verbosity_) {
-        ssLog << "stop because of empirical appertures";
+        ssLog << "stop because of empirical apertures (th_x_phys < " << th_x_th << ")" << std::endl;
         edm::LogInfo("PPS") << ssLog.str();
       }
 
